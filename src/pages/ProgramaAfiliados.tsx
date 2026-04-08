@@ -23,15 +23,20 @@ export default function ProgramaAfiliados() {
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
       {/* Hero */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.1) 0%, transparent 70%)" }} />
-        <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
-          <h1 className="font-syne font-extrabold text-[36px] md:text-[42px] text-wo-crema leading-tight mb-4">
+      <section className="relative min-h-[420px] flex items-center overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&h=600&fit=crop&crop=center&auto=format&q=80"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(105deg, rgba(5,12,28,0.95) 0%, rgba(5,12,28,0.82) 60%, rgba(5,12,28,0.55) 100%)" }} />
+        <div className="max-w-3xl mx-auto px-4 text-center relative z-10 py-20">
+          <h1 className="font-syne font-extrabold text-[36px] md:text-[48px] text-wo-crema leading-tight mb-4">
             Sé tu propio jefe.<br /><span className="text-primary">Gana con tu red.</span>
           </h1>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {["Desde S/ 100", "Comisiones inmediatas", "Soporte dedicado"].map((s) => (
-              <span key={s} className="font-jakarta text-xs text-wo-crema-muted px-3 py-1.5 rounded-wo-pill bg-wo-carbon" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+              <span key={s} className="font-jakarta text-xs text-wo-crema-muted px-3 py-1.5 rounded-wo-pill bg-wo-carbon/70 backdrop-blur-sm" style={{ border: "0.5px solid rgba(255,255,255,0.12)" }}>
                 {s}
               </span>
             ))}
@@ -162,14 +167,38 @@ export default function ProgramaAfiliados() {
           <h2 className="font-syne font-extrabold text-[26px] text-wo-crema mb-10">3 pasos para empezar.</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { num: "1", title: "Elige tu paquete", desc: "Básico (S/100), Intermedio (S/2,000) o VIP (S/10,000)." },
-              { num: "2", title: "Comparte tu link", desc: "Comparte tu tienda y código de afiliado con tu red." },
-              { num: "3", title: "Gana comisiones", desc: "Recibe comisiones por cada venta hasta tu nivel desbloqueado." },
+              {
+                num: "1",
+                title: "Elige tu paquete",
+                desc: "Básico (S/100), Intermedio (S/2,000) o VIP (S/10,000).",
+                img: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&h=280&fit=crop&crop=center&auto=format&q=80",
+                alt: "Productos orgánicos",
+              },
+              {
+                num: "2",
+                title: "Comparte tu link",
+                desc: "Comparte tu tienda y código de afiliado con tu red.",
+                img: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=500&h=280&fit=crop&crop=center&auto=format&q=80",
+                alt: "Compartir por celular",
+              },
+              {
+                num: "3",
+                title: "Gana comisiones",
+                desc: "Recibe comisiones por cada venta hasta tu nivel desbloqueado.",
+                img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=280&fit=crop&crop=center&auto=format&q=80",
+                alt: "Ganancias y éxito",
+              },
             ].map((s) => (
-              <div key={s.num} className="bg-wo-carbon rounded-wo-card p-6 text-center" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                <span className="font-syne font-extrabold text-[48px] text-wo-oro-muted opacity-40">{s.num}</span>
-                <h3 className="font-jakarta font-bold text-base text-wo-crema mt-2 mb-2">{s.title}</h3>
-                <p className="font-jakarta text-xs text-wo-crema-muted">{s.desc}</p>
+              <div key={s.num} className="bg-wo-carbon rounded-wo-card overflow-hidden" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+                <div className="relative h-[160px] overflow-hidden">
+                  <img src={s.img} alt={s.alt} loading="lazy" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(10,18,40,0.85) 100%)" }} />
+                  <span className="absolute bottom-3 left-4 font-syne font-extrabold text-[42px] leading-none text-primary opacity-80">{s.num}</span>
+                </div>
+                <div className="p-5">
+                  <h3 className="font-jakarta font-bold text-base text-wo-crema mb-1.5">{s.title}</h3>
+                  <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">{s.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -198,12 +227,20 @@ export default function ProgramaAfiliados() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 relative overflow-hidden">
+      <section className="relative py-24 overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1400&h=500&fit=crop&crop=center&auto=format&q=75"
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(5,12,28,0.93) 0%, rgba(5,12,28,0.88) 100%)" }} />
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.08) 0%, transparent 60%)" }} />
+          <div className="w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.1) 0%, transparent 60%)" }} />
         </div>
         <div className="max-w-lg mx-auto px-4 text-center relative z-10">
-          <h2 className="font-syne font-extrabold text-[32px] text-wo-crema mb-4">Empieza hoy.</h2>
+          <h2 className="font-syne font-extrabold text-[32px] text-wo-crema mb-2">Empieza hoy.</h2>
+          <p className="font-jakarta text-sm text-wo-crema-muted mb-8">Tu red empieza con una decisión.</p>
           <Link to="/registro-afiliado" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm px-9 py-4 rounded-xl hover:bg-wo-oro-dark">
             <Star size={14} /> Crear mi cuenta gratis
           </Link>

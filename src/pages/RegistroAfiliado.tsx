@@ -19,6 +19,68 @@ const packageFeatures: Record<PackageType, string[]> = {
   VIP: ["Comisiones niveles 1–10", "Todo lo de Intermedio", "Nivel 8: comisión 3% ★", "Máximo potencial de red"],
 };
 
+// ── Componentes auxiliares fuera del componente principal ──────────────────
+// IMPORTANTE: deben estar aquí fuera para que React no los desmonte en cada
+// re-render (si estuvieran dentro, cada tecla crearía una nueva referencia
+// de función y el input perdería el foco).
+
+const StepBar = ({ step }: { step: number }) => (
+  <div className="flex items-center mb-8">
+    {[{ n: 1, label: "Tus datos" }, { n: 2, label: "Paquete" }, { n: 3, label: "Pago" }].map((s, i) => (
+      <div key={s.n} className="flex items-center">
+        <div className="flex items-center gap-1.5">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center font-jakarta font-bold text-[11px] shrink-0 ${step > s.n ? "bg-secondary text-background" : step === s.n ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted"}`} style={step < s.n ? { border: "0.5px solid rgba(255,255,255,0.12)" } : {}}>
+            {step > s.n ? <Check size={10} /> : s.n}
+          </div>
+          <span className={`font-jakarta text-[11px] ${step === s.n ? "text-wo-crema font-semibold" : step > s.n ? "text-secondary" : "text-wo-crema/30"}`}>{s.label}</span>
+        </div>
+        {i < 2 && <div className="w-8 h-px mx-2 bg-wo-crema/10" />}
+      </div>
+    ))}
+  </div>
+);
+
+interface InputFieldProps {
+  label: string;
+  k: string;
+  type?: string;
+  placeholder: string;
+  maxLength?: number;
+  prefix?: string;
+  icon?: React.ReactNode;
+  value: string;
+  onChange: (k: string, value: string) => void;
+  refValid?: boolean | null;
+  refName?: string;
+}
+
+const InputField = ({ label, k, type = "text", placeholder, maxLength, prefix, icon, value, onChange, refValid, refName }: InputFieldProps) => (
+  <div>
+    <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">{label}</label>
+    <div className="relative">
+      {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-wo-crema-muted">{icon}</span>}
+      {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 font-jakarta text-sm text-wo-crema-muted">{prefix}</span>}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(k, e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        className={`w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary ${icon || prefix ? "pl-9" : "px-4"} ${!icon && !prefix ? "px-4" : "pr-4"}`}
+        style={{ border: k === "referral" && refValid === true ? "0.5px solid hsl(var(--wo-esmeralda))" : k === "referral" && refValid === false ? "0.5px solid hsl(var(--destructive))" : "0.5px solid rgba(255,255,255,0.1)" }}
+      />
+    </div>
+    {k === "referral" && refValid === true && (
+      <div className="mt-2 p-3 rounded-wo-btn" style={{ background: "rgba(30,192,213,0.08)", border: "0.5px solid rgba(30,192,213,0.3)" }}>
+        <p className="font-jakarta text-xs text-secondary">Con este código serás referido de {refName}</p>
+      </div>
+    )}
+    {k === "referral" && refValid === false && <p className="font-jakarta text-xs text-destructive mt-1">✗ Código no encontrado</p>}
+  </div>
+);
+
+// ───────────────────────────────────────────────────────────────────────────
+
 export default function RegistroAfiliado() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -42,7 +104,15 @@ export default function RegistroAfiliado() {
   const pkgFromUrl = searchParams.get("package");
   const preselectedPkg = pkgFromUrl ? packages.find((pkg) => pkg.name.toLowerCase() === pkgFromUrl.toLowerCase()) : null;
 
-  const set = (key: string, value: string) => setForm({ ...form, [key]: value });
+  const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleInputChange = (k: string, value: string) => {
+    if (k === "referral") {
+      validateRef(value);
+    } else {
+      set(k, value);
+    }
+  };
 
   const validateRef = async (code: string) => {
     set("referral", code);
@@ -110,48 +180,7 @@ export default function RegistroAfiliado() {
     setSubmitting(false);
   };
 
-  const selectedPkg = packages.find((p) => p.name === selectedPackage)!;
-
-  const StepBar = () => (
-    <div className="flex items-center mb-8">
-      {[{ n: 1, label: "Tus datos" }, { n: 2, label: "Paquete" }, { n: 3, label: "Pago" }].map((s, i) => (
-        <div key={s.n} className="flex items-center">
-          <div className="flex items-center gap-1.5">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-jakarta font-bold text-[11px] shrink-0 ${step > s.n ? "bg-secondary text-background" : step === s.n ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted"}`} style={step < s.n ? { border: "0.5px solid rgba(255,255,255,0.12)" } : {}}>
-              {step > s.n ? <Check size={10} /> : s.n}
-            </div>
-            <span className={`font-jakarta text-[11px] ${step === s.n ? "text-wo-crema font-semibold" : step > s.n ? "text-secondary" : "text-wo-crema/30"}`}>{s.label}</span>
-          </div>
-          {i < 2 && <div className="w-8 h-px mx-2 bg-wo-crema/10" />}
-        </div>
-      ))}
-    </div>
-  );
-
-  const InputField = ({ label, k, type = "text", placeholder, maxLength, prefix, icon }: { label: string; k: string; type?: string; placeholder: string; maxLength?: number; prefix?: string; icon?: React.ReactNode }) => (
-    <div>
-      <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">{label}</label>
-      <div className="relative">
-        {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-wo-crema-muted">{icon}</span>}
-        {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 font-jakarta text-sm text-wo-crema-muted">{prefix}</span>}
-        <input
-          type={type}
-          value={form[k as keyof typeof form]}
-          onChange={(e) => k === "referral" ? validateRef(e.target.value) : set(k, e.target.value)}
-          placeholder={placeholder}
-          maxLength={maxLength}
-          className={`w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary ${icon || prefix ? "pl-9" : "px-4"} ${!icon && !prefix ? "px-4" : "pr-4"}`}
-          style={{ border: k === "referral" && refValid === true ? "0.5px solid hsl(var(--wo-esmeralda))" : k === "referral" && refValid === false ? "0.5px solid hsl(var(--destructive))" : "0.5px solid rgba(255,255,255,0.1)" }}
-        />
-      </div>
-      {k === "referral" && refValid === true && (
-        <div className="mt-2 p-3 rounded-wo-btn" style={{ background: "rgba(30,192,213,0.08)", border: "0.5px solid rgba(30,192,213,0.3)" }}>
-          <p className="font-jakarta text-xs text-secondary">Con este código serás referido de {refName}</p>
-        </div>
-      )}
-      {k === "referral" && refValid === false && <p className="font-jakarta text-xs text-destructive mt-1">✗ Código no encontrado</p>}
-    </div>
-  );
+  const selectedPkg = packages.find((p) => p.name === selectedPackage)!
 
   return (
     <div className="min-h-screen bg-background pt-16">
@@ -202,7 +231,7 @@ export default function RegistroAfiliado() {
         {/* Right - Steps */}
         <div className="p-8 lg:p-12 flex items-start lg:items-center overflow-y-auto">
           <div className="w-full max-w-md mx-auto">
-            <StepBar />
+            <StepBar step={step} />
 
             {/* ── STEP 1: Datos personales ── */}
             {step === 1 && (
@@ -223,9 +252,9 @@ export default function RegistroAfiliado() {
                   </div>
                 )}
 
-                <InputField label="Nombre completo" k="name" placeholder="Tu nombre completo" />
-                <InputField label="DNI" k="dni" placeholder="12345678" maxLength={8} />
-                <InputField label="Email" k="email" type="email" placeholder="tu@email.com" />
+                <InputField label="Nombre completo" k="name" placeholder="Tu nombre completo" value={form.name} onChange={handleInputChange} />
+                <InputField label="DNI" k="dni" placeholder="12345678" maxLength={8} value={form.dni} onChange={handleInputChange} />
+                <InputField label="Email" k="email" type="email" placeholder="tu@email.com" value={form.email} onChange={handleInputChange} />
 
                 <div>
                   <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">Contraseña</label>
@@ -244,8 +273,8 @@ export default function RegistroAfiliado() {
                   {form.password2 && form.password !== form.password2 && <p className="font-jakarta text-xs text-destructive mt-1">Las contraseñas no coinciden</p>}
                 </div>
 
-                <InputField label="Número Yape" k="yape" placeholder="987654321" prefix="+51" />
-                <InputField label="Código de referido (opcional)" k="referral" placeholder="WIN-XXXXXX" icon={<Gift size={14} />} />
+                <InputField label="Número Yape" k="yape" placeholder="987654321" prefix="+51" value={form.yape} onChange={handleInputChange} />
+                <InputField label="Código de referido (opcional)" k="referral" placeholder="WIN-XXXXXX" icon={<Gift size={14} />} value={form.referral} onChange={handleInputChange} refValid={refValid} refName={refName} />
 
                 <button type="submit" className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors mt-4">
                   Continuar → Elegir paquete

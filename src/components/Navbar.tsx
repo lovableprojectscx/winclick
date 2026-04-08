@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, Menu, X, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -9,7 +9,14 @@ export default function Navbar() {
   const { itemCount, setIsOpen, lastAddedId } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const links = [
     { to: "/catalogo", label: "Productos" },
@@ -20,7 +27,10 @@ export default function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-wo-obsidiana/95 backdrop-blur-md" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 bg-wo-obsidiana/95 backdrop-blur-md transition-shadow duration-300 ${scrolled ? "navbar-scrolled" : ""}`}
+      style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -34,7 +44,7 @@ export default function Navbar() {
               <Link
                 key={l.to}
                 to={l.to}
-                className={`font-jakarta text-[13px] font-medium transition-colors hover:text-wo-crema ${isActive(l.to) ? "text-wo-crema" : "text-wo-crema-muted"}`}
+                className={`font-jakarta text-[13px] font-medium transition-colors hover:text-wo-crema ${isActive(l.to) ? "nav-link-active" : "text-wo-crema-muted"}`}
               >
                 {l.label}
               </Link>
@@ -104,7 +114,7 @@ export default function Navbar() {
 
       {/* Mobile panel */}
       {mobileOpen && (
-        <div className="md:hidden bg-wo-grafito" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
+        <div className="mobile-menu-animate md:hidden bg-wo-grafito" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
           <div className="px-4 py-3 space-y-1">
             {links.map((l) => (
               <Link

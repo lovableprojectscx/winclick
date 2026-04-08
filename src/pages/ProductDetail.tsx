@@ -51,7 +51,14 @@ export default function ProductDetail() {
           {/* Image */}
           <div>
             <div className="relative bg-wo-grafito rounded-wo-card overflow-hidden">
-              <img src={product.image_url ?? ""} alt={product.name} className="w-full aspect-square object-cover" />
+              <img
+                src={product.image_url || `https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=800&fit=crop&auto=format&q=82`}
+                alt={product.name}
+                className="w-full aspect-square object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=800&fit=crop&auto=format&q=82";
+                }}
+              />
               {product.organic && (
                 <span className="absolute top-3 left-3 px-2.5 py-1 text-xs font-jakarta font-bold rounded-wo-pill bg-secondary/90 text-secondary-foreground">
                   🌿 Orgánico

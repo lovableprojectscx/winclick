@@ -1193,12 +1193,133 @@ Cada mes:
       crea volume_units del mes
 
 Si no paga:
-  → Cron job suspend_overdue_affiliates
+  → Cron job suspend_overdue_affiliates (proceso BACKEND en Supabase, NO frontend)
   → account_status = "suspended"
   → Afiliado deja de generar comisiones
   → Puede reactivar pagando los S/300 atrasados
 ```
 
+> ⚠️ **`suspend_overdue_affiliates` es un RPC/cron job del backend de Supabase.**
+> No se invoca desde el código React. Debe configurarse como scheduled job en Supabase
+> o ejecutarse manualmente desde el panel admin. No buscar su llamada en el frontend.
+
 ---
 
-*Fin del documento. Para actualizaciones, editar este archivo en `docs/LOGICA_FUNCIONES.md`.*
+## 6. Páginas no transaccionales
+
+### TiendaAfiliado.tsx
+`src/pages/TiendaAfiliado.tsx` — Ruta: `/tienda/:codigo`
+
+Página pública (sin autenticación requerida) donde clientes pueden ver y comprar productos a través del link de un afiliado.
+
+**Flujo al cargar:**
+1. Lee `codigo` desde `useParams`
+2. Llama `useStoreProducts(codigo)` → busca `affiliate_stores` por código + productos activos
+3. `useEffect` registra `setAffiliateCode(codigo.toUpperCase())` en CartContext
+4. Al salir de la página (cleanup del useEffect) → `setAffiliateCode(null)`
+
+**Estados de renderizado:**
+- Loading → spinner
+- `!data?.store` → "Tienda no encontrada" + link al inicio
+- OK → banner personalizado + grid de productos
+
+**Datos que muestra:**
+- `store.store_name`, `store.tagline`, `store.accent_color`, `store.banner_emoji`
+- `store.whatsapp` → botón "Contactar por WhatsApp" → `wa.me/51{whatsapp}`
+- Grid de `ProductCard` con `affiliateCode` propagado
+
+**Crítico:** el `affiliateCode` se propaga a cada `ProductCard` y desde ahí al carrito.
+Si el cliente compra, ese código queda asociado al pedido → genera comisión al afiliado.
+
+---
+
+### Navbar.tsx
+`src/components/Navbar.tsx`
+
+Componente global fijo en la parte superior. Consume `useAuth` y `useCart`.
+
+**Links de navegación:** Productos (`/catalogo`), Ganar (`/programa-afiliados`), Contacto (`/contacto`)
+
+**Sección derecha (auth-aware):**
+- Sin sesión → botón "Únete" (`/registro-afiliado`) + "Ingresar" (`/login-afiliado`)
+- Con sesión + afiliado → dropdown con nombre, link a `/area-afiliado`, botón logout
+- Con sesión + admin → link a `/admin-dashboard`
+
+**Carrito:** badge con `itemCount`. Cuando `lastAddedId` tiene valor → animación CSS `badge-pop`.
+
+**Mobile:** hamburger (`Menu`/`X`) → drawer lateral con los mismos links.
+
+---
+
+### CartDrawer.tsx
+`src/components/CartDrawer.tsx`
+
+Panel lateral slide-in (controlled por `isOpen` del CartContext).
+
+- Lista items con `updateQuantity` y `removeItem`
+- Muestra subtotal calculado por `total`
+- Botón "Ir al Checkout" → `/checkout`
+- Si carrito vacío → empty state con ilustración
+
+---
+
+### ProductCard.tsx
+`src/components/ProductCard.tsx`
+
+Props: `product`, `affiliateCode?`
+
+- Muestra imagen, nombre, precio, badges (descuento, sin stock)
+- Botón "Agregar" → `addItem(product)` → feedback "✓ Agregado" por 2s
+- Click en la card → `/catalogo/{product.id}` (con `affiliateCode` en query param si existe)
+- Si `stock === 0` → botón deshabilitado
+
+---
+
+## 7. Aclaraciones importantes
+
+### Bonus de recarga en billetera (solo visual)
+
+En `MiBilletera.tsx`, la UI muestra bonuses en los paquetes de recarga:
+- S/200 → "+5% bonus"
+- S/500 → "+10% bonus"
+
+**⚠️ El bonus es SOLO VISUAL.** El monto enviado al backend en `useSubmitPayment()` es el valor nominal (`walletCreditAmount: recargarAmount`) sin multiplicar por el bonus. Si se desea implementar el bonus real, hay que modificar `useSubmitPayment` para calcular `amount * 1.05` o `amount * 1.10` antes de enviarlo.
+
+---
+
+### Regla: nunca definir componentes dentro de componentes
+
+En React, si defines un componente dentro de otro, en cada re-render se crea una nueva
+referencia de función. React lo trata como un componente diferente, lo desmonta y monta,
+causando pérdida de foco en inputs.
+
+**Patrón incorrecto (causa bugs de foco):**
+```tsx
+function MiPagina() {
+  const InputField = () => <input ... />  // ← BUG: nueva referencia en cada render
+  return <InputField />
+}
+```
+
+**Patrón correcto:**
+```tsx
+const InputField = () => <input ... />  // ← fuera del componente, referencia estable
+
+function MiPagina() {
+  return <InputField />
+}
+```
+
+Archivos corregidos: `RegistroAfiliado.tsx` (InputField, StepBar), `AdminDashboard.tsx` (PaymentRow).
+
+---
+
+### RPC `suspend_overdue_affiliates`
+
+Es un procedimiento almacenado en Supabase. No se llama desde React.
+Debe configurarse como cron job en Supabase Dashboard → Database → Functions → Cron jobs,
+o ejecutarse manualmente desde SQL editor cuando sea necesario.
+
+---
+
+*Fin del documento. Última actualización: 2026-04-08. Para actualizaciones, editar `docs/LOGICA_FUNCIONES.md`.*

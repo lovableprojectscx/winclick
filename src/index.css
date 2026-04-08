@@ -123,3 +123,70 @@
 .badge-pop {
   animation: pop 0.3s ease-out;
 }
+
+/* ── Product card hover lift + glow ────────────────────────── */
+.product-card {
+  border: 0.5px solid rgba(255,255,255,0.07);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.product-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(232,116,26,0.45);
+  box-shadow: 0 16px 40px rgba(232,116,26,0.14), 0 4px 12px rgba(0,0,0,0.4);
+}
+.product-card:active {
+  transform: translateY(-2px) scale(0.985);
+}
+
+/* ── Navbar scroll shadow ───────────────────────────────────── */
+.navbar-scrolled {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  border-bottom-color: rgba(232,116,26,0.15) !important;
+}
+
+/* ── Nav link active underline ──────────────────────────────── */
+.nav-link-active {
+  position: relative;
+  color: hsl(var(--wo-crema)) !important;
+}
+.nav-link-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: hsl(var(--wo-oro));
+  border-radius: 2px;
+}
+
+/* ── Mobile menu slide-down ─────────────────────────────────── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.mobile-menu-animate {
+  animation: slideDown 0.18s ease;
+}
+
+/* ── Scroll reveal fade-in ──────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ── Button micro-bounce ────────────────────────────────────── */
+.btn-bounce {
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.btn-bounce:active {
+  transform: scale(0.95);
+}

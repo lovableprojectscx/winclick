@@ -9,6 +9,15 @@ interface Props {
   affiliateCode?: string;
 }
 
+const CATEGORY_FALLBACK: Record<string, string> = {
+  "Detox":     "https://images.unsplash.com/photo-1622597467836-f3285f2131b8?w=600&h=600&fit=crop&auto=format&q=82",
+  "Vitaminas": "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=600&h=600&fit=crop&auto=format&q=82",
+  "Proteínas": "https://images.unsplash.com/photo-1579722820309-ad7660e21001?w=600&h=600&fit=crop&auto=format&q=82",
+  "Colágeno":  "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?w=600&h=600&fit=crop&auto=format&q=82",
+  "Naturales": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&h=600&fit=crop&auto=format&q=82",
+};
+const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
+
 export default function ProductCard({ product, affiliateCode }: Props) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
@@ -25,20 +34,17 @@ export default function ProductCard({ product, affiliateCode }: Props) {
   return (
     <Link
       to={`/catalogo/${product.id}`}
-      className="group block bg-wo-grafito rounded-wo-card overflow-hidden transition-all hover:shadow-xl active:scale-[0.99]"
-      style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(232,116,26,0.4)")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
+      className="product-card group block bg-wo-grafito rounded-wo-card overflow-hidden"
     >
       {/* Image */}
       <div className="relative h-[160px] sm:h-[180px] bg-wo-carbon overflow-hidden">
         <img
-          src={product.image_url ?? ""}
+          src={product.image_url || CATEGORY_FALLBACK[product.category ?? ""] || IMG_FALLBACK}
           alt={product.name}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src =
-              `https://picsum.photos/seed/${encodeURIComponent(product.name)}/600/400`;
+            (e.currentTarget as HTMLImageElement).src = CATEGORY_FALLBACK[product.category ?? ""] ?? IMG_FALLBACK;
           }}
         />
         {(product.rating ?? 0) >= 4.5 && (
@@ -71,7 +77,7 @@ export default function ProductCard({ product, affiliateCode }: Props) {
         <div className="flex items-center justify-between mt-3 gap-2">
           <button
             onClick={handleAdd}
-            className={`flex-1 font-jakarta font-bold text-xs py-2.5 px-3 rounded-wo-btn transition-colors min-h-[40px] ${
+            className={`btn-bounce flex-1 font-jakarta font-bold text-xs py-2.5 px-3 rounded-wo-btn min-h-[40px] ${
               added ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground hover:bg-wo-oro-dark"
             }`}
           >

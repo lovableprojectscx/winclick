@@ -56,6 +56,48 @@ function statusBadge(status: string) {
   return map[status] ?? "bg-wo-crema/10 text-wo-crema-muted";
 }
 
+interface PaymentRowProps {
+  p: PaymentWithAffiliate;
+  extraCols?: React.ReactNode;
+  onApprove: (p: PaymentWithAffiliate) => void;
+  onReject: (p: PaymentWithAffiliate) => void;
+  isPending: boolean;
+}
+
+const PaymentRow = ({ p, extraCols, onApprove, onReject, isPending }: PaymentRowProps) => (
+  <tr style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
+    <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{p.affiliate?.name ?? "—"}</td>
+    <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{p.affiliate?.affiliate_code ?? "—"}</td>
+    {extraCols}
+    <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {p.amount.toLocaleString()}</td>
+    <td className="px-4 py-3">
+      {p.receipt_url ? (
+        <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
+          <Eye size={11} /> Ver
+        </a>
+      ) : <span className="font-jakarta text-xs text-wo-crema-muted">—</span>}
+    </td>
+    <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(p.created_at).toLocaleDateString("es-PE")}</td>
+    <td className="px-4 py-3">
+      <span className={`font-jakarta text-xs font-bold px-2 py-0.5 rounded-wo-pill ${statusBadge(p.status)}`}>
+        {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+      </span>
+    </td>
+    <td className="px-4 py-3">
+      {p.status === "pendiente" && (
+        <div className="flex gap-1">
+          <button onClick={() => onApprove(p)} disabled={isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-secondary/15 text-wo-crema-muted hover:text-secondary transition-colors">
+            <CheckCircle size={11} /> Aprobar
+          </button>
+          <button onClick={() => onReject(p)} disabled={isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-destructive/15 text-wo-crema-muted hover:text-destructive transition-colors">
+            <XCircle size={11} /> Rechazar
+          </button>
+        </div>
+      )}
+    </td>
+  </tr>
+);
+
 export default function AdminDashboard() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -231,40 +273,6 @@ export default function AdminDashboard() {
     setNewProdName(""); setNewProdPrice(""); setNewProdStock(""); setNewProdDesc(""); setNewProdImg("");
   };
 
-  // Payment approval table row
-  const PaymentRow = ({ p, extraCols }: { p: PaymentWithAffiliate; extraCols?: React.ReactNode }) => (
-    <tr style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
-      <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{p.affiliate?.name ?? "—"}</td>
-      <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{p.affiliate?.affiliate_code ?? "—"}</td>
-      {extraCols}
-      <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {p.amount.toLocaleString()}</td>
-      <td className="px-4 py-3">
-        {p.receipt_url ? (
-          <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
-            <Eye size={11} /> Ver
-          </a>
-        ) : <span className="font-jakarta text-xs text-wo-crema-muted">—</span>}
-      </td>
-      <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(p.created_at).toLocaleDateString("es-PE")}</td>
-      <td className="px-4 py-3">
-        <span className={`font-jakarta text-xs font-bold px-2 py-0.5 rounded-wo-pill ${statusBadge(p.status)}`}>
-          {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
-        </span>
-      </td>
-      <td className="px-4 py-3">
-        {p.status === "pendiente" && (
-          <div className="flex gap-1">
-            <button onClick={() => handleApprove(p)} disabled={approvePayment.isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-secondary/15 text-wo-crema-muted hover:text-secondary transition-colors">
-              <CheckCircle size={11} /> Aprobar
-            </button>
-            <button onClick={() => handleReject(p)} disabled={rejectPayment.isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-destructive/15 text-wo-crema-muted hover:text-destructive transition-colors">
-              <XCircle size={11} /> Rechazar
-            </button>
-          </div>
-        )}
-      </td>
-    </tr>
-  );
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-16">
@@ -763,7 +771,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {activaciones.map((p) => (
-                        <PaymentRow key={p.id} p={p} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3">
                             <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>
                               {p.package_to ?? "—"}
@@ -791,7 +799,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {reactivaciones.map((p) => (
-                        <PaymentRow key={p.id} p={p} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema font-semibold">{p.reactivation_month ?? "—"}</td>
                         } />
                       ))}
@@ -815,7 +823,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {upgrades.map((p) => (
-                        <PaymentRow key={p.id} p={p} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">
                             <span className="text-wo-crema-muted">{p.package_from}</span> → <span className="font-bold text-primary">{p.package_to}</span>
                           </td>
@@ -841,7 +849,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {retiros.map((p) => (
-                        <PaymentRow key={p.id} p={p} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{p.withdrawal_method ?? "—"}</td>
                         } />
                       ))}
@@ -865,7 +873,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {recargas.map((p) => (
-                        <PaymentRow key={p.id} p={p} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-syne font-bold text-sm text-secondary">S/ {p.wallet_credit_amount ?? p.amount}</td>
                         } />
                       ))}
