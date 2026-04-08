@@ -44,7 +44,7 @@ INSERT INTO system_config (key, value, description) VALUES
   ('min_withdrawal',    '20',                          'Monto mínimo de retiro en soles'),
   ('withdrawal_days',   '3',                           'Días hábiles para procesar retiros'),
   ('reactivation_fee',  '300',                         'Costo de reactivación mensual en soles'),
-  ('company_yape',      '"985000000"',                 'Número Yape de la empresa para pagos'),
+  ('company_yape',      '"993516053"',                 'Número Yape de la empresa para pagos'),
   ('company_bcp',       '"191-12345678-0-01"',         'Cuenta BCP de la empresa'),
   ('company_name',      '"Winclick S.A.C."',      'Razón social'),
   ('company_ruc',       '"20XXXXXXXXX"',               'RUC de la empresa'),

@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
 
+const WHATSAPP = "51993516053";
+const EMAIL    = "Winnersmax369@gmail.com";
+
 export default function Footer() {
   return (
     <footer className="bg-wo-grafito" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
@@ -40,6 +43,27 @@ export default function Footer() {
               <Link to="/terminos" className="block font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-1.5 transition-colors">Términos</Link>
               <Link to="/privacidad" className="block font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-1.5 transition-colors">Privacidad</Link>
               <span className="block font-jakarta text-sm text-wo-crema-muted py-1.5">Devoluciones</span>
+            </div>
+          </div>
+
+          {/* Contacto */}
+          <div>
+            <h4 className="font-jakarta font-semibold text-wo-crema text-sm mb-3">Contacto</h4>
+            <div className="space-y-1">
+              <a
+                href={`https://wa.me/${WHATSAPP}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block font-jakarta text-sm text-wo-crema-muted hover:text-[#25D366] py-1.5 transition-colors"
+              >
+                WhatsApp
+              </a>
+              <a
+                href={`mailto:${EMAIL}`}
+                className="block font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-1.5 transition-colors truncate"
+              >
+                {EMAIL}
+              </a>
             </div>
           </div>
         </div>
