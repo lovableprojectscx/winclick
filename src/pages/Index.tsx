@@ -231,17 +231,22 @@ export default function Index() {
       <section ref={refTestimonials} className="reveal bg-background py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="font-jakarta text-[10px] font-bold tracking-[0.16em] uppercase text-primary mb-3">SOCIOS QUE YA GANAN</p>
-          <h2 className="font-syne font-extrabold text-[26px] text-wo-crema mb-10">Historias reales de éxito.</h2>
+          <h2 className="font-syne font-extrabold text-[26px] text-wo-crema mb-8">Historias reales de éxito.</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Mobile: scroll horizontal · Desktop: grid 2 cols */}
+          <div className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible scrollbar-hide">
             {testimonials.map((t, i) => (
-              <div key={i} className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid hsl(var(--wo-oro-muted) / 0.3)" }}>
-                <div className="flex items-center gap-3 mb-4">
+              <div
+                key={i}
+                className="bg-wo-grafito rounded-wo-card p-5 shrink-0 w-[78vw] sm:w-auto"
+                style={{ border: "0.5px solid hsl(var(--wo-oro-muted) / 0.3)" }}
+              >
+                <div className="flex items-center gap-3 mb-3">
                   <img
                     src={`https://ui-avatars.com/api/?name=${t.initials}&background=E8741A&color=fff&size=80&bold=true&font-size=0.38&rounded=true`}
                     alt={t.name}
                     loading="lazy"
-                    className="w-10 h-10 rounded-full"
+                    className="w-10 h-10 rounded-full shrink-0"
                   />
                   <div>
                     <p className="font-jakarta font-semibold text-sm text-wo-crema">{t.name}</p>
@@ -249,13 +254,15 @@ export default function Index() {
                       {t.rank}
                     </span>
                   </div>
+                  <p className="font-syne font-bold text-primary text-sm ml-auto">{t.earning}<span className="font-jakarta font-normal text-[10px] text-wo-crema-muted">/mes</span></p>
                 </div>
-                <span className="text-primary text-3xl font-syne leading-none opacity-30">"</span>
-                <p className="font-jakarta text-sm text-wo-crema-muted leading-relaxed -mt-4 ml-6">{t.text}</p>
-                <p className="font-syne font-bold text-primary mt-4 ml-6">{t.earning} / mes</p>
+                <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">"{t.text}"</p>
               </div>
             ))}
           </div>
+
+          {/* Indicador de scroll solo en mobile */}
+          <p className="font-jakarta text-[11px] text-wo-crema/30 mt-3 sm:hidden">← desliza para ver más →</p>
         </div>
       </section>
 
