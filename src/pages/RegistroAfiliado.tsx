@@ -52,9 +52,10 @@ interface InputFieldProps {
   onChange: (k: string, value: string) => void;
   refValid?: boolean | null;
   refName?: string;
+  sensitive?: boolean;
 }
 
-const InputField = ({ label, k, type = "text", placeholder, maxLength, prefix, icon, value, onChange, refValid, refName }: InputFieldProps) => (
+const InputField = ({ label, k, type = "text", placeholder, maxLength, prefix, icon, value, onChange, refValid, refName, sensitive }: InputFieldProps) => (
   <div>
     <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">{label}</label>
     <div className="relative">
@@ -66,6 +67,7 @@ const InputField = ({ label, k, type = "text", placeholder, maxLength, prefix, i
         onChange={(e) => onChange(k, e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
+        {...(sensitive ? { "data-idenza-ignore": true } : {})}
         className={`w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary ${icon || prefix ? "pl-9" : "px-4"} ${!icon && !prefix ? "px-4" : "pr-4"}`}
         style={{ border: k === "referral" && refValid === true ? "0.5px solid hsl(var(--wo-esmeralda))" : k === "referral" && refValid === false ? "0.5px solid hsl(var(--destructive))" : "0.5px solid rgba(255,255,255,0.1)" }}
       />
@@ -95,14 +97,14 @@ export default function RegistroAfiliado() {
   const [refValid, setRefValid] = useState<boolean | null>(null);
   const [refName, setRefName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [step1Complete, setStep1Complete] = useState(false);
+  const [showInlinePicker, setShowInlinePicker] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageType>(() => {
     const p = searchParams.get("package");
     const found = packages.find((pkg) => pkg.name.toLowerCase() === p?.toLowerCase());
     return found?.name ?? "Intermedio";
   });
   const [receipt, setReceipt] = useState<File | null>(null);
-  const pkgFromUrl = searchParams.get("package");
-  const preselectedPkg = pkgFromUrl ? packages.find((pkg) => pkg.name.toLowerCase() === pkgFromUrl.toLowerCase()) : null;
 
   const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -129,7 +131,21 @@ export default function RegistroAfiliado() {
   const handleStep1 = (e: React.FormEvent) => {
     e.preventDefault();
     if (form.password !== form.password2) return;
+    setStep1Complete(true);
     setStep(2);
+  };
+
+  const handleStep2Continue = () => {
+    if (!step1Complete) {
+      toast({
+        title: "Completa tus datos primero",
+        description: "Debes llenar nombre, DNI, email, contraseña y Yape antes de continuar.",
+        variant: "destructive",
+      });
+      setStep(1);
+      return;
+    }
+    setStep(3);
   };
 
   const handleFinalSubmit = async () => {
@@ -238,22 +254,46 @@ export default function RegistroAfiliado() {
               <form onSubmit={handleStep1} className="space-y-4">
                 <h2 className="font-syne font-extrabold text-[26px] text-wo-crema mb-4">Crea tu cuenta de socio</h2>
 
-                {preselectedPkg && (
-                  <div className="rounded-wo-btn px-4 py-3 flex items-center gap-3 mb-2" style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
-                    <span className="font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.15)", color: "hsl(var(--wo-oro))" }}>
-                      {preselectedPkg.name}
-                    </span>
-                    <p className="font-jakarta text-xs text-wo-crema-muted flex-1">
-                      Paquete seleccionado: <strong className="text-wo-crema">S/ {preselectedPkg.investment.toLocaleString()}</strong> + S/300/mes
-                    </p>
-                    <button type="button" onClick={() => { setStep(2); }} className="font-jakarta text-[11px] text-primary hover:underline shrink-0">
-                      Cambiar →
-                    </button>
+                <div className="rounded-wo-btn px-4 py-3 flex items-center gap-3 mb-2" style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
+                  <span className="font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.15)", color: "hsl(var(--wo-oro))" }}>
+                    {selectedPackage}
+                  </span>
+                  <p className="font-jakarta text-xs text-wo-crema-muted flex-1">
+                    Paquete seleccionado: <strong className="text-wo-crema">S/ {selectedPkg.investment.toLocaleString()}</strong> + S/300/mes
+                  </p>
+                  <button type="button" onClick={() => setShowInlinePicker((v) => !v)} className="font-jakarta text-[11px] text-primary hover:underline shrink-0">
+                    {showInlinePicker ? "Cerrar" : "Cambiar →"}
+                  </button>
+                </div>
+
+                {showInlinePicker && (
+                  <div className="space-y-2 mb-2 p-3 rounded-wo-card" style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
+                    {packages.map((pkg) => {
+                      const isSel = selectedPackage === pkg.name;
+                      return (
+                        <button
+                          key={pkg.name}
+                          type="button"
+                          onClick={() => { setSelectedPackage(pkg.name); setShowInlinePicker(false); }}
+                          className="w-full text-left rounded-wo-btn px-4 py-3 flex items-center justify-between transition-all"
+                          style={{
+                            background: isSel ? "rgba(232,116,26,0.08)" : "rgba(255,255,255,0.02)",
+                            border: isSel ? "1.5px solid hsl(var(--wo-oro))" : "0.5px solid rgba(255,255,255,0.1)",
+                          }}
+                        >
+                          <div>
+                            <span className="font-jakarta font-bold text-sm text-wo-crema">{pkg.name}</span>
+                            <span className="font-jakarta text-[11px] text-wo-crema-muted ml-2">S/ {pkg.investment.toLocaleString()}</span>
+                          </div>
+                          {isSel && <Check size={14} className="text-primary" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
                 <InputField label="Nombre completo" k="name" placeholder="Tu nombre completo" value={form.name} onChange={handleInputChange} />
-                <InputField label="DNI" k="dni" placeholder="12345678" maxLength={8} value={form.dni} onChange={handleInputChange} />
+                <InputField label="DNI" k="dni" placeholder="12345678" maxLength={8} value={form.dni} onChange={handleInputChange} sensitive />
                 <InputField label="Email" k="email" type="email" placeholder="tu@email.com" value={form.email} onChange={handleInputChange} />
 
                 <div>
@@ -273,7 +313,7 @@ export default function RegistroAfiliado() {
                   {form.password2 && form.password !== form.password2 && <p className="font-jakarta text-xs text-destructive mt-1">Las contraseñas no coinciden</p>}
                 </div>
 
-                <InputField label="Número Yape" k="yape" placeholder="987654321" prefix="+51" value={form.yape} onChange={handleInputChange} />
+                <InputField label="Número Yape" k="yape" placeholder="987654321" prefix="+51" value={form.yape} onChange={handleInputChange} sensitive />
                 <InputField label="Código de referido (opcional)" k="referral" placeholder="WIN-XXXXXX" icon={<Gift size={14} />} value={form.referral} onChange={handleInputChange} refValid={refValid} refName={refName} />
 
                 <button type="submit" className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors mt-4">
@@ -340,7 +380,7 @@ export default function RegistroAfiliado() {
                   })}
                 </div>
 
-                <button onClick={() => setStep(3)} className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors">
+                <button onClick={handleStep2Continue} className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors">
                   Continuar con {selectedPackage} → Pagar S/ {selectedPkg.investment.toLocaleString()}
                 </button>
                 <button type="button" onClick={() => setStep(1)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">

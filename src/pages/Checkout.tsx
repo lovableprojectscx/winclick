@@ -249,8 +249,8 @@ export default function Checkout() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { key: "dni",   label: "DNI",     placeholder: "12345678",      maxLength: 8 },
-                  { key: "phone", label: "Teléfono", placeholder: "+51 987654321" },
+                  { key: "dni",   label: "DNI",     placeholder: "12345678",      maxLength: 8, sensitive: true },
+                  { key: "phone", label: "Teléfono", placeholder: "+51 987654321",              sensitive: true },
                 ].map((f) => (
                   <div key={f.key}>
                     <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">{f.label}</label>
@@ -259,6 +259,7 @@ export default function Checkout() {
                       onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
                       placeholder={f.placeholder}
                       maxLength={f.maxLength}
+                      {...(f.sensitive ? { "data-idenza-ignore": true } : {})}
                       className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3.5 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary min-h-[48px]"
                       style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                     />
