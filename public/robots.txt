@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin-dashboard
+Disallow: /area-afiliado
+Disallow: /mi-billetera
+Disallow: /editar-tienda
+Disallow: /reset-password
+
+# Permitir crawl de recursos estáticos
+Allow: /logo-winclick.png
+Allow: /foto-index.webp
+Allow: /icono-winclick.png
+
+Sitemap: https://winclick.pe/sitemap.xml

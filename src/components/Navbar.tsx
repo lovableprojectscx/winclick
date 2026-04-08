@@ -20,16 +20,15 @@ export default function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-wo-obsidiana/90 backdrop-blur-md" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-wo-obsidiana/95 backdrop-blur-md" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-1 font-syne text-lg font-extrabold">
-            <span className="text-wo-crema">Winner</span>
-            <span className="text-primary">Organa</span>
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img src="/logo-winclick.png" alt="Winclick" className="h-8 w-auto" />
           </Link>
 
-          {/* Center links - desktop */}
+          {/* Center links — desktop */}
           <div className="hidden md:flex items-center gap-8">
             {links.map((l) => (
               <Link
@@ -43,38 +42,40 @@ export default function Navbar() {
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* Cart */}
             <button
               onClick={() => setIsOpen(true)}
-              className="relative p-2 text-wo-crema-muted hover:text-wo-crema transition-colors"
+              className="relative p-3 text-wo-crema-muted hover:text-wo-crema transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Abrir carrito"
             >
               <ShoppingCart size={20} />
               {itemCount > 0 && (
-                <span className={`absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ${lastAddedId ? "badge-pop" : ""}`}>
+                <span className={`absolute top-1 right-1 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ${lastAddedId ? "badge-pop" : ""}`}>
                   {itemCount}
                 </span>
               )}
             </button>
 
-            {/* Auth */}
+            {/* Auth — desktop */}
             {user ? (
               <div className="relative hidden md:block">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-jakarta font-bold text-xs flex items-center justify-center"
+                  className="w-9 h-9 rounded-full bg-primary text-primary-foreground font-jakarta font-bold text-xs flex items-center justify-center"
                 >
                   {user.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
                 </button>
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-wo-grafito rounded-wo-card py-2" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                    <Link to="/mi-billetera" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon font-jakarta">
+                  <div className="absolute right-0 mt-2 w-48 bg-wo-grafito rounded-wo-card py-1 shadow-xl" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
+                    <Link to="/mi-billetera" onClick={() => setDropdownOpen(false)} className="block px-4 py-3 text-sm text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon font-jakarta transition-colors">
                       Mi Billetera
                     </Link>
-                    <Link to={user.role === "admin" ? "/admin-dashboard" : "/area-afiliado"} onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon font-jakarta">
+                    <Link to={user.role === "admin" ? "/admin-dashboard" : "/area-afiliado"} onClick={() => setDropdownOpen(false)} className="block px-4 py-3 text-sm text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon font-jakarta transition-colors">
                       {user.role === "admin" ? "Panel Admin" : "Área de Socio"}
                     </Link>
-                    <button onClick={() => { logout(); setDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-wo-crema-muted hover:text-destructive hover:bg-wo-carbon font-jakarta">
+                    <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }} />
+                    <button onClick={() => { logout(); setDropdownOpen(false); }} className="block w-full text-left px-4 py-3 text-sm text-wo-crema-muted hover:text-destructive hover:bg-wo-carbon font-jakarta transition-colors">
                       Cerrar Sesión
                     </button>
                   </div>
@@ -83,15 +84,19 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/registro-afiliado"
-                className="hidden md:flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-lg hover:bg-wo-oro-dark transition-colors"
+                className="hidden md:flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2.5 rounded-lg hover:bg-wo-oro-dark transition-colors"
               >
                 <Star size={12} /> Únete
               </Link>
             )}
 
-            {/* Mobile hamburger */}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-wo-crema">
-              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {/* Hamburger */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-3 text-wo-crema min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
@@ -100,28 +105,49 @@ export default function Navbar() {
       {/* Mobile panel */}
       {mobileOpen && (
         <div className="md:hidden bg-wo-grafito" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
-          <div className="px-4 py-4 space-y-3">
+          <div className="px-4 py-3 space-y-1">
             {links.map((l) => (
-              <Link key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="block font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2">
+              <Link
+                key={l.to}
+                to={l.to}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center font-jakarta text-[15px] py-3.5 px-2 rounded-lg transition-colors ${isActive(l.to) ? "text-wo-crema bg-wo-carbon" : "text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon/50"}`}
+              >
                 {l.label}
               </Link>
             ))}
+
+            <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)", margin: "8px 0" }} />
+
             {user ? (
               <>
-                <Link to={user.role === "admin" ? "/admin-dashboard" : "/area-afiliado"} onClick={() => setMobileOpen(false)} className="block font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2">
+                <Link to={user.role === "admin" ? "/admin-dashboard" : "/area-afiliado"} onClick={() => setMobileOpen(false)} className="flex items-center font-jakarta text-[15px] text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon/50 py-3.5 px-2 rounded-lg transition-colors">
                   {user.role === "admin" ? "Panel Admin" : "Área de Socio"}
                 </Link>
-                <Link to="/mi-billetera" onClick={() => setMobileOpen(false)} className="block font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2">
+                <Link to="/mi-billetera" onClick={() => setMobileOpen(false)} className="flex items-center font-jakarta text-[15px] text-wo-crema-muted hover:text-wo-crema hover:bg-wo-carbon/50 py-3.5 px-2 rounded-lg transition-colors">
                   Mi Billetera
                 </Link>
-                <button onClick={() => { logout(); setMobileOpen(false); }} className="block font-jakarta text-sm text-destructive py-2">
+                <button onClick={() => { logout(); setMobileOpen(false); }} className="flex items-center w-full font-jakarta text-[15px] text-destructive py-3.5 px-2 rounded-lg hover:bg-wo-carbon/50 transition-colors">
                   Cerrar Sesión
                 </button>
               </>
             ) : (
-              <Link to="/registro-afiliado" onClick={() => setMobileOpen(false)} className="block bg-primary text-primary-foreground font-jakarta font-bold text-sm text-center py-3 rounded-wo-btn">
-                ★ Únete
-              </Link>
+              <div className="py-2">
+                <Link
+                  to="/registro-afiliado"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn"
+                >
+                  <Star size={14} /> Únete gratis
+                </Link>
+                <Link
+                  to="/login-afiliado"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center font-jakarta text-sm text-wo-crema-muted py-3 mt-1"
+                >
+                  Ya tengo cuenta →
+                </Link>
+              </div>
             )}
           </div>
         </div>

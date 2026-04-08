@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import { Star, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { useState } from "react";
 import { commissionLevels, packages } from "@/data/affiliates";
 
 const faqs = [
   { q: "¿Cuánto cuesta registrarse?", a: "Puedes empezar con el paquete Básico desde S/ 100. Recibes productos desde el primer día." },
-  { q: "¿Cómo recibo mis comisiones?", a: "Las comisiones se acreditan en tu Billetera Winner y puedes retirarlas vía Yape, Plin o transferencia bancaria." },
+  { q: "¿Cómo recibo mis comisiones?", a: "Las comisiones se acreditan en tu Billetera Winclick y puedes retirarlas vía Yape, Plin o transferencia bancaria." },
   { q: "¿Qué pasa después del primer mes?", a: "A partir del mes 2 necesitas reactivarte con S/ 300 mensuales (3 frascos) para mantener tus niveles activos." },
   { q: "¿Cuántos niveles de comisión hay?", a: "Hay 10 niveles de comisión. La profundidad que desbloqueas depende de tu paquete de activación." },
   { q: "¿Puedo tener mi propia tienda online?", a: "Sí. Cada socio tiene una tienda personalizable con su propio link, branding y productos destacados." },
@@ -13,12 +14,17 @@ const faqs = [
 
 export default function ProgramaAfiliados() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  useSEO({
+    title: "Programa de Afiliados Winclick Perú | Gana hasta 25% de Comisiones",
+    description: "Únete al programa de afiliados Winclick. Gana hasta 25% de comisiones en 10 niveles de red vendiendo productos orgánicos y premium desde casa en Perú.",
+    canonical: "https://winclick.pe/programa-afiliados",
+  });
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
       {/* Hero */}
       <section className="py-20 relative overflow-hidden">
-        <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(242,201,76,0.1) 0%, transparent 70%)" }} />
+        <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.1) 0%, transparent 70%)" }} />
         <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
           <h1 className="font-syne font-extrabold text-[36px] md:text-[42px] text-wo-crema leading-tight mb-4">
             Sé tu propio jefe.<br /><span className="text-primary">Gana con tu red.</span>
@@ -53,8 +59,8 @@ export default function ProgramaAfiliados() {
                   key={pkg.name}
                   className={`relative rounded-2xl p-6 flex flex-col ${isVip ? "ring-2 ring-primary" : ""}`}
                   style={{
-                    background: isVip ? "linear-gradient(180deg, rgba(242,201,76,0.08) 0%, rgba(10,11,9,0.95) 100%)" : "rgba(30,33,26,0.6)",
-                    border: isVip ? "1px solid rgba(242,201,76,0.3)" : "0.5px solid rgba(255,255,255,0.07)",
+                    background: isVip ? "linear-gradient(180deg, rgba(232,116,26,0.08) 0%, rgba(10,11,9,0.95) 100%)" : "rgba(10,18,40,0.6)",
+                    border: isVip ? "1px solid rgba(232,116,26,0.3)" : "0.5px solid rgba(255,255,255,0.07)",
                   }}
                 >
                   {isVip && (
@@ -133,7 +139,7 @@ export default function ProgramaAfiliados() {
                       className="h-10 rounded-md flex items-center justify-between px-3 transition-all group-hover:scale-[1.02]"
                       style={{
                         width: `${width}%`,
-                        background: `rgba(242,201,76,${opacity})`,
+                        background: `rgba(232,116,26,${opacity})`,
                       }}
                     >
                       <span className="font-jakarta font-bold text-sm text-primary-foreground">{cl.percentage}%</span>
@@ -194,7 +200,7 @@ export default function ProgramaAfiliados() {
       {/* CTA */}
       <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(242,201,76,0.08) 0%, transparent 60%)" }} />
+          <div className="w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.08) 0%, transparent 60%)" }} />
         </div>
         <div className="max-w-lg mx-auto px-4 text-center relative z-10">
           <h2 className="font-syne font-extrabold text-[32px] text-wo-crema mb-4">Empieza hoy.</h2>

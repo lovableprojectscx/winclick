@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Datos semilla (seed)
+-- WINCLICK — Datos semilla (seed)
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 04_seed.sql
 -- Ejecutar después de 03_rls.sql
@@ -46,7 +46,7 @@ INSERT INTO system_config (key, value, description) VALUES
   ('reactivation_fee',  '300',                         'Costo de reactivación mensual en soles'),
   ('company_yape',      '"985000000"',                 'Número Yape de la empresa para pagos'),
   ('company_bcp',       '"191-12345678-0-01"',         'Cuenta BCP de la empresa'),
-  ('company_name',      '"Winner Organa S.A.C."',      'Razón social'),
+  ('company_name',      '"Winclick S.A.C."',      'Razón social'),
   ('company_ruc',       '"20XXXXXXXXX"',               'RUC de la empresa'),
   ('commission_active', 'true',                        'Flag global para habilitar/deshabilitar comisiones');
 

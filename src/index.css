@@ -13,11 +13,11 @@
     --popover: 80 8% 8%;
     --popover-foreground: 38 33% 95%;
 
-    --primary: 45 87% 62%;
-    --primary-foreground: 70 6% 4%;
+    --primary: 26 82% 51%;          /* Winclick orange — acción / CTA */
+    --primary-foreground: 0 0% 100%; /* blanco sobre naranja */
 
-    --secondary: 145 63% 49%;
-    --secondary-foreground: 70 6% 4%;
+    --secondary: 188 74% 48%;        /* Winclick cyan — confianza / info */
+    --secondary-foreground: 214 50% 10%;
 
     --muted: 75 10% 11%;
     --muted-foreground: 38 33% 75%;
@@ -30,30 +30,38 @@
 
     --border: 0 0% 100% / 0.07;
     --input: 0 0% 100% / 0.1;
-    --ring: 45 87% 62%;
+    --ring: 26 82% 51%;
 
     --radius: 0.625rem;
 
     --sidebar-background: 80 8% 8%;
     --sidebar-foreground: 38 33% 95%;
-    --sidebar-primary: 45 87% 62%;
-    --sidebar-primary-foreground: 70 6% 4%;
+    --sidebar-primary: 26 82% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 75 10% 11%;
     --sidebar-accent-foreground: 38 33% 95%;
     --sidebar-border: 0 0% 100% / 0.07;
-    --sidebar-ring: 45 87% 62%;
+    --sidebar-ring: 26 82% 51%;
 
-    /* Winner Organa custom tokens */
-    --wo-obsidiana: 70 6% 4%;
-    --wo-grafito: 80 8% 8%;
-    --wo-carbon: 75 10% 11%;
-    --wo-oro: 45 87% 62%;
-    --wo-oro-dark: 40 67% 55%;
-    --wo-oro-muted: 37 56% 43%;
-    --wo-esmeralda: 145 63% 49%;
-    --wo-esmeralda-dark: 150 68% 39%;
-    --wo-crema: 38 33% 95%;
-    --wo-crema-muted: 38 33% 75%;
+    /* Winclick custom tokens */
+    --wo-obsidiana: 214 30% 5%;      /* fondo profundo azul-noche */
+    --wo-grafito: 214 25% 9%;        /* cards — azul muy oscuro */
+    --wo-carbon: 214 20% 13%;        /* muted bg */
+    --wo-oro: 26 82% 51%;            /* naranja Winclick (acción) */
+    --wo-oro-dark: 20 75% 43%;       /* naranja oscuro */
+    --wo-oro-muted: 18 55% 36%;      /* naranja apagado */
+    --wo-esmeralda: 188 74% 48%;     /* cyan Winclick (info/confianza) */
+    --wo-esmeralda-dark: 207 71% 39%; /* azul medio */
+    --wo-crema: 210 20% 96%;         /* texto claro — ligeramente azulado */
+    --wo-crema-muted: 214 15% 68%;   /* texto muted — gris azulado */
+
+    /* Paleta extendida Winclick */
+    --wc-azul-dark: 214 64% 29%;     /* azul marino profundo (isotipo) */
+    --wc-azul: 207 71% 39%;          /* azul medio */
+    --wc-cyan: 188 74% 48%;          /* cyan (= secondary) */
+    --wc-naranja: 26 82% 51%;        /* naranja (= primary) */
+    --wc-ambar: 42 91% 51%;          /* ámbar / punta de flecha */
+    --wc-gris: 215 10% 56%;          /* gris eslogan */
   }
 
   .dark {
@@ -90,7 +98,7 @@
   100% { background-position: 200% 0; }
 }
 .skeleton-shimmer {
-  background: linear-gradient(90deg, hsl(75 10% 11%) 25%, hsl(80 8% 14%) 50%, hsl(75 10% 11%) 75%);
+  background: linear-gradient(90deg, hsl(214 20% 13%) 25%, hsl(214 25% 16%) 50%, hsl(214 20% 13%) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }

@@ -18,7 +18,7 @@ export default function Privacidad() {
           {[
             {
               title: "1. Responsable del tratamiento",
-              body: "Winner Organa S.A.C. (RUC: 20XXXXXXXXX), con domicilio en Lima, Perú, es el responsable del tratamiento de los datos personales recopilados a través de esta plataforma.",
+              body: "Winclick S.A.C. (RUC: 20XXXXXXXXX), con domicilio en Lima, Perú, es el responsable del tratamiento de los datos personales recopilados a través de esta plataforma.",
             },
             {
               title: "2. Datos que recopilamos",
@@ -38,7 +38,7 @@ export default function Privacidad() {
             },
             {
               title: "6. Derechos del titular",
-              body: "Tienes derecho a acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales. Para ejercer estos derechos, envía una solicitud a privacidad@winnerorgana.com con tu nombre, código de afiliado y el derecho que deseas ejercer.",
+              body: "Tienes derecho a acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales. Para ejercer estos derechos, envía una solicitud a privacidad@winclick.com con tu nombre, código de afiliado y el derecho que deseas ejercer.",
             },
             {
               title: "7. Conservación de datos",
@@ -63,9 +63,9 @@ export default function Privacidad() {
             </div>
           ))}
 
-          <div className="rounded-wo-card p-5 mt-10" style={{ background: "rgba(242,201,76,0.04)", border: "0.5px solid rgba(242,201,76,0.15)" }}>
+          <div className="rounded-wo-card p-5 mt-10" style={{ background: "rgba(232,116,26,0.04)", border: "0.5px solid rgba(232,116,26,0.15)" }}>
             <p className="font-jakarta text-xs text-wo-crema-muted">
-              Consultas sobre privacidad: <span className="text-primary">privacidad@winnerorgana.com</span> · Winner Organa S.A.C. · Lima, Perú
+              Consultas sobre privacidad: <span className="text-primary">privacidad@winclick.com</span> · Winclick S.A.C. · Lima, Perú
             </p>
           </div>
         </div>

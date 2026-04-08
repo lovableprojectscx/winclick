@@ -115,7 +115,7 @@ export default function AreaAfiliado() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="font-jakarta font-semibold text-base text-wo-crema">Hola, {affiliate.name.split(" ")[0]} 👋</span>
-              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(242,201,76,0.25)" }}>
+              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.25)" }}>
                 {affiliate.package}
               </span>
             </div>
@@ -145,7 +145,7 @@ export default function AreaAfiliado() {
       {/* Banner: cuenta en revisión */}
       {isPending && (
         <div className="px-4 sm:px-6 lg:px-8 pt-4 max-w-7xl mx-auto">
-          <div className="rounded-wo-card p-4 flex items-start gap-3" style={{ background: "rgba(242,201,76,0.08)", border: "1px solid rgba(242,201,76,0.35)" }}>
+          <div className="rounded-wo-card p-4 flex items-start gap-3" style={{ background: "rgba(232,116,26,0.08)", border: "1px solid rgba(232,116,26,0.35)" }}>
             <Clock size={18} className="text-primary shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-jakarta font-bold text-sm text-primary">Tu pago está en revisión</p>
@@ -206,7 +206,7 @@ export default function AreaAfiliado() {
 
         {/* Pending: instrucciones de activación */}
         {isPending && (
-          <div className="rounded-wo-card p-6" style={{ background: "rgba(242,201,76,0.04)", border: "0.5px solid rgba(242,201,76,0.2)" }}>
+          <div className="rounded-wo-card p-6" style={{ background: "rgba(232,116,26,0.04)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
             <h3 className="font-jakarta font-bold text-sm text-wo-crema mb-3">Pasos para activar tu cuenta</h3>
             <div className="space-y-3">
               {[
@@ -241,14 +241,14 @@ export default function AreaAfiliado() {
                   <button
                     onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/tienda/${affiliate.affiliate_code}`); setCopiedUrl(true); setTimeout(() => setCopiedUrl(false), 2000); }}
                     className="shrink-0 font-jakarta font-bold text-[10px] px-2.5 py-1 rounded-wo-pill transition-colors"
-                    style={{ background: copiedUrl ? "rgba(46,204,113,0.15)" : "rgba(242,201,76,0.1)", color: copiedUrl ? "rgb(46,204,113)" : "hsl(var(--wo-oro))", border: "0.5px solid rgba(242,201,76,0.25)" }}
+                    style={{ background: copiedUrl ? "rgba(30,192,213,0.15)" : "rgba(232,116,26,0.1)", color: copiedUrl ? "rgb(30,192,213)" : "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.25)" }}
                   >
                     {copiedUrl ? "✓ Copiado" : "Copiar"}
                   </button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <a
-                    href={`https://wa.me/?text=${encodeURIComponent(`Visita mi tienda Winner Organa: ${window.location.origin}/tienda/${affiliate.affiliate_code}`)}`}
+                    href={`https://wa.me/?text=${encodeURIComponent(`Visita mi tienda Winclick: ${window.location.origin}/tienda/${affiliate.affiliate_code}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 font-jakarta font-bold text-xs px-3 py-2 rounded-wo-btn transition-colors hover:brightness-110"
@@ -321,7 +321,7 @@ export default function AreaAfiliado() {
               <button
                 onClick={() => setShowUpgradeModal(true)}
                 className="mt-4 w-full flex items-center justify-center gap-2 font-jakarta font-bold text-xs py-2.5 rounded-wo-btn transition-colors hover:bg-primary hover:text-primary-foreground"
-                style={{ border: "0.5px solid rgba(242,201,76,0.35)", color: "hsl(var(--wo-oro))" }}
+                style={{ border: "0.5px solid rgba(232,116,26,0.35)", color: "hsl(var(--wo-oro))" }}
               >
                 <ArrowUpCircle size={13} /> Mejorar a {nextPackage.name}
               </button>
@@ -334,7 +334,7 @@ export default function AreaAfiliado() {
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-syne font-bold text-lg text-wo-crema">Misiones activas</h3>
             {!isSuspended && (
-              <span className="font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill bg-primary/12 text-primary" style={{ border: "0.5px solid rgba(242,201,76,0.25)" }}>
+              <span className="font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill bg-primary/12 text-primary" style={{ border: "0.5px solid rgba(232,116,26,0.25)" }}>
                 {missions.length}
               </span>
             )}
@@ -357,7 +357,7 @@ export default function AreaAfiliado() {
                     <span className="text-lg">{m.icon}</span>
                     <span className="font-jakarta font-semibold text-sm text-wo-crema">{m.name}</span>
                   </div>
-                  <span className="font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(242,201,76,0.25)" }}>
+                  <span className="font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.25)" }}>
                     +{m.points} pts
                   </span>
                 </div>
@@ -416,7 +416,7 @@ export default function AreaAfiliado() {
                         </td>
                         <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{ref.affiliate_code}</td>
                         <td className="px-4 py-3">
-                          <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))" }}>
+                          <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>
                             {ref.package ?? "—"}
                           </span>
                         </td>
@@ -562,14 +562,14 @@ export default function AreaAfiliado() {
                 <p className="font-jakarta font-bold text-sm text-wo-crema">{currentPackage.name}</p>
                 <p className="font-jakarta text-[11px] text-wo-crema-muted">Niveles 1–{currentPackage.depthUnlocked}</p>
               </div>
-              <div className="rounded-wo-btn p-3 text-center" style={{ background: "rgba(242,201,76,0.08)", border: "0.5px solid rgba(242,201,76,0.3)" }}>
+              <div className="rounded-wo-btn p-3 text-center" style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.3)" }}>
                 <p className="font-jakarta text-[10px] text-primary uppercase mb-1">Nuevo</p>
                 <p className="font-jakarta font-bold text-sm text-wo-crema">{nextPackage.name}</p>
                 <p className="font-jakarta text-[11px] text-secondary">Niveles 1–{nextPackage.depthUnlocked}</p>
               </div>
             </div>
 
-            <div className="rounded-wo-btn p-4 mb-5 flex items-center justify-between" style={{ background: "rgba(242,201,76,0.05)", border: "0.5px solid rgba(242,201,76,0.2)" }}>
+            <div className="rounded-wo-btn p-4 mb-5 flex items-center justify-between" style={{ background: "rgba(232,116,26,0.05)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
               <div>
                 <p className="font-jakarta text-[11px] text-wo-crema-muted">Diferencia a pagar</p>
                 <p className="font-syne font-extrabold text-2xl text-primary">S/ {(nextPackage.investment - currentPackage.investment).toLocaleString()}</p>
@@ -598,7 +598,7 @@ export default function AreaAfiliado() {
               <p className="font-jakarta text-[11px] text-wo-crema-muted mb-2 font-semibold uppercase">Comprobante de pago</p>
               <label className="block cursor-pointer">
                 <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setUpgradeReceipt(e.target.files?.[0] ?? null)} />
-                <div className="rounded-wo-card p-4 flex items-center gap-3 transition-all" style={{ border: upgradeReceipt ? "1px dashed hsl(var(--wo-esmeralda))" : "1px dashed rgba(255,255,255,0.15)", background: upgradeReceipt ? "rgba(46,204,113,0.04)" : "transparent" }}>
+                <div className="rounded-wo-card p-4 flex items-center gap-3 transition-all" style={{ border: upgradeReceipt ? "1px dashed hsl(var(--wo-esmeralda))" : "1px dashed rgba(255,255,255,0.15)", background: upgradeReceipt ? "rgba(30,192,213,0.04)" : "transparent" }}>
                   {upgradeReceipt ? <Check size={16} className="text-secondary" /> : <Upload size={16} className="text-wo-crema-muted" />}
                   <p className="font-jakarta text-xs text-wo-crema-muted">{upgradeReceipt ? upgradeReceipt.name : "Subir comprobante (JPG · PNG · PDF)"}</p>
                 </div>

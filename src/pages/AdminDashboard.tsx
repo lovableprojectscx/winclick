@@ -488,7 +488,7 @@ export default function AdminDashboard() {
                       <div className="flex-1 min-w-0">
                         <p className="font-jakarta font-semibold text-sm text-wo-crema truncate">{a.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))" }}>{a.package}</span>
+                          <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>{a.package}</span>
                           <span className={`font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill ${
                             a.account_status === "active"    ? "bg-secondary/12 text-secondary" :
                             a.account_status === "suspended" ? "bg-destructive/12 text-destructive" :
@@ -765,7 +765,7 @@ export default function AdminDashboard() {
                       {activaciones.map((p) => (
                         <PaymentRow key={p.id} p={p} extraCols={
                           <td className="px-4 py-3">
-                            <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))" }}>
+                            <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>
                               {p.package_to ?? "—"}
                             </span>
                           </td>
@@ -923,7 +923,7 @@ export default function AdminDashboard() {
                       <tr key={m.id} style={rowBorder}>
                         <td className="px-4 py-3 font-jakarta text-sm text-wo-crema">{m.name}</td>
                         <td className="px-4 py-3"><span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill bg-wo-crema/10 text-wo-crema-muted">{m.type}</span></td>
-                        <td className="px-4 py-3"><span className="font-jakarta text-xs font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))" }}>+{m.points} pts</span></td>
+                        <td className="px-4 py-3"><span className="font-jakarta text-xs font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>+{m.points} pts</span></td>
                         <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{m.completedBy} afiliados</td>
                         <td className="px-4 py-3"><span className={`font-jakarta text-xs font-bold ${m.active ? "text-secondary" : "text-wo-crema-muted"}`}>{m.active ? "● Activa" : "● Inactiva"}</span></td>
                         <td className="px-4 py-3"><div className="flex gap-1"><button className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"><Edit2 size={12} /></button></div></td>

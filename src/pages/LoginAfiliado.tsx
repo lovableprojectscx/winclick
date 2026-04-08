@@ -17,7 +17,6 @@ export default function LoginAfiliado() {
   const [loading,        setLoading]        = useState(false);
   const [pendingNav,     setPendingNav]     = useState(false);
 
-  // Navegar cuando el rol cargue después del login
   useEffect(() => {
     if (pendingNav && !authLoading && role !== null) {
       setPendingNav(false);
@@ -30,16 +29,9 @@ export default function LoginAfiliado() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     const { error: loginError } = await login(email, password);
     setLoading(false);
-
-    if (loginError) {
-      setError("Email o contraseña incorrectos.");
-      return;
-    }
-
-    // Esperar a que AuthContext cargue el rol, luego navegar
+    if (loginError) { setError("Email o contraseña incorrectos."); return; }
     setPendingNav(true);
   };
 
@@ -54,32 +46,38 @@ export default function LoginAfiliado() {
   return (
     <div className="min-h-screen bg-background pt-16">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-64px)]">
-        {/* Left */}
+        {/* Left panel — solo desktop */}
         <div className="hidden lg:flex flex-col justify-center p-12 relative overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(var(--wo-obsidiana)), hsl(var(--wo-grafito)))" }}>
-          <div className="absolute top-20 right-20 w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(242,201,76,0.12) 0%, transparent 70%)" }} />
+          <div className="absolute top-20 right-20 w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.12) 0%, transparent 70%)" }} />
           <div className="relative z-10">
             <h2 className="font-syne font-extrabold text-[36px] text-wo-crema leading-tight mb-6">
               Bienvenido de vuelta<br />a <span className="text-primary">tu negocio.</span>
             </h2>
             <p className="font-jakarta text-sm text-wo-crema-muted mb-8">Tu red sigue creciendo mientras no estás.</p>
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-wo-pill" style={{ background: "rgba(46,204,113,0.12)", border: "0.5px solid rgba(46,204,113,0.25)" }}>
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-wo-pill" style={{ background: "rgba(30,192,213,0.12)", border: "0.5px solid rgba(30,192,213,0.25)" }}>
               <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
               <span className="font-jakarta text-xs text-secondary font-medium">+2,400 socios activos ahora</span>
             </span>
           </div>
         </div>
 
-        {/* Right - Form */}
-        <div className="flex items-center justify-center p-8 lg:p-12 bg-wo-grafito">
-          <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
-            <h2 className="font-syne font-bold text-[24px] text-wo-crema mb-2">Iniciar sesión</h2>
+        {/* Right — Form */}
+        <div className="flex items-center justify-center px-5 py-10 sm:p-8 lg:p-12 bg-wo-grafito">
+          <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+            {/* Mobile logo */}
+            <div className="lg:hidden text-center mb-6">
+              <img src="/logo-winclick.png" alt="Winclick" className="h-10 w-auto mx-auto mb-2" />
+            </div>
+
+            <h2 className="font-syne font-bold text-[24px] text-wo-crema mb-1">Iniciar sesión</h2>
+            <p className="font-jakarta text-sm text-wo-crema-muted mb-2">Accede a tu área de socio</p>
 
             <div>
               <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">Email</label>
               <input
                 type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                 placeholder="tu@email.com"
-                className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3.5 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary min-h-[48px]"
                 style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
               />
             </div>
@@ -90,25 +88,30 @@ export default function LoginAfiliado() {
                 <input
                   type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
                   placeholder="Tu contraseña"
-                  className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3.5 pr-12 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary min-h-[48px]"
                   style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-wo-crema-muted">
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-0 top-0 h-full px-4 text-wo-crema-muted hover:text-wo-crema transition-colors"
+                  aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <button type="button" onClick={() => setShowRecovery(!showRecovery)} className="block font-jakarta text-xs text-primary hover:underline mt-2 ml-auto">
+              <button type="button" onClick={() => setShowRecovery(!showRecovery)} className="block font-jakarta text-xs text-primary hover:underline mt-2 ml-auto py-1">
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
 
             {error && (
-              <p className="font-jakarta text-xs text-destructive px-1">{error}</p>
+              <p className="font-jakarta text-sm text-destructive bg-destructive/10 px-3 py-2.5 rounded-lg">{error}</p>
             )}
 
             <button
               type="submit" disabled={loading}
-              className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-3.5 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-60"
+              className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-60 min-h-[52px]"
             >
               {loading ? "Ingresando..." : "Iniciar sesión →"}
             </button>
@@ -118,30 +121,31 @@ export default function LoginAfiliado() {
               <div className="bg-wo-carbon rounded-wo-btn p-4 space-y-3" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
                 {!recoverySent ? (
                   <>
+                    <p className="font-jakarta text-xs text-wo-crema-muted">Ingresa tu email para recibir el enlace de recuperación</p>
                     <input
                       type="email" value={recoveryEmail} onChange={(e) => setRecoveryEmail(e.target.value)}
-                      placeholder="Tu email"
-                      className="w-full bg-wo-grafito font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-2.5 rounded-wo-btn outline-none"
+                      placeholder="tu@email.com"
+                      className="w-full bg-wo-grafito font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none min-h-[44px]"
                       style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                     />
                     <button
                       type="button" onClick={handleRecovery}
-                      className="w-full font-jakarta font-bold text-xs text-wo-crema/80 py-2.5 rounded-wo-btn hover:text-wo-crema"
+                      className="w-full font-jakarta font-bold text-sm text-wo-crema/80 py-3 rounded-wo-btn hover:text-wo-crema min-h-[44px]"
                       style={{ border: "0.5px solid rgba(248,244,236,0.2)" }}
                     >
                       Enviar enlace
                     </button>
                   </>
                 ) : (
-                  <div className="flex items-center gap-2 text-secondary">
-                    <Check size={14} />
+                  <div className="flex items-center gap-2 text-secondary py-1">
+                    <Check size={16} />
                     <span className="font-jakarta text-sm">Enlace enviado a tu correo</span>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 py-1">
               <div className="flex-1 h-px bg-wo-crema/10" />
               <span className="font-jakarta text-xs text-wo-crema-muted">o</span>
               <div className="flex-1 h-px bg-wo-crema/10" />

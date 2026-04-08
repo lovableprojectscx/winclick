@@ -39,7 +39,7 @@ export default function AdminLogin() {
 
         <div className="bg-wo-grafito rounded-wo-card p-8" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
           <h1 className="font-syne font-extrabold text-[24px] text-wo-crema mb-1">Panel de administración</h1>
-          <p className="font-jakarta text-xs text-wo-crema-muted mb-8">Winner Organa · Acceso interno</p>
+          <p className="font-jakarta text-xs text-wo-crema-muted mb-8">Winclick · Acceso interno</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

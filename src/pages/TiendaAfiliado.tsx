@@ -59,7 +59,7 @@ export default function TiendaAfiliado() {
             </div>
             <div>
               <p className="font-jakarta font-semibold text-sm text-wo-crema">{store.store_name}</p>
-              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))" }}>
+              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>
                 {codigo.toUpperCase()}
               </span>
             </div>
@@ -76,7 +76,7 @@ export default function TiendaAfiliado() {
           )}
         </div>
 
-        <p className="font-jakarta text-[11px] text-wo-crema-muted mb-6">Powered by Winner Organa</p>
+        <p className="font-jakarta text-[11px] text-wo-crema-muted mb-6">Powered by Winclick</p>
 
         {/* Products */}
         {products.length > 0 ? (
@@ -93,7 +93,7 @@ export default function TiendaAfiliado() {
       {/* Store footer */}
       <div className="bg-wo-grafito py-8 text-center" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
         <p className="font-jakarta text-xs text-wo-crema-muted">
-          Tienda oficial — Afiliado Winner Organa
+          Tienda oficial — Afiliado Winclick
         </p>
         <Link to="/registro-afiliado" className="inline-block font-jakarta text-xs text-primary hover:underline mt-2">
           ¿Quieres tu propia tienda? → Regístrate gratis

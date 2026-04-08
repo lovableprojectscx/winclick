@@ -13,20 +13,20 @@ export default function Checkout() {
   const { data: walletData }     = useWallet();
   const placeOrder               = usePlaceOrder();
 
-  const [paymentMethod,   setPaymentMethod]   = useState<"wallet" | "cash">("cash");
-  const [receipt,         setReceipt]         = useState<File | null>(null);
-  const [receiptUrl,      setReceiptUrl]      = useState<string | null>(null);
-  const [refCode,         setRefCode]         = useState(affiliateCode || "");
-  const [refValid,        setRefValid]        = useState<boolean | null>(affiliateCode ? true : null);
-  const [refName,         setRefName]         = useState("");
-  const [processing,      setProcessing]      = useState(false);
-  const [checkoutError,   setCheckoutError]   = useState<string | null>(null);
-  const [success,         setSuccess]         = useState(false);
-  const [orderNumber,     setOrderNumber]     = useState("");
-  const [confirmedItems,  setConfirmedItems]  = useState<typeof items>([]);
-  const [confirmedTotal,  setConfirmedTotal]  = useState(0);
-  const [confirmedPayment,setConfirmedPayment]= useState<"wallet" | "cash">("cash");
-  const [formData,        setFormData]        = useState({ dni: "", phone: "", address: "", city: "" });
+  const [paymentMethod,    setPaymentMethod]    = useState<"wallet" | "cash">("cash");
+  const [receipt,          setReceipt]          = useState<File | null>(null);
+  const [receiptUrl,       setReceiptUrl]       = useState<string | null>(null);
+  const [refCode,          setRefCode]          = useState(affiliateCode || "");
+  const [refValid,         setRefValid]         = useState<boolean | null>(affiliateCode ? true : null);
+  const [refName,          setRefName]          = useState("");
+  const [processing,       setProcessing]       = useState(false);
+  const [checkoutError,    setCheckoutError]    = useState<string | null>(null);
+  const [success,          setSuccess]          = useState(false);
+  const [orderNumber,      setOrderNumber]      = useState("");
+  const [confirmedItems,   setConfirmedItems]   = useState<typeof items>([]);
+  const [confirmedTotal,   setConfirmedTotal]   = useState(0);
+  const [confirmedPayment, setConfirmedPayment] = useState<"wallet" | "cash">("cash");
+  const [formData,         setFormData]         = useState({ dni: "", phone: "", address: "", city: "" });
 
   const walletBalance = walletData?.balance ?? 0;
 
@@ -48,7 +48,6 @@ export default function Checkout() {
     setProcessing(true);
     setCheckoutError(null);
     try {
-      // Upload receipt to storage if cash payment
       let receiptStorageUrl: string | undefined;
       if (paymentMethod === "cash" && receipt && session) {
         const ext  = receipt.name.split(".").pop();
@@ -57,7 +56,6 @@ export default function Checkout() {
         const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(path);
         receiptStorageUrl = publicUrl;
       }
-
       const order = await placeOrder.mutateAsync({
         customerName:    affiliate?.name ?? formData.dni,
         customerEmail:   affiliate?.email ?? session?.user?.email ?? "",
@@ -74,7 +72,6 @@ export default function Checkout() {
         })),
         affiliateCode: refCode || affiliateCode || undefined,
       });
-
       setConfirmedItems([...items]);
       setConfirmedTotal(total);
       setConfirmedPayment(paymentMethod);
@@ -91,10 +88,10 @@ export default function Checkout() {
 
   if (items.length === 0 && !success) {
     return (
-      <div className="min-h-screen bg-background pt-24 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background pt-20 flex flex-col items-center justify-center gap-4 px-4">
         <ShoppingCart size={48} className="text-wo-crema-muted opacity-30" />
-        <h2 className="font-syne font-bold text-[22px] text-wo-crema">Tu carrito está vacío</h2>
-        <Link to="/catalogo" className="bg-primary text-primary-foreground font-jakarta font-bold text-sm px-6 py-3 rounded-wo-btn">
+        <h2 className="font-syne font-bold text-[22px] text-wo-crema text-center">Tu carrito está vacío</h2>
+        <Link to="/catalogo" className="bg-primary text-primary-foreground font-jakarta font-bold text-sm px-8 py-3.5 rounded-wo-btn min-h-[48px] flex items-center">
           Ir al catálogo
         </Link>
       </div>
@@ -103,10 +100,10 @@ export default function Checkout() {
 
   if (!affiliate && !session) {
     return (
-      <div className="min-h-screen bg-background pt-24 flex items-center justify-center">
-        <div className="bg-wo-grafito rounded-wo-card p-8 max-w-sm text-center" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center px-4">
+        <div className="bg-wo-grafito rounded-wo-card p-6 sm:p-8 w-full max-w-sm text-center" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
           <h2 className="font-syne font-bold text-lg text-wo-crema mb-4">Inicia sesión para continuar</h2>
-          <Link to="/login-afiliado" className="block bg-primary text-primary-foreground font-jakarta font-bold text-sm py-3 rounded-wo-btn mb-3">
+          <Link to="/login-afiliado" className="block bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn mb-3 min-h-[52px] flex items-center justify-center">
             Iniciar sesión
           </Link>
           <Link to="/registro-afiliado" className="font-jakarta text-sm text-primary hover:underline">Registrarse</Link>
@@ -117,17 +114,17 @@ export default function Checkout() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background pt-24 pb-16">
+      <div className="min-h-screen bg-background pt-20 pb-16">
         <div className="max-w-lg mx-auto px-4">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-secondary/15 flex items-center justify-center mx-auto mb-4" style={{ border: "1px solid rgba(46,204,113,0.3)" }}>
+            <div className="w-16 h-16 rounded-full bg-secondary/15 flex items-center justify-center mx-auto mb-4" style={{ border: "1px solid rgba(30,192,213,0.3)" }}>
               <Check size={28} className="text-secondary" />
             </div>
             <h2 className="font-syne font-extrabold text-[26px] text-wo-crema">¡Pedido confirmado!</h2>
             <p className="font-jakarta text-sm text-wo-crema-muted mt-1">Nos pondremos en contacto contigo cuando sea enviado.</p>
           </div>
 
-          <div className="rounded-wo-card p-4 text-center mb-6" style={{ background: "rgba(242,201,76,0.06)", border: "0.5px solid rgba(242,201,76,0.25)" }}>
+          <div className="rounded-wo-card p-5 text-center mb-4" style={{ background: "rgba(232,116,26,0.06)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
             <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1">Número de pedido</p>
             <p className="font-syne font-extrabold text-3xl text-primary">{orderNumber}</p>
             <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1">Guarda este número para seguimiento</p>
@@ -137,9 +134,9 @@ export default function Checkout() {
             <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-3">Productos</p>
             <div className="space-y-2 mb-3">
               {confirmedItems.map((item) => (
-                <div key={item.product.id} className="flex justify-between items-center">
+                <div key={item.product.id} className="flex justify-between items-center gap-2">
                   <span className="font-jakarta text-xs text-wo-crema">{item.product.name} × {item.quantity}</span>
-                  <span className="font-jakarta text-xs text-primary font-semibold">S/ {(item.product.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-jakarta text-xs text-primary font-semibold shrink-0">S/ {(item.product.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -150,16 +147,16 @@ export default function Checkout() {
           </div>
 
           <div className="bg-wo-grafito rounded-wo-card p-5 mb-6" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1.5">Método de pago</p>
                 <p className="font-jakarta text-sm text-wo-crema">
-                  {confirmedPayment === "wallet" ? "💳 Billetera Winner" : "💵 Dinero Real"}
+                  {confirmedPayment === "wallet" ? "💳 Billetera Winclick" : "💵 Dinero Real"}
                 </p>
               </div>
               {formData.address && (
                 <div>
-                  <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1.5">Dirección de envío</p>
+                  <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1.5">Dirección</p>
                   <p className="font-jakarta text-sm text-wo-crema">{formData.address}</p>
                   {formData.city && <p className="font-jakarta text-xs text-wo-crema-muted">{formData.city}</p>}
                 </div>
@@ -168,13 +165,11 @@ export default function Checkout() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <p className="font-jakarta text-[11px] text-wo-crema/40 text-center">
-              📦 Te contactaremos cuando tu pedido sea enviado
-            </p>
-            <Link to="/catalogo" className="block text-center bg-primary text-primary-foreground font-jakarta font-bold text-sm py-3 rounded-wo-btn hover:bg-wo-oro-dark transition-colors">
+            <p className="font-jakarta text-[11px] text-wo-crema/40 text-center">📦 Te contactaremos cuando tu pedido sea enviado</p>
+            <Link to="/catalogo" className="block text-center bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors min-h-[52px] flex items-center justify-center">
               Seguir comprando
             </Link>
-            <Link to="/area-afiliado" className="block text-center font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2">
+            <Link to="/area-afiliado" className="block text-center font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-3">
               Ir a mi dashboard →
             </Link>
           </div>
@@ -184,29 +179,29 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="font-syne font-extrabold text-[28px] text-wo-crema mb-8">Checkout</h1>
+    <div className="min-h-screen bg-background pt-20 pb-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <h1 className="font-syne font-extrabold text-[26px] sm:text-[28px] text-wo-crema mb-6">Checkout</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Form */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-5">
             {/* Payment method */}
             <div>
               <h3 className="font-jakarta font-semibold text-sm text-wo-crema mb-3">Método de pago</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { value: "wallet" as const, icon: "💳", label: "Billetera Winner", sub: `Saldo: S/ ${walletBalance.toFixed(2)}` },
-                  { value: "cash"   as const, icon: "💵", label: "Dinero Real",       sub: "Yape / Plin / Banco" },
+                  { value: "wallet" as const, icon: "💳", label: "Billetera Winclick", sub: `Saldo: S/ ${walletBalance.toFixed(2)}` },
+                  { value: "cash"   as const, icon: "💵", label: "Dinero Real",        sub: "Yape / Plin / Banco" },
                 ].map((m) => (
                   <button
                     key={m.value}
                     onClick={() => setPaymentMethod(m.value)}
-                    className={`text-left p-4 rounded-wo-btn transition-all ${paymentMethod === m.value ? "bg-primary/5" : "bg-wo-carbon"}`}
-                    style={{ border: paymentMethod === m.value ? "0.5px solid rgba(242,201,76,0.5)" : "0.5px solid rgba(255,255,255,0.07)" }}
+                    className={`text-left p-4 rounded-wo-btn transition-all min-h-[80px] ${paymentMethod === m.value ? "bg-primary/5" : "bg-wo-carbon"}`}
+                    style={{ border: paymentMethod === m.value ? "0.5px solid rgba(232,116,26,0.5)" : "0.5px solid rgba(255,255,255,0.07)" }}
                   >
-                    <span className="text-lg">{m.icon}</span>
-                    <p className="font-jakarta font-semibold text-sm text-wo-crema mt-1">{m.label}</p>
+                    <span className="text-xl">{m.icon}</span>
+                    <p className="font-jakarta font-semibold text-sm text-wo-crema mt-1.5">{m.label}</p>
                     <p className="font-jakarta text-xs text-wo-crema-muted">{m.sub}</p>
                   </button>
                 ))}
@@ -214,7 +209,7 @@ export default function Checkout() {
             </div>
 
             {paymentMethod === "wallet" ? (
-              <div className="rounded-wo-btn p-3.5" style={{ background: "rgba(46,204,113,0.08)", border: "0.5px solid rgba(46,204,113,0.3)" }}>
+              <div className="rounded-wo-btn p-4" style={{ background: "rgba(30,192,213,0.08)", border: "0.5px solid rgba(30,192,213,0.3)" }}>
                 <p className="font-jakarta text-sm text-secondary flex items-center gap-2">
                   <Check size={14} /> Se descontarán S/ {total.toFixed(2)} de tu billetera
                 </p>
@@ -223,27 +218,24 @@ export default function Checkout() {
               <div>
                 <h3 className="font-jakarta font-semibold text-sm text-wo-crema mb-3">Comprobante de pago</h3>
                 {!receipt ? (
-                  <label className="block bg-wo-carbon rounded-wo-btn p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors" style={{ border: "1px dashed rgba(255,255,255,0.15)" }}>
-                    <Upload size={24} className="mx-auto text-wo-crema-muted mb-2" />
-                    <p className="font-jakarta text-sm text-wo-crema-muted">Sube tu comprobante de pago</p>
-                    <p className="font-jakarta text-[11px] text-wo-crema/30 mt-1">JPG, PNG o PDF</p>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*,.pdf"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) { setReceipt(f); setReceiptUrl(URL.createObjectURL(f)); }
-                      }}
-                    />
+                  <label className="block bg-wo-carbon rounded-wo-btn p-6 sm:p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors" style={{ border: "1px dashed rgba(255,255,255,0.15)" }}>
+                    <Upload size={24} className="mx-auto text-wo-crema-muted mb-3" />
+                    <p className="font-jakarta text-sm text-wo-crema-muted">Sube tu comprobante</p>
+                    <p className="font-jakarta text-xs text-wo-crema/30 mt-1">JPG, PNG o PDF</p>
+                    <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) { setReceipt(f); setReceiptUrl(URL.createObjectURL(f)); }
+                    }} />
                   </label>
                 ) : (
-                  <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                    {receiptUrl && <img src={receiptUrl} alt="Comprobante" className="w-20 h-20 rounded-lg object-cover" />}
-                    <div className="flex-1">
-                      <p className="font-jakarta text-sm text-wo-crema">{receipt.name}</p>
+                  <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3.5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+                    {receiptUrl && <img src={receiptUrl} alt="Comprobante" className="w-16 h-16 rounded-lg object-cover shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-jakarta text-sm text-wo-crema truncate">{receipt.name}</p>
                     </div>
-                    <button onClick={() => { setReceipt(null); setReceiptUrl(null); }} className="text-destructive"><X size={14} /></button>
+                    <button onClick={() => { setReceipt(null); setReceiptUrl(null); }} className="w-9 h-9 flex items-center justify-center text-destructive shrink-0">
+                      <X size={15} />
+                    </button>
                   </div>
                 )}
               </div>
@@ -255,9 +247,25 @@ export default function Checkout() {
               <div className="bg-wo-carbon rounded-wo-btn py-3 px-4 opacity-60" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
                 <p className="font-jakarta text-sm text-wo-crema">{affiliate?.email ?? session?.user?.email}</p>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { key: "dni",   label: "DNI",     placeholder: "12345678",      maxLength: 8 },
+                  { key: "phone", label: "Teléfono", placeholder: "+51 987654321" },
+                ].map((f) => (
+                  <div key={f.key}>
+                    <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">{f.label}</label>
+                    <input
+                      value={formData[f.key as keyof typeof formData]}
+                      onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
+                      placeholder={f.placeholder}
+                      maxLength={f.maxLength}
+                      className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3.5 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary min-h-[48px]"
+                      style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                    />
+                  </div>
+                ))}
+              </div>
               {[
-                { key: "dni",     label: "DNI",              placeholder: "12345678",      maxLength: 8 },
-                { key: "phone",   label: "Teléfono",          placeholder: "+51 987654321" },
                 { key: "address", label: "Dirección",         placeholder: "Av. Lima 123" },
                 { key: "city",    label: "Ciudad / Distrito", placeholder: "Miraflores, Lima" },
               ].map((f) => (
@@ -267,8 +275,7 @@ export default function Checkout() {
                     value={formData[f.key as keyof typeof formData]}
                     onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
                     placeholder={f.placeholder}
-                    maxLength={f.maxLength}
-                    className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3.5 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary min-h-[48px]"
                     style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                   />
                 </div>
@@ -278,56 +285,54 @@ export default function Checkout() {
               <div>
                 <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">Código de afiliado (opcional)</label>
                 <div className="relative">
-                  <Gift size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-wo-crema-muted" />
+                  <Gift size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-wo-crema-muted pointer-events-none" />
                   <input
                     value={refCode}
                     onChange={(e) => validateRef(e.target.value)}
                     placeholder="WIN-XXXXXX"
-                    className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 pl-9 pr-4 py-3 rounded-wo-btn outline-none"
+                    className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 pl-10 pr-4 py-3.5 rounded-wo-btn outline-none min-h-[48px]"
                     style={{ border: refValid === true ? "0.5px solid hsl(var(--wo-esmeralda))" : refValid === false ? "0.5px solid hsl(var(--destructive))" : "0.5px solid rgba(255,255,255,0.1)" }}
                   />
                 </div>
-                {refValid === true  && <p className="font-jakarta text-xs text-secondary mt-1">✓ Código válido — Referido por: {refName}</p>}
-                {refValid === false && <p className="font-jakarta text-xs text-destructive mt-1">✗ Código no encontrado</p>}
+                {refValid === true  && <p className="font-jakarta text-xs text-secondary mt-1.5">✓ Código válido — Referido por: {refName}</p>}
+                {refValid === false && <p className="font-jakarta text-xs text-destructive mt-1.5">✗ Código no encontrado</p>}
               </div>
             </div>
 
-            {/* Error message */}
             {checkoutError && (
-              <div className="rounded-wo-btn p-3.5" style={{ background: "rgba(231,76,60,0.08)", border: "0.5px solid rgba(231,76,60,0.3)" }}>
+              <div className="rounded-wo-btn p-4" style={{ background: "rgba(231,76,60,0.08)", border: "0.5px solid rgba(231,76,60,0.3)" }}>
                 <p className="font-jakarta text-sm text-destructive">{checkoutError}</p>
               </div>
             )}
 
-            {/* Submit */}
             <button
               onClick={handleSubmit}
               disabled={processing || (paymentMethod === "cash" && !receipt)}
-              className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+              className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-35 disabled:cursor-not-allowed min-h-[52px]"
             >
               {processing ? "Procesando..." : paymentMethod === "wallet" ? `Pagar S/ ${total.toFixed(2)} con Billetera` : `Confirmar Pedido (S/ ${total.toFixed(2)})`}
             </button>
           </div>
 
           {/* Summary */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-first lg:order-last">
             <div className="bg-wo-grafito rounded-wo-card p-5 lg:sticky lg:top-24" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-              <h3 className="font-jakarta font-semibold text-sm text-wo-crema-muted uppercase tracking-[0.1em] mb-4">Resumen del pedido</h3>
+              <h3 className="font-jakarta font-semibold text-sm text-wo-crema-muted uppercase tracking-[0.1em] mb-4">Resumen</h3>
               <div className="space-y-3 mb-4">
                 {items.map((item) => (
-                  <div key={item.product.id} className="flex justify-between">
+                  <div key={item.product.id} className="flex justify-between gap-2">
                     <span className="font-jakarta text-sm text-wo-crema-muted">{item.product.name} × {item.quantity}</span>
-                    <span className="font-jakarta text-sm text-primary">S/ {(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-jakarta text-sm text-primary shrink-0">S/ {(item.product.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
-              <div className="pt-4 flex justify-between" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
+              <div className="pt-4 flex justify-between items-center" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
                 <span className="font-jakarta text-sm text-wo-crema">Total</span>
                 <span className="font-syne font-extrabold text-[22px] text-primary">S/ {total.toFixed(2)}</span>
               </div>
               {paymentMethod === "wallet" && (
                 <div className="mt-3">
-                  <span className={`text-xs font-jakarta font-bold px-2 py-0.5 rounded-wo-pill ${walletBalance >= total ? "bg-secondary/12 text-secondary" : "bg-destructive/12 text-destructive"}`} style={{ border: walletBalance >= total ? "0.5px solid rgba(46,204,113,0.25)" : "0.5px solid rgba(231,76,60,0.25)" }}>
+                  <span className={`text-xs font-jakarta font-bold px-2 py-1 rounded-wo-pill inline-block ${walletBalance >= total ? "bg-secondary/12 text-secondary" : "bg-destructive/12 text-destructive"}`} style={{ border: walletBalance >= total ? "0.5px solid rgba(30,192,213,0.25)" : "0.5px solid rgba(231,76,60,0.25)" }}>
                     {walletBalance >= total ? "Saldo suficiente" : "Saldo insuficiente"}
                   </span>
                 </div>

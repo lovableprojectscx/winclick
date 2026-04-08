@@ -18,11 +18,11 @@ export default function Terminos() {
           {[
             {
               title: "1. Aceptación de los términos",
-              body: "Al registrarte como socio afiliado de Winner Organa, aceptas quedar vinculado por estos Términos y Condiciones. Si no estás de acuerdo con alguna parte de estos términos, no podrás participar en el programa de afiliados.",
+              body: "Al registrarte como socio afiliado de Winclick, aceptas quedar vinculado por estos Términos y Condiciones. Si no estás de acuerdo con alguna parte de estos términos, no podrás participar en el programa de afiliados.",
             },
             {
               title: "2. Descripción del programa",
-              body: "Winner Organa opera un programa de afiliados de marketing multinivel (MLM) que permite a sus socios ganar comisiones por ventas directas y por las ventas generadas por su red de afiliados referidos, hasta los niveles desbloqueados por su paquete de activación.",
+              body: "Winclick opera un programa de afiliados de marketing multinivel (MLM) que permite a sus socios ganar comisiones por ventas directas y por las ventas generadas por su red de afiliados referidos, hasta los niveles desbloqueados por su paquete de activación.",
             },
             {
               title: "3. Paquetes de activación",
@@ -38,7 +38,7 @@ export default function Terminos() {
             },
             {
               title: "6. Retiros",
-              body: "Los afiliados pueden solicitar retiros de su saldo de billetera en cualquier momento. Los retiros mínimos son de S/ 20. El procesamiento puede tomar hasta 3 días hábiles. Winner Organa se reserva el derecho de verificar la legitimidad de las comisiones antes de aprobar retiros.",
+              body: "Los afiliados pueden solicitar retiros de su saldo de billetera en cualquier momento. Los retiros mínimos son de S/ 20. El procesamiento puede tomar hasta 3 días hábiles. Winclick se reserva el derecho de verificar la legitimidad de las comisiones antes de aprobar retiros.",
             },
             {
               title: "7. Prohibiciones",
@@ -46,11 +46,11 @@ export default function Terminos() {
             },
             {
               title: "8. Limitación de responsabilidad",
-              body: "Winner Organa no garantiza ingresos mínimos. Los resultados dependen del esfuerzo individual de cada afiliado. La empresa no es responsable por las declaraciones o promesas realizadas por afiliados a sus referidos.",
+              body: "Winclick no garantiza ingresos mínimos. Los resultados dependen del esfuerzo individual de cada afiliado. La empresa no es responsable por las declaraciones o promesas realizadas por afiliados a sus referidos.",
             },
             {
               title: "9. Modificaciones",
-              body: "Winner Organa se reserva el derecho de modificar estos términos en cualquier momento. Las modificaciones entran en vigencia a los 30 días de su publicación en la plataforma. El uso continuado del servicio implica la aceptación de los nuevos términos.",
+              body: "Winclick se reserva el derecho de modificar estos términos en cualquier momento. Las modificaciones entran en vigencia a los 30 días de su publicación en la plataforma. El uso continuado del servicio implica la aceptación de los nuevos términos.",
             },
             {
               title: "10. Ley aplicable",
@@ -63,9 +63,9 @@ export default function Terminos() {
             </div>
           ))}
 
-          <div className="rounded-wo-card p-5 mt-10" style={{ background: "rgba(242,201,76,0.04)", border: "0.5px solid rgba(242,201,76,0.15)" }}>
+          <div className="rounded-wo-card p-5 mt-10" style={{ background: "rgba(232,116,26,0.04)", border: "0.5px solid rgba(232,116,26,0.15)" }}>
             <p className="font-jakarta text-xs text-wo-crema-muted">
-              Para consultas sobre estos términos, contáctanos en <span className="text-primary">legal@winnerorgana.com</span> · Winner Organa S.A.C. · RUC: 20XXXXXXXXX · Lima, Perú
+              Para consultas sobre estos términos, contáctanos en <span className="text-primary">legal@winclick.com</span> · Winclick S.A.C. · RUC: 20XXXXXXXXX · Lima, Perú
             </p>
           </div>
         </div>

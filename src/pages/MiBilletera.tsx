@@ -120,7 +120,7 @@ export default function MiBilletera() {
 
         {/* KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(242,201,76,0.15)", background: "rgba(242,201,76,0.03)" }}>
+          <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(232,116,26,0.15)", background: "rgba(232,116,26,0.03)" }}>
             <p className="font-jakarta text-xs text-wo-crema-muted uppercase mb-1">Saldo actual</p>
             <p className="font-syne font-extrabold text-[36px] text-primary">
               {loadingWallet ? "..." : `S/ ${balance.toFixed(2)}`}
@@ -178,7 +178,7 @@ export default function MiBilletera() {
                       key={amount}
                       onClick={() => setRecargarAmount(amount)}
                       className={`rounded-wo-btn p-4 text-center transition-colors ${recargarAmount === amount ? "bg-primary/10" : "bg-wo-carbon hover:bg-wo-grafito"}`}
-                      style={{ border: recargarAmount === amount ? "0.5px solid rgba(242,201,76,0.5)" : "0.5px solid rgba(255,255,255,0.07)" }}
+                      style={{ border: recargarAmount === amount ? "0.5px solid rgba(232,116,26,0.5)" : "0.5px solid rgba(255,255,255,0.07)" }}
                     >
                       <p className="font-syne font-extrabold text-xl text-primary">S/ {amount}</p>
                       {amount >= 200 && <p className="font-jakarta text-[10px] text-secondary mt-1">+{amount >= 500 ? "10" : "5"}% bonus</p>}
@@ -188,7 +188,7 @@ export default function MiBilletera() {
                 <p className="font-jakarta text-xs text-wo-crema-muted mb-3">Realiza tu pago por Yape/Plin al:</p>
                 <div className="bg-wo-carbon rounded-wo-btn p-4 text-center mb-4" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
                   <p className="font-syne font-bold text-lg text-primary">{settings?.yape_number ?? "—"}</p>
-                  <p className="font-jakarta text-xs text-wo-crema-muted">{settings?.business_name ?? "Winner Organa"}</p>
+                  <p className="font-jakarta text-xs text-wo-crema-muted">{settings?.business_name ?? "Winclick"}</p>
                 </div>
                 <label className="block bg-wo-carbon rounded-wo-btn p-6 text-center cursor-pointer" style={{ border: recargarReceipt ? "1px dashed hsl(var(--wo-esmeralda))" : "1px dashed rgba(255,255,255,0.15)" }}>
                   {recargarReceipt ? (
@@ -217,8 +217,8 @@ export default function MiBilletera() {
         {activeTab === "reactivacion" && (
           <div className="space-y-4 mb-8">
             <div className="rounded-wo-card p-5" style={{
-              background: affiliate.account_status === "active" ? "rgba(46,204,113,0.05)" : affiliate.account_status === "suspended" ? "rgba(239,68,68,0.06)" : "rgba(242,201,76,0.06)",
-              border: affiliate.account_status === "active" ? "0.5px solid rgba(46,204,113,0.25)" : affiliate.account_status === "suspended" ? "0.5px solid rgba(239,68,68,0.3)" : "0.5px solid rgba(242,201,76,0.25)",
+              background: affiliate.account_status === "active" ? "rgba(30,192,213,0.05)" : affiliate.account_status === "suspended" ? "rgba(239,68,68,0.06)" : "rgba(232,116,26,0.06)",
+              border: affiliate.account_status === "active" ? "0.5px solid rgba(30,192,213,0.25)" : affiliate.account_status === "suspended" ? "0.5px solid rgba(239,68,68,0.3)" : "0.5px solid rgba(232,116,26,0.25)",
             }}>
               <div className="flex items-center gap-3">
                 {affiliate.account_status === "active"
@@ -244,7 +244,7 @@ export default function MiBilletera() {
             </div>
 
             {submitted === "reactivacion" ? (
-              <div className="bg-wo-grafito rounded-wo-card p-6 flex items-center gap-3 justify-center" style={{ border: "0.5px solid rgba(46,204,113,0.3)" }}>
+              <div className="bg-wo-grafito rounded-wo-card p-6 flex items-center gap-3 justify-center" style={{ border: "0.5px solid rgba(30,192,213,0.3)" }}>
                 <Check size={18} className="text-secondary" />
                 <span className="font-jakarta text-sm text-secondary font-semibold">Comprobante enviado — el admin revisará y activará tu cuenta en menos de 24h.</span>
               </div>
@@ -255,13 +255,13 @@ export default function MiBilletera() {
                   <h3 className="font-jakarta font-semibold text-sm text-wo-crema">Pagar reactivación mensual</h3>
                 </div>
 
-                <div className="rounded-wo-card p-4 mb-5 flex items-center justify-between" style={{ background: "rgba(242,201,76,0.06)", border: "0.5px solid rgba(242,201,76,0.2)" }}>
+                <div className="rounded-wo-card p-4 mb-5 flex items-center justify-between" style={{ background: "rgba(232,116,26,0.06)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
                   <div>
                     <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold">Monto de reactivación</p>
                     <p className="font-syne font-extrabold text-3xl text-primary mt-0.5">S/ 300</p>
                     <p className="font-jakarta text-[11px] text-wo-crema-muted">Monto fijo mensual — todos los paquetes</p>
                   </div>
-                  <span className="font-jakarta font-bold text-[10px] px-2 py-1 rounded-wo-pill" style={{ background: "rgba(242,201,76,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(242,201,76,0.3)" }}>
+                  <span className="font-jakarta font-bold text-[10px] px-2 py-1 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.3)" }}>
                     {affiliate.package}
                   </span>
                 </div>
@@ -302,7 +302,7 @@ export default function MiBilletera() {
                       className="rounded-wo-card p-5 flex flex-col items-center gap-2 transition-all"
                       style={{
                         border: reactivacionReceipt ? "1px dashed hsl(var(--wo-esmeralda))" : "1px dashed rgba(255,255,255,0.15)",
-                        background: reactivacionReceipt ? "rgba(46,204,113,0.04)" : "rgba(255,255,255,0.01)",
+                        background: reactivacionReceipt ? "rgba(30,192,213,0.04)" : "rgba(255,255,255,0.01)",
                       }}
                     >
                       {reactivacionReceipt ? (
