@@ -144,7 +144,7 @@ export function useMyNetwork() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("referrals")
-        .select("level, referred:referred_id(id, name, affiliate_code, package, account_status, total_sales, rank, created_at)")
+        .select("level, referred:referred_id(id, name, affiliate_code, package, account_status, total_sales, created_at)")
         .eq("referrer_id", affiliate!.id)
         .order("level");
       if (error) throw error;
