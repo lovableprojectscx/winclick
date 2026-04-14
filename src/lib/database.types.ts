@@ -1009,7 +1009,6 @@ export type Database = {
           next_reactivation_due: string | null
           package: string | null
           phone: string | null
-          rank: string
           referral_count: number | null
           referred_by: string | null
           shipping_address: string | null
@@ -1019,8 +1018,6 @@ export type Database = {
           total_sales: number | null
           updated_at: string | null
           user_id: string | null
-          uv_amount_month: number
-          uv_month_year: string
           yape_number: string | null
         }
         SetofOptions: {
