@@ -179,7 +179,6 @@ export type Database = {
           next_reactivation_due: string | null
           package: string | null
           phone: string | null
-          rank: string
           referral_count: number | null
           referred_by: string | null
           shipping_address: string | null
@@ -189,8 +188,6 @@ export type Database = {
           total_sales: number | null
           updated_at: string | null
           user_id: string | null
-          uv_amount_month: number
-          uv_month_year: string
           yape_number: string | null
         }
         Insert: {
@@ -208,7 +205,6 @@ export type Database = {
           next_reactivation_due?: string | null
           package?: string | null
           phone?: string | null
-          rank?: string
           referral_count?: number | null
           referred_by?: string | null
           shipping_address?: string | null
@@ -218,8 +214,6 @@ export type Database = {
           total_sales?: number | null
           updated_at?: string | null
           user_id?: string | null
-          uv_amount_month?: number
-          uv_month_year?: string
           yape_number?: string | null
         }
         Update: {
@@ -237,7 +231,6 @@ export type Database = {
           next_reactivation_due?: string | null
           package?: string | null
           phone?: string | null
-          rank?: string
           referral_count?: number | null
           referred_by?: string | null
           shipping_address?: string | null
@@ -247,8 +240,6 @@ export type Database = {
           total_sales?: number | null
           updated_at?: string | null
           user_id?: string | null
-          uv_amount_month?: number
-          uv_month_year?: string
           yape_number?: string | null
         }
         Relationships: [
@@ -964,51 +955,6 @@ export type Database = {
         }
         Relationships: []
       }
-      volume_units: {
-        Row: {
-          affiliate_id: string
-          amount: number
-          created_at: string
-          id: string
-          month_year: string
-          order_id: string | null
-          source: string
-        }
-        Insert: {
-          affiliate_id: string
-          amount?: number
-          created_at?: string
-          id?: string
-          month_year: string
-          order_id?: string | null
-          source: string
-        }
-        Update: {
-          affiliate_id?: string
-          amount?: number
-          created_at?: string
-          id?: string
-          month_year?: string
-          order_id?: string | null
-          source?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "volume_units_affiliate_id_fkey"
-            columns: ["affiliate_id"]
-            isOneToOne: false
-            referencedRelation: "affiliates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "volume_units_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -1017,10 +963,6 @@ export type Database = {
       approve_affiliate_payment: {
         Args: { p_admin_id: string; p_payment_id: string }
         Returns: Json
-      }
-      calculate_affiliate_rank: {
-        Args: { p_affiliate_id: string }
-        Returns: string
       }
       create_order_commissions: {
         Args: {

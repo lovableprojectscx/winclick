@@ -1,22 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Copy, Check, LogOut, ExternalLink, TrendingUp, DollarSign, Users, ShoppingBag, AlertTriangle, Clock, Lock, ArrowUpCircle, X, MessageCircle } from "lucide-react";
+import { Copy, Check, LogOut, ExternalLink, DollarSign, Users, ShoppingBag, AlertTriangle, Clock, Lock, ArrowUpCircle, X, MessageCircle, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PackageType } from "@/lib/database.types";
 import { useAffiliateStats, useMyCommissions, useMyNetwork, useMyPayments, useSubmitPayment, useWallet, useUpdateProfile, useProfile, useBusinessSettings } from "@/hooks/useAffiliate";
+import { useMyOrders } from "@/hooks/useOrders";
 
 const PACKAGES: { name: PackageType; depthUnlocked: number; investment: number }[] = [
   { name: "Básico",      depthUnlocked: 3,  investment: 100 },
   { name: "Intermedio",  depthUnlocked: 7,  investment: 2000 },
   { name: "VIP",         depthUnlocked: 10, investment: 10000 },
-];
-
-const uvRanks = [
-  { name: "Socio Activo",  minUV: 0,    maxUV: 499,  minDirectos: 0,  emoji: "🌱" },
-  { name: "Emprendedor",   minUV: 500,  maxUV: 999,  minDirectos: 3,  emoji: "🚀" },
-  { name: "Líder Plata",   minUV: 1000, maxUV: 2499, minDirectos: 5,  emoji: "🥈" },
-  { name: "Líder Oro",     minUV: 2500, maxUV: 4999, minDirectos: 8,  emoji: "🥇" },
-  { name: "Rango Élite",   minUV: 5000, maxUV: Infinity, minDirectos: 12, emoji: "👑" },
 ];
 
 const missions = [
@@ -41,13 +34,14 @@ export default function AreaAfiliado() {
   const [profileYape,      setProfileYape]      = useState("");
   const [updatingProfile,  setUpdatingProfile]  = useState(false);
   const [saveSuccess,      setSaveSuccess]      = useState(false);
-  const [activeTab,        setActiveTab]        = useState<"inicio" | "mi-red" | "comisiones" | "pagos">("inicio");
+  const [activeTab,        setActiveTab]        = useState<"inicio" | "mi-red" | "comisiones" | "pagos" | "pedidos">("inicio");
 
   const submitPayment  = useSubmitPayment();
   const updateProfile  = useUpdateProfile();
 
   const { data: settings }         = useBusinessSettings();
   const { data: affiliateStats }   = useAffiliateStats();
+  const { data: myOrders = [] }    = useMyOrders();
   const { data: liveProfile }      = useProfile();
   const { data: commissions = [] } = useMyCommissions();
   const { data: network = [] }     = useMyNetwork();
@@ -60,19 +54,9 @@ export default function AreaAfiliado() {
   const currentPackage    = PACKAGES[Math.max(0, currentPackageIdx)];
   const nextPackage       = PACKAGES[currentPackageIdx + 1];
 
-  const uvAmount      = affiliateStats?.uv_amount_month  ?? affiliate.uv_amount_month  ?? 0;
-  const activeDirectos= affiliateStats?.active_directos  ?? affiliate.active_directos  ?? 0;
-  const totalSales    = affiliateStats?.total_sales       ?? affiliate.total_sales       ?? 0;
+  const totalSales = affiliateStats?.total_sales       ?? affiliate.total_sales       ?? 0;
   const totalComm     = affiliateStats?.total_commissions ?? affiliate.total_commissions ?? 0;
   const walletBalance = walletData?.balance ?? 0;
-
-  const currentRankIdx = uvRanks.reduce((best, rank, i) =>
-    uvAmount >= rank.minUV && activeDirectos >= rank.minDirectos ? i : best, 0);
-  const currentRank = uvRanks[currentRankIdx];
-  const nextRank    = uvRanks[currentRankIdx + 1];
-  const rankProgress = nextRank
-    ? Math.min(100, Math.round(((uvAmount - currentRank.minUV) / (nextRank.minUV - currentRank.minUV)) * 100))
-    : 100;
 
   const isPending   = affiliate.account_status === "pending";
   const isSuspended = affiliate.account_status === "suspended";
@@ -177,10 +161,11 @@ export default function AreaAfiliado() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex overflow-x-auto">
             {([
-              { id: "inicio",     label: "Inicio",     icon: "🏠" },
-              { id: "mi-red",     label: "Mi Red",     icon: "👥" },
-              { id: "comisiones", label: "Comisiones", icon: "💰" },
-              { id: "pagos",      label: "Pagos",      icon: "📋" },
+              { id: "inicio",     label: "Inicio",      icon: "🏠" },
+              { id: "pedidos",    label: "Mis Pedidos", icon: "📦" },
+              { id: "mi-red",     label: "Mi Red",      icon: "👥" },
+              { id: "comisiones", label: "Comisiones",  icon: "💰" },
+              { id: "pagos",      label: "Pagos",       icon: "📋" },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
@@ -204,10 +189,9 @@ export default function AreaAfiliado() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "VENTAS TOTALES",      value: `S/ ${totalSales.toLocaleString()}`,   change: "",    up: true, color: "text-primary",    icon: <ShoppingBag size={16} /> },
-            { label: "COMISIONES GANADAS",  value: `S/ ${totalComm.toLocaleString()}`,    change: "",    up: true, color: "text-primary",    icon: <DollarSign size={16} /> },
-            { label: "UV DEL MES",          value: uvAmount.toLocaleString(),              change: "",    up: true, color: "text-secondary",  icon: <TrendingUp size={16} /> },
-            { label: "REFERIDOS DIRECTOS",  value: String(affiliate.referral_count ?? 0), change: "",    up: true, color: "text-wo-crema",   icon: <Users size={16} /> },
+            { label: "VENTAS TOTALES",      value: `S/ ${totalSales.toLocaleString()}`,   change: "",    up: true, color: "text-primary",   icon: <ShoppingBag size={16} /> },
+            { label: "COMISIONES GANADAS",  value: `S/ ${totalComm.toLocaleString()}`,    change: "",    up: true, color: "text-primary",   icon: <DollarSign size={16} /> },
+            { label: "REFERIDOS DIRECTOS",  value: String(affiliate.referral_count ?? 0), change: "",    up: true, color: "text-wo-crema",  icon: <Users size={16} /> },
           ].map((kpi, i) => (
             <div key={i} className="bg-wo-grafito rounded-wo-card p-5 relative overflow-hidden" style={{ border: isSuspended ? "0.5px solid rgba(239,68,68,0.2)" : isPending ? "0.5px solid rgba(232,116,26,0.2)" : "0.5px solid rgba(255,255,255,0.07)" }}>
               {isSuspended && (
@@ -351,8 +335,8 @@ export default function AreaAfiliado() {
         )}
 
         {/* Tu Paquete */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-wo-grafito rounded-wo-card p-5 flex flex-col justify-between" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+        <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-2">Tu paquete actual</p>
               <div className="flex items-center gap-3">
@@ -362,37 +346,10 @@ export default function AreaAfiliado() {
                 </span>
               </div>
             </div>
-          </div>
-
-          <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-            <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-3">Tu rango</p>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">{currentRank.emoji}</span>
-              <div>
-                <p className="font-jakarta font-bold text-sm text-wo-crema">{currentRank.name}</p>
-                <p className="font-jakarta text-xs text-wo-crema-muted">{uvAmount.toLocaleString()} UV del mes</p>
-              </div>
-            </div>
-            {nextRank ? (
-              <>
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="font-jakarta text-[11px] text-wo-crema-muted">→ {nextRank.emoji} {nextRank.name}</span>
-                  <span className="font-jakarta text-[11px] font-bold text-primary">{rankProgress}%</span>
-                </div>
-                <div className="h-1.5 bg-wo-carbon rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${rankProgress}%`, background: "hsl(var(--primary))" }} />
-                </div>
-                <p className="font-jakarta text-[10px] text-wo-crema/40 mt-2">
-                  Faltan {Math.max(0, nextRank.minUV - uvAmount).toLocaleString()} UV y {Math.max(0, nextRank.minDirectos - activeDirectos)} directos activos
-                </p>
-              </>
-            ) : (
-              <p className="font-jakarta text-sm font-bold text-primary">¡Rango máximo alcanzado! 👑</p>
-            )}
             {nextPackage && !isPending && (
               <button
                 onClick={() => setShowUpgradeModal(true)}
-                className="mt-4 w-full flex items-center justify-center gap-2 font-jakarta font-bold text-xs py-2.5 rounded-wo-btn transition-colors hover:bg-primary hover:text-primary-foreground"
+                className="flex items-center gap-2 font-jakarta font-bold text-xs px-4 py-2.5 rounded-wo-btn transition-colors hover:bg-primary hover:text-primary-foreground"
                 style={{ border: "0.5px solid rgba(232,116,26,0.35)", color: "hsl(var(--wo-oro))" }}
               >
                 <ArrowUpCircle size={13} /> Mejorar a {nextPackage.name}
@@ -411,6 +368,72 @@ export default function AreaAfiliado() {
         </div>
         */}
 
+        </>}
+
+        {/* ── Tab: Mis Pedidos ────────────────────────────────────── */}
+        {activeTab === "pedidos" && <>
+        <div>
+          <h3 className="font-syne font-bold text-lg text-wo-crema mb-4">Mis Pedidos</h3>
+          {myOrders.length === 0 ? (
+            <div className="bg-wo-grafito rounded-wo-card p-10 flex flex-col items-center gap-3" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+              <Package size={36} className="text-wo-crema/20" />
+              <p className="font-jakarta text-sm text-wo-crema-muted">Aún no tienes pedidos</p>
+              <Link to="/catalogo" className="font-jakarta font-bold text-xs text-primary hover:underline mt-1">
+                Ir al catálogo →
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myOrders.map((order) => {
+                const statusColor =
+                  order.status === "entregado"  ? "text-secondary bg-secondary/10 border-secondary/30" :
+                  order.status === "aprobado"   ? "text-primary bg-primary/10 border-primary/30" :
+                  order.status === "cancelado"  ? "text-destructive bg-destructive/10 border-destructive/30" :
+                  "text-wo-crema-muted bg-wo-carbon border-wo-crema/10";
+                const statusLabel: Record<string, string> = {
+                  pendiente:  "Pendiente",
+                  aprobado:   "Aprobado",
+                  entregado:  "Entregado",
+                  cancelado:  "Cancelado",
+                };
+                return (
+                  <div key={order.id} className="bg-wo-grafito rounded-wo-card p-4" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                      <div>
+                        <p className="font-jakarta font-bold text-sm text-wo-crema">{order.order_number ?? `#${order.id.slice(0, 8)}`}</p>
+                        <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">
+                          {new Date(order.created_at).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="font-syne font-bold text-lg text-primary">S/ {order.total.toFixed(2)}</p>
+                        <span className={`font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill border ${statusColor}`}>
+                          {statusLabel[order.status] ?? order.status}
+                        </span>
+                      </div>
+                    </div>
+                    {order.order_items && order.order_items.length > 0 && (
+                      <div className="border-t pt-3 space-y-1.5" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                        {order.order_items.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between">
+                            <p className="font-jakarta text-xs text-wo-crema-muted">
+                              {item.name} <span className="text-wo-crema/40">× {item.quantity}</span>
+                            </p>
+                            <p className="font-jakarta text-xs text-wo-crema">S/ {(item.price * item.quantity).toFixed(2)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-jakarta text-wo-crema/40">
+                      <span>📦 {order.shipping_address}, {order.shipping_city}</span>
+                      <span>💳 {order.payment_method === "wallet" ? "Billetera" : "Transferencia"}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         </>}
 
         {/* ── Tab: Mi Red ─────────────────────────────────────────── */}

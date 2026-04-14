@@ -60,10 +60,6 @@ export function useAffiliateStats() {
     queryFn: async () => {
       if (!affiliate) return null;
 
-      // Refrescar rango UV (ignorar error si la función aún no existe en el DB)
-      await supabase.rpc("calculate_affiliate_rank", { p_affiliate_id: affiliate.id }).catch(() => {});
-
-      // Traer perfil actualizado
       const { data, error } = await supabase
         .from("affiliates")
         .select("*")
