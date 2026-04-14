@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,21 +29,66 @@ import Privacidad from "./pages/Privacidad";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 
+const DevTools = import.meta.env.DEV
+  ? lazy(() => import("./pages/DevTools"))
+  : null;
+
+function FullPageLoader() {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "hsl(var(--background))",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", gap: "1rem"
+    }}>
+      <div style={{
+        width: 44, height: 44, borderRadius: "50%",
+        border: "2.5px solid hsl(var(--primary))",
+        borderTopColor: "transparent",
+        animation: "spin 0.75s linear infinite"
+      }} />
+      <p style={{ fontFamily: "var(--font-jakarta, sans-serif)", fontSize: 13, color: "hsl(var(--wo-crema-muted, 210 10% 60%))" }}>
+        Cargando...
+      </p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
 function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { isAdmin, loading } = useAuth();
-  if (loading) return null;
-  if (!isAdmin) return <Navigate to="/login-afiliado" replace />;
+  const { isAdmin, session, loading } = useAuth();
+  if (loading) return <FullPageLoader />;
+  // No hay sesión → puede ser el admin intentando entrar
+  if (!session) return <Navigate to="/admin-login" replace />;
+  // Hay sesión pero no es admin → es un afiliado, mandarlo a su área
+  if (!isAdmin) return <Navigate to="/area-afiliado" replace />;
   return <>{children}</>;
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <FullPageLoader />;
   if (!session) return <Navigate to="/login-afiliado" replace />;
   return <>{children}</>;
 }
 
+
 const queryClient = new QueryClient();
+
+// Oculta Navbar y Footer en las páginas de tienda de afiliado
+function ConditionalLayout({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const isTienda = pathname.startsWith("/tienda/");
+  return (
+    <>
+      {!isTienda && <Navbar />}
+      <CartDrawer />
+      {children}
+      {!isTienda && <Footer />}
+    </>
+  );
+}
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -51,14 +97,13 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Navbar />
-            <CartDrawer />
-            <Routes>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ConditionalLayout>
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/catalogo/:id" element={<ProductDetail />} />
-              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
               <Route path="/programa-afiliados" element={<ProgramaAfiliados />} />
               <Route path="/registro-afiliado" element={<RegistroAfiliado />} />
               <Route path="/login-afiliado" element={<LoginAfiliado />} />
@@ -72,9 +117,12 @@ const App = () => (
               <Route path="/terminos" element={<Terminos />} />
               <Route path="/privacidad" element={<Privacidad />} />
               <Route path="/admin-login" element={<AdminLogin />} />
+              {import.meta.env.DEV && DevTools && (
+                <Route path="/dev-tools" element={<Suspense fallback={null}><DevTools /></Suspense>} />
+              )}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Footer />
+              </Routes>
+            </ConditionalLayout>
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>

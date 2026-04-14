@@ -40,35 +40,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Cargar sesión inicial y suscribirse a cambios ─────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) loadProfile(session.user.id);
-      else setLoading(false);
+    let isInitializationBound = true;
+
+    // 1. Obtener sesión inicial
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (!isInitializationBound) return;
+
+      if (initialSession) {
+        setSession(initialSession);
+        loadProfile(initialSession.user.id, true).finally(() => {
+          if (isInitializationBound) setLoading(false);
+          isInitializationBound = false;
+        });
+      } else {
+        setLoading(false);
+        isInitializationBound = false;
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) loadProfile(session.user.id);
-      else {
+    // 2. Escuchar cambios de estado
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      // Si estamos en medio del getSession inicial, ignorar este evento
+      if (isInitializationBound && _event === "INITIAL_SESSION") return;
+
+      setSession(currentSession);
+      if (currentSession) {
+        // En cambios posteriores (refresh, etc), no bloqueamos la UI con el loader global
+        loadProfile(currentSession.user.id, false);
+      } else {
         setAffiliate(null);
         setRole(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isInitializationBound = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // ── Cargar perfil del afiliado y su rol ───────────────────────────────────
-  async function loadProfile(userId: string) {
-    setLoading(true);
+  async function loadProfile(userId: string, isInitial = true) {
+    if (isInitial) setLoading(true);
     try {
       // Rol del usuario
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       const userRole = (roleData?.role as "affiliate" | "admin") ?? "affiliate";
       setRole(userRole);
@@ -78,11 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("affiliates")
         .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       setAffiliate(affiliateData ?? null);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   }
 
@@ -123,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("affiliates")
         .select("id")
         .eq("affiliate_code", data.referralCode.toUpperCase())
-        .single();
+        .maybeSingle();
       referrerId = referrer?.id;
     }
 

@@ -4,6 +4,7 @@ import { useStoreProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import ProductCard from "@/components/ProductCard";
 import { MessageCircle } from "lucide-react";
+import { DynamicIcon } from "@/components/DynamicIcon";
 
 export default function TiendaAfiliado() {
   const { codigo = "" } = useParams<{ codigo: string }>();
@@ -13,7 +14,6 @@ export default function TiendaAfiliado() {
   // Registrar el código de afiliado en el carrito para comisiones
   useEffect(() => {
     if (codigo) setAffiliateCode(codigo.toUpperCase());
-    return () => setAffiliateCode(null);
   }, [codigo, setAffiliateCode]);
 
   if (isLoading) {
@@ -36,16 +36,26 @@ export default function TiendaAfiliado() {
   const { store, products } = data;
   const affiliateInitials = (store.store_name ?? codigo).substring(0, 2).toUpperCase();
 
+  const bannerBgStyle = store.banner_type === 'image' && store.banner_image_url 
+    ? { backgroundImage: `url(${store.banner_image_url})`, backgroundColor: store.accent_color ?? "hsl(var(--wo-grafito))" }
+    : { backgroundColor: store.accent_color ?? "hsl(var(--wo-grafito))" };
+
   return (
     <div className="min-h-screen bg-background pt-16">
       {/* Banner */}
-      <div className="relative h-[180px] overflow-hidden" style={{ background: store.accent_color ?? "hsl(var(--wo-grafito))" }}>
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3 z-10">
-          <div className="text-4xl">{store.banner_emoji ?? "🌿"}</div>
-          <div>
-            <h1 className="font-syne font-extrabold text-2xl text-wo-crema">{store.store_name}</h1>
-            <p className="font-jakarta text-sm text-wo-crema-muted">{store.tagline}</p>
+      <div className="relative h-[220px] overflow-hidden bg-cover bg-center" style={bannerBgStyle}>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        <div className="absolute bottom-6 left-6 right-6 flex items-end gap-5 z-10 max-w-7xl mx-auto">
+          <div className="p-4 bg-wo-carbon/40 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl">
+            {store.banner_icon ? (
+              <DynamicIcon name={store.banner_icon} size={42} className="text-primary" strokeWidth={2.5} />
+            ) : (
+              <div className="text-5xl">{store.banner_emoji ?? "🌿"}</div>
+            )}
+          </div>
+          <div className="pb-2">
+            <h1 className="font-syne font-extrabold text-3xl sm:text-4xl text-wo-crema leading-none mb-1">{store.store_name}</h1>
+            <p className="font-jakarta text-sm sm:text-base text-wo-crema-muted opacity-80">{store.tagline}</p>
           </div>
         </div>
       </div>

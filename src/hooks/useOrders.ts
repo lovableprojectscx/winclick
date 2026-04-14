@@ -20,6 +20,7 @@ interface PlaceOrderArgs {
   paymentMethod:   "wallet" | "cash";
   items:           CartItem[];
   affiliateCode?:  string;
+  receiptUrl?:     string;
 }
 
 // ─── Crear pedido ─────────────────────────────────────────────────────────────
@@ -32,47 +33,64 @@ export function usePlaceOrder() {
     mutationFn: async (args: PlaceOrderArgs) => {
       const total = args.items.reduce((s, i) => s + i.price * i.quantity, 0);
 
-      // 1. Si paga con billetera, descontar crédito primero
-      if (args.paymentMethod === "wallet" && session) {
-        const { data: result } = await supabase.rpc("use_credits_for_purchase", {
-          p_user_id: session.user.id,
-          p_amount:  total,
-        });
-        if (!result?.success) throw new Error(result?.error ?? "Saldo insuficiente");
-      }
-
-      // 2. Buscar affiliate_id por código si viene referido
+      // 1. Buscar affiliate_id por código si viene referido
       let affiliateId: string | null = affiliate?.id ?? null;
       if (args.affiliateCode && !affiliateId) {
         const { data } = await supabase
           .from("affiliates")
           .select("id")
           .eq("affiliate_code", args.affiliateCode.toUpperCase())
-          .single();
+          .maybeSingle();
         affiliateId = data?.id ?? null;
       }
 
-      // 3. Crear el pedido (order_number lo genera el trigger)
+      // 2. Crear el pedido (order_number lo genera el trigger)
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          customer_name:    args.customerName,
-          customer_email:   args.customerEmail,
-          customer_phone:   args.customerPhone,
-          customer_dni:     args.customerDni,
-          shipping_address: args.shippingAddress,
-          shipping_city:    args.shippingCity,
-          payment_method:   args.paymentMethod,
+          customer_name:        args.customerName,
+          customer_email:       args.customerEmail,
+          customer_phone:       args.customerPhone,
+          customer_dni:         args.customerDni,
+          shipping_address:     args.shippingAddress,
+          shipping_city:        args.shippingCity,
+          payment_method:       args.paymentMethod,
           total,
-          status:           "pendiente",
-          affiliate_id:     affiliateId,
+          status:               "pendiente",
+          affiliate_id:         affiliateId,
+          shipping_voucher_url: args.receiptUrl,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (orderError) throw orderError;
 
-      // 4. Insertar items
+      // 3. Descontar billetera DESPUÉS de crear el pedido (nunca antes)
+      if (args.paymentMethod === "wallet" && session) {
+        const { data: result } = await supabase.rpc("use_credits_for_purchase", {
+          p_amount:   total,
+          p_order_id: order.id,
+        });
+        if (!result?.success) {
+          // Revertir el pedido si falla el pago
+          await supabase.from("orders").delete().eq("id", order.id);
+          throw new Error(result?.error ?? "Saldo insuficiente");
+        }
+      }
+
+      // 4. Insertar comprobante de pago
+      if (args.receiptUrl) {
+        const { error: proofError } = await supabase.from("payment_proofs").insert({
+          order_id:       order.id,
+          proof_url:      args.receiptUrl,
+          payment_method: args.paymentMethod,
+          amount:         total,
+          status:         "pendiente",
+        });
+        if (proofError) throw new Error("Error al guardar el comprobante: " + proofError.message);
+      }
+
+      // 5. Insertar items
       const itemsToInsert = args.items.map(i => ({
         order_id:   order.id,
         product_id: i.productId,
@@ -84,20 +102,15 @@ export function usePlaceOrder() {
       const { error: itemsError } = await supabase.from("order_items").insert(itemsToInsert);
       if (itemsError) throw itemsError;
 
-      // 5. Calcular comisiones si hay afiliado
-      if (affiliateId && args.affiliateCode) {
-        await supabase.rpc("create_order_commissions", {
-          p_order_id:      order.id,
-          p_order_amount:  total,
-          p_affiliate_code: args.affiliateCode.toUpperCase(),
-        });
-      }
+      // Las comisiones se calculan automáticamente via trigger DB
+      // cuando el pedido alcanza el estado 'entregado' (trigger_commissions_on_delivery)
 
       return order;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["affiliate-stats"] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 }

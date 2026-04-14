@@ -5,12 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { session, affiliate, role, logout } = useAuth();
   const { itemCount, setIsOpen, lastAddedId } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  // Use the auth role (not hardcoded from affiliate presence) so admins who
+  // also have an affiliate record still see "Panel Admin" in the navbar.
+  const user = session ? { name: affiliate?.name ?? session.user.email ?? "Admin", role } : null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);

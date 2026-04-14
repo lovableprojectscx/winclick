@@ -26,7 +26,7 @@ export default function Terminos() {
             },
             {
               title: "3. Paquetes de activación",
-              body: "Existen tres paquetes de activación: Básico (S/ 100, niveles 1-3), Intermedio (S/ 2,000, niveles 1-7) y VIP (S/ 10,000, niveles 1-10). Todos los paquetes requieren una reactivación mensual de S/ 300 para mantener activo el derecho a percibir comisiones.",
+              body: "Existen tres paquetes de activación definidos por la compra de volumen de productos: Básico (Meta de compras S/ 100, niveles 1-3), Intermedio (S/ 2,000, niveles 1-7) y VIP (S/ 10,000, niveles 1-10). Todos los paquetes requieren compras personales acumulables en el catálogo de productos por un valor estipulado (ej. S/ 300 mensuales) para mantener activo el derecho a percibir comisiones.",
             },
             {
               title: "4. Comisiones",
@@ -34,7 +34,7 @@ export default function Terminos() {
             },
             {
               title: "5. Suspensión y reactivación",
-              body: "Si un afiliado no realiza su reactivación mensual, su cuenta pasa a estado 'suspendido'. Durante este período no genera nuevas comisiones, pero conserva las ya acreditadas en su billetera. La reactivación se produce una vez que el administrador aprueba el comprobante de pago de S/ 300.",
+              body: "Si un afiliado no realiza las compras mínimas para su reactivación mensual, su cuenta pasa a estado 'suspendido'. Durante este período no genera nuevas comisiones, pero conserva las ya acreditadas en su billetera. La reactivación se produce orgánicamente una vez que el afiliado realiza compras de productos en la plataforma y se aprueba dicho pedido.",
             },
             {
               title: "6. Retiros",
@@ -65,7 +65,7 @@ export default function Terminos() {
 
           <div className="rounded-wo-card p-5 mt-10" style={{ background: "rgba(232,116,26,0.04)", border: "0.5px solid rgba(232,116,26,0.15)" }}>
             <p className="font-jakarta text-xs text-wo-crema-muted">
-              Para consultas sobre estos términos, contáctanos en <span className="text-primary">legal@winclick.com</span> · Winclick S.A.C. · RUC: 20XXXXXXXXX · Lima, Perú
+              Para consultas sobre estos términos, contáctanos en <span className="text-primary">Winnersmax369@gmail.com</span> · Winclick S.A.C. · Lima, Perú
             </p>
           </div>
         </div>

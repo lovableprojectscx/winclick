@@ -1,14 +1,21 @@
-import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Star, Check, Shield, Leaf, Truck, ArrowLeft } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get("ref");
+  
   const { data: product, isLoading } = useProduct(id ?? "");
-  const { addItem, setIsOpen } = useCart();
+  const { addItem, setIsOpen, setAffiliateCode } = useCart();
   const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    if (refCode) setAffiliateCode(refCode.toUpperCase());
+  }, [refCode, setAffiliateCode]);
 
   if (isLoading) {
     return (

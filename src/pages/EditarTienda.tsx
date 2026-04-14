@@ -5,9 +5,11 @@ import { useProducts } from "@/hooks/useProducts";
 import { useMyStoreConfig, useUpdateStoreConfig } from "@/hooks/useAffiliate";
 import {
   ArrowLeft, Save, Eye, Store, Palette, MessageCircle,
-  Package, Check, Sparkles
+  Package, Check, Sparkles, Image as ImageIcon, Upload, Camera, Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { DynamicIcon } from "@/components/DynamicIcon";
 
 const colorOptions = [
   { value: "#F2C94C", label: "Dorado" },
@@ -20,7 +22,9 @@ const colorOptions = [
   { value: "#34495E", label: "Oscuro" },
 ];
 
-const emojiOptions = ["🌿", "💪", "🌱", "✨", "🍃", "💎", "🔥", "⭐", "🌸", "🏆", "💚", "🌻"];
+const proIconOptions = [
+  "Sparkles", "Diamond", "Star", "Crown", "Flame", "Gem", "Trophy", "Rocket", "Zap", "Shield", "Heart", "Medal"
+];
 
 const cardStyle = { border: "0.5px solid rgba(255,255,255,0.07)" };
 
@@ -36,11 +40,14 @@ export default function EditarTienda() {
   const [storeName,        setStoreName]        = useState("");
   const [storeTagline,     setStoreTagline]     = useState("");
   const [storeColor,       setStoreColor]       = useState("#F2C94C");
-  const [storeEmoji,       setStoreEmoji]       = useState("🌿");
+  const [bannerType,       setBannerType]       = useState<"color" | "image">("color");
+  const [bannerIcon,       setBannerIcon]       = useState("Sparkles");
+  const [bannerImageUrl,   setBannerImageUrl]   = useState("");
   const [storeWhatsapp,    setStoreWhatsapp]    = useState("");
   const [storeActive,      setStoreActive]      = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [saving,           setSaving]           = useState(false);
+  const [uploadingImage,   setUploadingImage]   = useState(false);
 
   // Populate form from fetched config
   useEffect(() => {
@@ -48,19 +55,63 @@ export default function EditarTienda() {
       setStoreName(storeConfig.store_name ?? "");
       setStoreTagline(storeConfig.tagline ?? "");
       setStoreColor(storeConfig.accent_color ?? "#F2C94C");
-      setStoreEmoji(storeConfig.banner_emoji ?? "🌿");
+      setBannerType((storeConfig.banner_type as any) ?? "color");
+      setBannerIcon(storeConfig.banner_icon ?? "Sparkles");
+      setBannerImageUrl(storeConfig.banner_image_url ?? "");
       setStoreWhatsapp(storeConfig.whatsapp ?? "");
       setStoreActive(storeConfig.is_public ?? true);
       setSelectedProducts(storeConfig.featured_product_ids ?? []);
     }
   }, [storeConfig]);
 
-  if (!affiliate) { navigate("/login-afiliado"); return null; }
-
   const toggleProduct = (id: string) => {
     setSelectedProducts((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !affiliate) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Imagen muy pesada",
+        description: "El tamaño máximo es 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${affiliate.id}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('store-banners')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('store-banners')
+        .getPublicUrl(filePath);
+
+      setBannerImageUrl(publicUrl);
+      setBannerType("image");
+      toast({ title: "✓ Imagen subida" });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error al subir",
+        description: "Intenta con otra imagen.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSave = async () => {
@@ -70,7 +121,9 @@ export default function EditarTienda() {
         store_name:           storeName,
         tagline:              storeTagline,
         accent_color:         storeColor,
-        banner_emoji:         storeEmoji,
+        banner_type:          bannerType,
+        banner_icon:          bannerIcon,
+        banner_image_url:     bannerImageUrl,
         whatsapp:             storeWhatsapp,
         is_public:            storeActive,
         featured_product_ids: selectedProducts,
@@ -91,6 +144,8 @@ export default function EditarTienda() {
   };
 
   const activeProducts = products.filter((p) => p.is_active);
+
+  if (!affiliate) return null;
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-16">
@@ -131,15 +186,31 @@ export default function EditarTienda() {
 
         {/* Preview banner */}
         <div className="rounded-wo-card overflow-hidden" style={cardStyle}>
-          <div className="relative h-[140px]" style={{ background: storeColor }}>
-            <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3 z-10">
-              <div className="text-4xl">{storeEmoji}</div>
-              <div>
-                <h2 className="font-syne font-extrabold text-xl text-wo-crema">{storeName || "Nombre de tu tienda"}</h2>
-                <p className="font-jakarta text-sm text-wo-crema-muted">{storeTagline || "Tu slogan aquí"}</p>
+          <div 
+            className="relative h-[160px] bg-cover bg-center transition-all duration-500" 
+            style={{ 
+              backgroundColor: storeColor,
+              backgroundImage: bannerType === 'image' && bannerImageUrl ? `url(${bannerImageUrl})` : 'none'
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
+            <div className="absolute bottom-4 left-6 right-6 flex items-end gap-4 z-10">
+              <div className="p-3 bg-wo-carbon/40 backdrop-blur-md rounded-2xl" style={cardStyle}>
+                <DynamicIcon name={bannerIcon} size={32} className="text-primary" strokeWidth={2.5} />
+              </div>
+              <div className="pb-1">
+                <h2 className="font-syne font-extrabold text-2xl text-wo-crema leading-tight">{storeName || "Nombre de tu tienda"}</h2>
+                <p className="font-jakarta text-sm text-wo-crema-muted mt-0.5">{storeTagline || "Tu slogan aquí"}</p>
               </div>
             </div>
+            
+            {bannerType === 'image' && (
+              <div className="absolute top-4 right-4 z-20">
+                <span className="flex items-center gap-1.5 px-2 py-1 bg-black/40 backdrop-blur-md rounded-md text-[10px] text-wo-crema/80 font-bold uppercase tracking-wider">
+                  <ImageIcon size={10} /> Fondo personalizado
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -201,45 +272,101 @@ export default function EditarTienda() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Color & Emoji */}
-        <div className="bg-wo-grafito rounded-wo-card p-6 space-y-5" style={cardStyle}>
-          <div className="flex items-center gap-2 mb-1">
-            <Palette size={14} className="text-primary" />
-            <h3 className="font-jakarta font-semibold text-sm text-wo-crema">Apariencia</h3>
-          </div>
-
-          <div>
-            <label className="font-jakarta text-xs text-wo-crema-muted uppercase block mb-2">Color del banner</label>
-            <div className="flex flex-wrap gap-2">
-              {colorOptions.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => setStoreColor(c.value)}
-                  className={`w-10 h-10 rounded-xl transition-all ${storeColor === c.value ? "ring-2 ring-wo-crema ring-offset-2 ring-offset-wo-grafito scale-110" : "hover:scale-105"}`}
-                  style={{ background: c.value }}
-                  title={c.label}
-                />
-              ))}
+        </div>        {/* Appearance & Style */}
+        <div className="bg-wo-grafito rounded-wo-card p-6 space-y-7" style={cardStyle}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Palette size={14} className="text-primary" />
+              <h3 className="font-jakarta font-semibold text-sm text-wo-crema">Apariencia y Estilo</h3>
+            </div>
+            <div className="bg-wo-carbon p-1 rounded-lg flex items-center gap-1" style={cardStyle}>
+              <button 
+                onClick={() => setBannerType("color")}
+                className={`text-[10px] uppercase font-bold px-3 py-1.5 rounded-md transition-all ${bannerType === 'color' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-wo-crema-muted hover:text-wo-crema'}`}
+              >
+                Color
+              </button>
+              <button 
+                onClick={() => setBannerType("image")}
+                className={`text-[10px] uppercase font-bold px-3 py-1.5 rounded-md transition-all ${bannerType === 'image' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-wo-crema-muted hover:text-wo-crema'}`}
+              >
+                Imagen
+              </button>
             </div>
           </div>
 
-          <div>
-            <label className="font-jakarta text-xs text-wo-crema-muted uppercase block mb-2">Emoji de la tienda</label>
-            <div className="flex flex-wrap gap-2">
-              {emojiOptions.map((e) => (
-                <button
-                  key={e}
-                  onClick={() => setStoreEmoji(e)}
-                  className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                    storeEmoji === e ? "bg-primary/20 ring-2 ring-primary scale-110" : "bg-wo-carbon hover:bg-wo-carbon/80"
-                  }`}
-                  style={cardStyle}
-                >
-                  {e}
-                </button>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Background Control */}
+            <div className="space-y-4">
+              {bannerType === 'color' ? (
+                <div>
+                  <label className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold tracking-wider block mb-3">Color de fondo</label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {colorOptions.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => setStoreColor(c.value)}
+                        className={`w-9 h-9 rounded-xl transition-all ${storeColor === c.value ? "ring-2 ring-primary ring-offset-2 ring-offset-wo-grafito scale-110" : "hover:scale-105"}`}
+                        style={{ background: c.value }}
+                        title={c.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold tracking-wider block mb-1">Imagen de fondo</label>
+                  
+                  {bannerImageUrl ? (
+                    <div className="relative group rounded-xl overflow-hidden aspect-video bg-wo-carbon" style={cardStyle}>
+                      <img src={bannerImageUrl} className="w-full h-full object-cover" alt="Banner" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <label className="cursor-pointer p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-wo-crema">
+                          <Camera size={18} />
+                          <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />
+                        </label>
+                        <button 
+                          onClick={() => setBannerImageUrl("")}
+                          className="p-2 bg-destructive/20 hover:bg-destructive/40 rounded-full transition-colors text-destructive"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-3 w-full aspect-video rounded-xl bg-wo-carbon border-2 border-dashed border-wo-crema/10 hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer group">
+                      <div className="p-3 rounded-full bg-wo-crema/5 group-hover:bg-primary/20 transition-colors">
+                        <Upload size={24} className="text-wo-crema-muted group-hover:text-primary transition-colors" />
+                      </div>
+                      <div className="text-center px-4">
+                        <p className="font-jakarta text-xs font-bold text-wo-crema">Subir fondo</p>
+                        <p className="font-jakarta text-[10px] text-wo-crema-muted mt-1">Recomendado: 1200x400px (Máx 2MB)</p>
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />
+                    </label>
+                  )}
+                  {uploadingImage && <div className="text-center animate-pulse py-2 text-[10px] text-primary font-bold uppercase">Subiendo imagen...</div>}
+                </div>
+              )}
+            </div>
+
+            {/* Icon Picker */}
+            <div>
+              <label className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold tracking-wider block mb-3">Icono de marca</label>
+              <div className="grid grid-cols-4 gap-2.5">
+                {proIconOptions.map((iconName) => (
+                  <button
+                    key={iconName}
+                    onClick={() => setBannerIcon(iconName)}
+                    className={`h-11 rounded-xl flex items-center justify-center transition-all ${
+                      bannerIcon === iconName ? "bg-primary/20 ring-1 ring-primary scale-105 shadow-lg shadow-primary/10" : "bg-wo-carbon hover:bg-wo-crema/5"
+                    }`}
+                    style={cardStyle}
+                  >
+                    <DynamicIcon name={iconName} size={18} className={bannerIcon === iconName ? "text-primary" : "text-wo-crema-muted"} />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

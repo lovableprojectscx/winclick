@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { Product } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
 
 export type { Product };
 
@@ -26,10 +27,24 @@ interface CartContextType {
 const CartContext = createContext<CartContextType>({} as CartContextType);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items,         setItems]         = useState<CartItem[]>([]);
+  const [items,         setItems]         = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("wo_cart_items");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [isOpen,        setIsOpen]        = useState(false);
-  const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
+  const [affiliateCode, setAffiliateCode] = useState<string | null>(() => localStorage.getItem("wo_affiliate_code"));
   const [lastAddedId,   setLastAddedId]   = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("wo_cart_items", JSON.stringify(items));
+  }, [items]);
+
+  useEffect(() => {
+    if (affiliateCode) localStorage.setItem("wo_affiliate_code", affiliateCode);
+    else localStorage.removeItem("wo_affiliate_code");
+  }, [affiliateCode]);
 
   const addItem = useCallback((product: Product) => {
     setItems((prev) => {
@@ -38,7 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...prev, { product, quantity: 1 }];
     });
     setLastAddedId(product.id);
-    setTimeout(() => setLastAddedId(null), 300);
+    setTimeout(() => setLastAddedId(null), 700);
   }, []);
 
   const removeItem = useCallback((productId: string) => {
@@ -51,6 +66,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [removeItem]);
 
   const clearCart = useCallback(() => setItems([]), []);
+
+  // Limpiar carrito y código de afiliado al cerrar sesión
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setItems([]);
+        setAffiliateCode(null);
+        localStorage.removeItem("wo_cart_items");
+        localStorage.removeItem("wo_affiliate_code");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const total     = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);

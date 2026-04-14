@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Check } from "lucide-react";
+import { Eye, EyeOff, Check, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
+const isDev = import.meta.env.DEV;
+
+// ─── Cuentas de afiliado para testeo rápido (solo DEV) ───────────────────────
+const DEV_AFFILIATES = [
+  { label: "Afiliado 1", email: "prueba@gmail.com", password: "test123456" },
+  { label: "Afiliado 2", email: "afiliado2@test.com", password: "test123456" },
+  { label: "Afiliado 3", email: "afiliado3@test.com", password: "test123456" },
+];
+
 export default function LoginAfiliado() {
-  const { login, isAdmin, role, loading: authLoading } = useAuth();
+  const { login, isAdmin, role, loading: authLoading, session: existingSession } = useAuth();
   const navigate  = useNavigate();
   const [email,          setEmail]          = useState("");
   const [password,       setPassword]       = useState("");
@@ -16,6 +25,14 @@ export default function LoginAfiliado() {
   const [error,          setError]          = useState("");
   const [loading,        setLoading]        = useState(false);
   const [pendingNav,     setPendingNav]     = useState(false);
+
+  // Si ya hay sesión activa, redirigir directamente
+  useEffect(() => {
+    if (!authLoading && existingSession && !pendingNav) {
+      if (isAdmin) navigate("/admin-dashboard", { replace: true });
+      else navigate("/area-afiliado", { replace: true });
+    }
+  }, [authLoading, existingSession, isAdmin, navigate, pendingNav]);
 
   useEffect(() => {
     if (pendingNav && !authLoading && role !== null) {
@@ -41,6 +58,15 @@ export default function LoginAfiliado() {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setRecoverySent(true);
+  };
+
+  const quickLogin = async (acc: { email: string; password: string }) => {
+    setError("");
+    setLoading(true);
+    const { error: loginError } = await login(acc.email, acc.password);
+    setLoading(false);
+    if (loginError) { setError(`No existe: ${acc.email}`); return; }
+    setPendingNav(true);
   };
 
   return (
@@ -155,6 +181,32 @@ export default function LoginAfiliado() {
               ¿Aún no tienes cuenta?{" "}
               <Link to="/registro-afiliado" className="text-primary hover:underline font-semibold">Regístrate gratis</Link>
             </p>
+
+            {/* ── DEV: Acceso rápido ── */}
+            {isDev && (
+              <div className="mt-2 rounded-wo-card p-4" style={{ background: "rgba(255,200,0,0.05)", border: "0.5px solid rgba(255,200,0,0.2)" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap size={12} className="text-yellow-400" />
+                  <span className="font-jakarta font-bold text-[11px] text-yellow-400">DEV · Afiliados de prueba</span>
+                  <Link to="/dev-tools" className="ml-auto font-jakarta text-[10px] text-yellow-400/70 hover:text-yellow-400 underline">Panel completo →</Link>
+                </div>
+                <div className="space-y-1.5">
+                  {DEV_AFFILIATES.map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      onClick={() => quickLogin(acc)}
+                      disabled={loading}
+                      className="w-full text-left px-3 py-2 rounded-wo-btn font-jakarta text-xs text-wo-crema hover:bg-wo-carbon transition-colors disabled:opacity-60"
+                      style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                    >
+                      <span className="font-bold text-yellow-400">{acc.label}</span>
+                      <span className="text-wo-crema-muted ml-2">{acc.email}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </form>
         </div>
       </div>

@@ -3,6 +3,9 @@ import { Star, Heart, Check } from "lucide-react";
 import type { Product } from "@/lib/database.types";
 import { useCart } from "@/contexts/CartContext";
 import { Link } from "react-router-dom";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   product:       Product;
@@ -20,8 +23,12 @@ const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba170
 
 export default function ProductCard({ product, affiliateCode }: Props) {
   const { addItem } = useCart();
+  const { session } = useAuth();
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  
+  const { toast } = useToast();
   const [added, setAdded] = useState(false);
-  const [fav,   setFav]   = useState(false);
+  const isFav = favoriteIds.includes(product.id);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -33,7 +40,7 @@ export default function ProductCard({ product, affiliateCode }: Props) {
 
   return (
     <Link
-      to={`/catalogo/${product.id}`}
+      to={`/catalogo/${product.id}${affiliateCode ? `?ref=${affiliateCode}` : ""}`}
       className="product-card group block bg-wo-grafito rounded-wo-card overflow-hidden"
     >
       {/* Image */}
@@ -86,11 +93,19 @@ export default function ProductCard({ product, affiliateCode }: Props) {
               : <span>★ {affiliateCode ? "Comprar" : "Agregar"}</span>}
           </button>
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFav(!fav); }}
-            className={`w-10 h-10 flex items-center justify-center rounded-wo-btn transition-colors ${fav ? "text-destructive bg-destructive/10" : "text-wo-crema-muted hover:text-destructive hover:bg-wo-carbon"}`}
-            aria-label={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!session) {
+                toast({ title: "Inicia sesión", description: "Debes iniciar sesión para guardar favoritos.", variant: "destructive" });
+                return;
+              }
+              toggleFavorite.mutate({ productId: product.id, isFavorited: isFav });
+            }}
+            className={`w-10 h-10 flex items-center justify-center rounded-wo-btn transition-colors ${isFav ? "text-destructive bg-destructive/10" : "text-wo-crema-muted hover:text-destructive hover:bg-wo-carbon"}`}
+            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
           >
-            <Heart size={16} fill={fav ? "currentColor" : "none"} />
+            <Heart size={16} fill={isFav ? "currentColor" : "none"} />
           </button>
         </div>
       </div>

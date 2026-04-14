@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Gift, Check, Upload, MessageCircle, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone } from "lucide-react";
+import { useBusinessSettings } from "@/hooks/useAffiliate";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import type { PackageType } from "@/lib/database.types";
 import { useToast } from "@/hooks/use-toast";
-import { useSubmitPayment, useBusinessSettings } from "@/hooks/useAffiliate";
 
 const packages = [
   { name: "Básico"     as const, investment: 100,   depthUnlocked: 3  },
@@ -26,7 +26,7 @@ const packageFeatures: Record<PackageType, string[]> = {
 
 const StepBar = ({ step }: { step: number }) => (
   <div className="flex items-center mb-8">
-    {[{ n: 1, label: "Tus datos" }, { n: 2, label: "Paquete" }, { n: 3, label: "Pago" }].map((s, i) => (
+    {[{ n: 1, label: "Tus datos" }, { n: 2, label: "Paquete" }, { n: 3, label: "Activación" }].map((s, i) => (
       <div key={s.n} className="flex items-center">
         <div className="flex items-center gap-1.5">
           <div className={`w-6 h-6 rounded-full flex items-center justify-center font-jakarta font-bold text-[11px] shrink-0 ${step > s.n ? "bg-secondary text-background" : step === s.n ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted"}`} style={step < s.n ? { border: "0.5px solid rgba(255,255,255,0.12)" } : {}}>
@@ -87,8 +87,7 @@ export default function RegistroAfiliado() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const submitPayment = useSubmitPayment();
-  const { data: settings } = useBusinessSettings();
+  const { data: bizSettings } = useBusinessSettings();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showPw, setShowPw] = useState(false);
@@ -104,9 +103,7 @@ export default function RegistroAfiliado() {
     const found = packages.find((pkg) => pkg.name.toLowerCase() === p?.toLowerCase());
     return found?.name ?? "Intermedio";
   });
-  const [receipt, setReceipt] = useState<File | null>(null);
-
-  const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+  const set =(key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleInputChange = (k: string, value: string) => {
     if (k === "referral") {
@@ -123,7 +120,7 @@ export default function RegistroAfiliado() {
       .from("affiliates")
       .select("id, name")
       .eq("affiliate_code", code.toUpperCase())
-      .single();
+      .maybeSingle();
     setRefValid(!!data);
     setRefName(data?.name ?? "");
   };
@@ -150,8 +147,6 @@ export default function RegistroAfiliado() {
 
   const handleFinalSubmit = async () => {
     if (submitting) return;
-    // Para Básico e Intermedio el comprobante es obligatorio; para VIP no (trato directo)
-    if (selectedPackage !== "VIP" && !receipt) return;
     setSubmitting(true);
 
     // 1. Crear cuenta en Supabase Auth + registro en affiliates
@@ -163,35 +158,19 @@ export default function RegistroAfiliado() {
     });
 
     if (regError) {
-      toast({ title: "Error al crear cuenta", description: regError, variant: "destructive" });
+      console.error("Registration Error Detail:", regError);
+      toast({ 
+        title: "No se pudo crear la cuenta", 
+        description: regError.includes("database") 
+          ? "Error de conexión o datos inválidos. Por favor revisa los campos." 
+          : regError, 
+        variant: "destructive" 
+      });
       setSubmitting(false);
       return;
     }
 
-    // 2. Subir comprobante de activación (solo Básico e Intermedio)
-    if (selectedPackage !== "VIP" && receipt) {
-      try {
-        const pkg = packages.find((p) => p.name === selectedPackage)!;
-        await submitPayment.mutateAsync({
-          type:        "activacion",
-          amount:      pkg.investment,
-          receiptFile: receipt,
-          packageTo:   selectedPackage,
-        });
-      } catch {
-        // El pago puede fallar si el storage RLS aún no tiene el user_id (auth pendiente)
-        toast({
-          title: "Comprobante no enviado",
-          description: "Tu cuenta fue creada, pero el comprobante no pudo subirse. Súbelo desde Mi Billetera → Recargar.",
-          variant: "destructive",
-        });
-      }
-      toast({ title: "¡Cuenta creada!", description: "Tu comprobante está en revisión. Te avisaremos cuando sea aprobado." });
-    } else {
-      // VIP: cuenta creada, pago se coordina por WhatsApp
-      toast({ title: "¡Cuenta VIP creada!", description: "Un asesor te contactará por WhatsApp para coordinar el pago y activar tu cuenta." });
-    }
-
+    toast({ title: "¡Bienvenido a Winclick!", description: "Cuenta creada. Ya puedes acceder a tu panel — activa tu cuenta haciendo tu primera compra en el catálogo." });
     navigate("/area-afiliado");
     setSubmitting(false);
   };
@@ -228,8 +207,7 @@ export default function RegistroAfiliado() {
             <div className="bg-wo-carbon rounded-wo-card p-5 mb-6" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
               <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-2">Resumen de tu elección</p>
               <p className="font-jakarta font-bold text-sm text-wo-crema">{selectedPkg.name}</p>
-              <p className="font-syne font-extrabold text-xl text-primary mt-1">S/ {selectedPkg.investment.toLocaleString()}</p>
-              <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">+ S/ 300/mes reactivación</p>
+              <p className="font-syne font-extrabold text-xl text-primary mt-1">Meta: S/ {selectedPkg.investment.toLocaleString()}</p>
               <p className="font-jakarta text-[11px] text-secondary mt-1">Niveles 1–{selectedPkg.depthUnlocked} desbloqueados</p>
             </div>
           )}
@@ -259,7 +237,7 @@ export default function RegistroAfiliado() {
                     {selectedPackage}
                   </span>
                   <p className="font-jakarta text-xs text-wo-crema-muted flex-1">
-                    Paquete seleccionado: <strong className="text-wo-crema">S/ {selectedPkg.investment.toLocaleString()}</strong> + S/300/mes
+                    Paquete seleccionado: <strong className="text-wo-crema">S/ {selectedPkg.investment.toLocaleString()}</strong> + compras S/ 300/mes
                   </p>
                   <button type="button" onClick={() => setShowInlinePicker((v) => !v)} className="font-jakarta text-[11px] text-primary hover:underline shrink-0">
                     {showInlinePicker ? "Cerrar" : "Cambiar →"}
@@ -330,7 +308,7 @@ export default function RegistroAfiliado() {
             {step === 2 && (
               <div>
                 <h2 className="font-syne font-extrabold text-[24px] text-wo-crema mb-1">Elige tu paquete</h2>
-                <p className="font-jakarta text-sm text-wo-crema-muted mb-6">Todos incluyen S/ 300/mes de reactivación para mantener comisiones activas.</p>
+                <p className="font-jakarta text-sm text-wo-crema-muted mb-6">Todos los paquetes requieren cumplir compras mensuales mínimas para mantener comisiones activas.</p>
 
                 <div className="space-y-3 mb-6">
                   {packages.map((pkg) => {
@@ -359,7 +337,7 @@ export default function RegistroAfiliado() {
                             </div>
                             <div className="flex items-baseline gap-1.5 mb-2">
                               <span className="font-syne font-extrabold text-xl text-primary">S/ {pkg.investment.toLocaleString()}</span>
-                              <span className="font-jakarta text-[11px] text-wo-crema-muted">entrada · + S/300/mes</span>
+                              <span className="font-jakarta text-[11px] text-wo-crema-muted">entrada · + compras de S/ 300/mes</span>
                             </div>
                             <p className="font-jakarta text-[11px] text-secondary mb-2">Niveles 1–{pkg.depthUnlocked} desbloqueados</p>
                             <ul className="space-y-0.5">
@@ -389,142 +367,49 @@ export default function RegistroAfiliado() {
               </div>
             )}
 
-            {/* ── STEP 3: Instrucciones de pago ── */}
+            {/* ── STEP 3: Instrucciones de activación por compras ── */}
             {step === 3 && (
               <div>
-                <h2 className="font-syne font-extrabold text-[24px] text-wo-crema mb-1">Realiza tu pago</h2>
+                <h2 className="font-syne font-extrabold text-[24px] text-wo-crema mb-1">¡Casi listo!</h2>
                 <p className="font-jakarta text-sm text-wo-crema-muted mb-6">
-                  {selectedPackage === "VIP"
-                    ? "Para montos de S/ 10,000 coordinamos el pago directamente contigo."
-                    : "Transfiere el monto y sube tu comprobante para activar tu cuenta."}
+                  Crea tu cuenta para acceder a tu panel de afiliado. Una vez dentro, deberás dirigirte al catálogo y realizar compras en productos por el valor total de tu paquete para activarlo.
                 </p>
 
-                {/* Monto a pagar */}
-                <div className="rounded-wo-card p-4 mb-5" style={{ background: "rgba(232,116,26,0.06)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
-                  <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1">Monto de activación</p>
-                  <p className="font-syne font-extrabold text-3xl text-primary">S/ {selectedPkg.investment.toLocaleString()}</p>
-                  <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">Paquete {selectedPkg.name} · Activación única + S/ 300/mes</p>
+                {/* Resumen Final */}
+                <div className="rounded-wo-card p-6 mb-8" style={{ background: "rgba(232,116,26,0.06)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
+                  <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1">Paquete a activar</p>
+                  <p className="font-syne font-extrabold text-3xl text-primary mb-2">{selectedPkg.name}</p>
+                  <p className="font-jakarta text-xs text-wo-crema leading-relaxed">
+                    Meta de compra inicial para activación: <strong className="text-secondary">S/ {selectedPkg.investment.toLocaleString()}</strong> en productos.
+                  </p>
                 </div>
 
-                {/* ── VIP: flujo WhatsApp ─────────────────────────────── */}
-                {selectedPackage === "VIP" && (
-                  <div className="space-y-4 mb-6">
-                    <div className="rounded-wo-card p-4" style={{ background: "rgba(232,116,26,0.05)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle size={16} className="text-primary shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-jakarta font-semibold text-sm text-wo-crema mb-1">Pago coordinado directamente</p>
-                          <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">
-                            Yape y Plin tienen límites diarios que no permiten transferencias de S/ 10,000 en una sola operación.
-                            Un asesor Winclick te guiará para completar el pago por transferencia bancaria u otros medios seguros.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                <div className="mb-4 p-4 rounded-wo-btn bg-wo-carbon/50 flex gap-3" style={{ border: "0.5px solid rgba(255,255,255,0.05)" }}>
+                  <ShoppingBag size={20} className="text-wo-crema-muted shrink-0 mt-0.5" />
+                  <p className="font-jakarta text-[13px] text-wo-crema-muted leading-relaxed">
+                    Al finalizar el registro, haz clic en "Ir al Catálogo" desde tu panel para seleccionar los productos que conformarán tu paquete de activación.
+                  </p>
+                </div>
 
-                    <div className="space-y-2">
-                      <p className="font-jakarta text-xs text-wo-crema-muted font-semibold uppercase">Datos bancarios</p>
-                      <div className="flex items-center gap-3 bg-wo-carbon rounded-wo-btn px-4 py-3" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                        <span className="text-base">🏦</span>
-                        <div>
-                          <p className="font-jakarta text-[11px] text-wo-crema-muted">{settings?.bank_name ?? "Banco"}</p>
-                          <p className="font-jakarta text-sm text-wo-crema font-medium">{settings?.bank_account ?? "—"}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="font-jakarta text-xs text-wo-crema-muted">
-                      Al hacer click en el botón, un asesor te contactará por WhatsApp para confirmar tu pago y activar tu cuenta VIP en menos de 24h.
-                    </p>
-
-                    <a
-                      href={`https://wa.me/${(settings?.whatsapp_number ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(
-                        `Hola, soy ${form.name}. Quiero activar mi cuenta Winclick Paquete VIP (S/ 10,000). Mi DNI: ${form.dni}. Por favor indíquenme cómo realizar el pago.`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={handleFinalSubmit}
-                      className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-[#1ebe5d] transition-colors min-h-[52px]"
-                    >
-                      <MessageCircle size={18} />
-                      Contactar asesor por WhatsApp →
-                    </a>
-                    <p className="font-jakarta text-[11px] text-wo-crema/30 text-center">
-                      Tu cuenta se creará ahora y quedará en revisión hasta confirmar el pago.
-                    </p>
-                  </div>
-                )}
-
-                {/* ── Intermedio: advertencia + flujo normal ─────────── */}
-                {selectedPackage === "Intermedio" && (
-                  <div className="rounded-wo-card p-4 mb-5" style={{ background: "rgba(255,193,7,0.05)", border: "0.5px solid rgba(255,193,7,0.25)" }}>
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle size={15} className="text-amber-400 shrink-0 mt-0.5" />
-                      <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">
-                        <span className="text-wo-crema font-semibold">Atención:</span> S/ 2,000 supera el límite diario de Yape (S/ 500–1,000).
-                        Te recomendamos usar <span className="text-wo-crema font-semibold">transferencia bancaria</span> o dividir el pago en múltiples operaciones Yape y subir todos los comprobantes en una sola imagen.
+                {(bizSettings?.yape_number || bizSettings?.plin_number) && (
+                  <div className="mb-6 p-4 rounded-wo-btn flex items-center gap-3" style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
+                    <Phone size={16} className="text-primary shrink-0" />
+                    <div>
+                      <p className="font-jakarta text-[11px] text-wo-crema-muted">Número de pago (Yape / Plin)</p>
+                      <p className="font-syne font-bold text-base text-primary">
+                        {bizSettings.yape_number ?? bizSettings.plin_number}
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* ── Básico e Intermedio: cuentas + upload ──────────── */}
-                {selectedPackage !== "VIP" && (
-                  <>
-                    <div className="space-y-2 mb-5">
-                      <p className="font-jakarta text-xs text-wo-crema-muted font-semibold uppercase">Cuentas de destino</p>
-                      {[
-                        { icon: "📱", label: "Yape / Plin", value: settings?.yape_number ? `${settings.yape_number}${settings.business_name ? ` — ${settings.business_name}` : ""}` : "—" },
-                        { icon: "🏦", label: settings?.bank_name ?? "Banco", value: settings?.bank_account ?? "—" },
-                      ].map((acc) => (
-                        <div key={acc.label} className="flex items-center gap-3 bg-wo-carbon rounded-wo-btn px-4 py-3" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                          <span className="text-base">{acc.icon}</span>
-                          <div>
-                            <p className="font-jakarta text-[11px] text-wo-crema-muted">{acc.label}</p>
-                            <p className="font-jakarta text-sm text-wo-crema font-medium">{acc.value}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mb-6">
-                      <p className="font-jakarta text-xs text-wo-crema-muted font-semibold uppercase mb-2">Sube tu comprobante</p>
-                      <label className="block cursor-pointer">
-                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} />
-                        <div
-                          className="rounded-wo-card p-5 flex flex-col items-center gap-2 transition-all"
-                          style={{
-                            border: receipt ? "1px dashed hsl(var(--wo-esmeralda))" : "1px dashed rgba(255,255,255,0.15)",
-                            background: receipt ? "rgba(30,192,213,0.04)" : "rgba(255,255,255,0.01)",
-                          }}
-                        >
-                          {receipt ? (
-                            <>
-                              <Check size={20} className="text-secondary" />
-                              <p className="font-jakarta text-sm text-secondary font-semibold">{receipt.name}</p>
-                              <p className="font-jakarta text-[11px] text-wo-crema-muted">Toca para cambiar</p>
-                            </>
-                          ) : (
-                            <>
-                              <Upload size={20} className="text-wo-crema-muted" />
-                              <p className="font-jakarta text-sm text-wo-crema-muted">Arrastra o toca para subir</p>
-                              <p className="font-jakarta text-[11px] text-wo-crema/30">JPG · PNG · PDF · Máx. 5 MB</p>
-                            </>
-                          )}
-                        </div>
-                      </label>
-                    </div>
-
-                    <button
-                      onClick={handleFinalSubmit}
-                      disabled={!receipt || submitting}
-                      className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {submitting ? "Creando cuenta..." : "Enviar comprobante y crear cuenta →"}
-                    </button>
-                    <p className="font-jakarta text-[11px] text-wo-crema/30 text-center mt-2">El admin revisará tu pago y activará tu cuenta en menos de 24h.</p>
-                  </>
-                )}
+                <button
+                  onClick={handleFinalSubmit}
+                  disabled={submitting}
+                  className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Creando cuenta..." : "Crear mi cuenta ahora →"}
+                </button>
 
                 <button type="button" onClick={() => setStep(2)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
                   ← Cambiar paquete

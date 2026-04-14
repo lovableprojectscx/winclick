@@ -5,10 +5,10 @@ import { useState } from "react";
 import { commissionLevels, packages } from "@/data/affiliates";
 
 const faqs = [
-  { q: "¿Cuánto cuesta registrarse?", a: "Puedes empezar con el paquete Básico desde S/ 100. Recibes productos desde el primer día." },
+  { q: "¿Cuánto cuesta registrarse?", a: "Puedes empezar con el paquete Básico logrando compras acumuladas desde S/ 100. Recibes productos desde el primer día." },
   { q: "¿Cómo recibo mis comisiones?", a: "Las comisiones se acreditan en tu Billetera Winclick y puedes retirarlas vía Yape, Plin o transferencia bancaria." },
-  { q: "¿Qué pasa después del primer mes?", a: "A partir del mes 2 necesitas reactivarte con S/ 300 mensuales (3 frascos) para mantener tus niveles activos." },
-  { q: "¿Cuántos niveles de comisión hay?", a: "Hay 10 niveles de comisión. La profundidad que desbloqueas depende de tu paquete de activación." },
+  { q: "¿Qué pasa después del primer mes?", a: "A partir del mes 2 necesitas reactivar tu cuenta realizando compras mensuales en el catálogo por una meta estipulada (ej. S/ 300) para mantener tus niveles activos." },
+  { q: "¿Cuántos niveles de comisión hay?", a: "Hay 10 niveles de comisión. La profundidad que desbloqueas depende de tu paquete de activación elegido." },
   { q: "¿Puedo tener mi propia tienda online?", a: "Sí. Cada socio tiene una tienda personalizable con su propio link, branding y productos destacados." },
 ];
 
@@ -41,7 +41,7 @@ export default function ProgramaAfiliados() {
               </span>
             ))}
           </div>
-          <Link to="/registro-afiliado?package=intermedio" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm px-8 py-4 rounded-wo-btn hover:bg-wo-oro-dark">
+          <Link to="/registro-afiliado" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm px-8 py-4 rounded-wo-btn hover:bg-wo-oro-dark">
             <Star size={14} /> Registrarme ahora
           </Link>
         </div>

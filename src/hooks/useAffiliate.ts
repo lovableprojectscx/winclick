@@ -4,13 +4,47 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { Commission, CreditTransaction, AffiliatePayment, PackageType, StoreConfig, BusinessSettings } from "@/lib/database.types";
 export type { StoreConfig };
 
+// ─── Obtener y Actualizar perfil de afiliado ───────────────────────────────────
+
+export function useProfile() {
+  const { session } = useAuth();
+  return useQuery({
+    queryKey: ["affiliate-profile"],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data } = await supabase.from("affiliates").select("*").eq("user_id", session.user.id).maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!session?.user?.id,
+  });
+}
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  const { session } = useAuth();
+  
+  return useMutation({
+    mutationFn: async (fields: { shipping_address?: string; shipping_city?: string; yape_number?: string; phone?: string; dni?: string }) => {
+      if (!session?.user?.id) throw new Error("No autenticado");
+      const { error } = await supabase
+        .from("affiliates")
+        .update(fields)
+        .eq("user_id", session.user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["affiliate-profile"] });
+    },
+  });
+}
+
 // ─── Configuración del negocio (pública) ─────────────────────────────────────
 
 export function useBusinessSettings() {
   return useQuery<BusinessSettings | null>({
     queryKey: ["business-settings"],
     queryFn: async () => {
-      const { data } = await supabase.from("business_settings").select("*").single();
+      const { data } = await supabase.from("business_settings").select("*").maybeSingle();
       return data ?? null;
     },
     staleTime: 300_000,
@@ -26,8 +60,8 @@ export function useAffiliateStats() {
     queryFn: async () => {
       if (!affiliate) return null;
 
-      // Refrescar rango UV
-      await supabase.rpc("calculate_affiliate_rank", { p_affiliate_id: affiliate.id });
+      // Refrescar rango UV (ignorar error si la función aún no existe en el DB)
+      await supabase.rpc("calculate_affiliate_rank", { p_affiliate_id: affiliate.id }).catch(() => {});
 
       // Traer perfil actualizado
       const { data, error } = await supabase
@@ -75,7 +109,7 @@ export function useWallet() {
         .from("user_credits")
         .select("balance, credit_transactions(*)")
         .eq("user_id", session!.user.id)
-        .single();
+        .maybeSingle();
 
       return {
         balance:      credit?.balance ?? 0,
@@ -129,7 +163,7 @@ export function useMyNetwork() {
 interface SubmitPaymentArgs {
   type:                 AffiliatePayment["type"];
   amount:               number;
-  receiptFile:          File;
+  receiptFile?:         File;   // opcional: retiros no necesitan comprobante
   packageTo?:           PackageType;
   packageFrom?:         PackageType;
   reactivationMonth?:   string;
@@ -144,15 +178,18 @@ export function useSubmitPayment() {
 
   return useMutation({
     mutationFn: async (args: SubmitPaymentArgs) => {
-      // 1. Subir comprobante a Storage
-      const ext      = args.receiptFile.name.split(".").pop();
-      const path     = `${session!.user.id}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("receipts")
-        .upload(path, args.receiptFile);
-      if (uploadError) throw new Error("Error al subir comprobante: " + uploadError.message);
-
-      const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(path);
+      // 1. Subir comprobante a Storage (solo si se adjuntó archivo)
+      let receiptStorageUrl: string | undefined;
+      if (args.receiptFile && args.receiptFile.size > 0) {
+        const ext  = args.receiptFile.name.split(".").pop();
+        const path = `${session!.user.id}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("receipts")
+          .upload(path, args.receiptFile);
+        if (uploadError) throw new Error("Error al subir comprobante: " + uploadError.message);
+        const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(path);
+        receiptStorageUrl = publicUrl;
+      }
 
       // 2. Insertar registro de pago
       const { error } = await supabase.from("affiliate_payments").insert({
@@ -160,7 +197,7 @@ export function useSubmitPayment() {
         type:                 args.type,
         status:               "pendiente",
         amount:               args.amount,
-        receipt_url:          publicUrl,
+        receipt_url:          receiptStorageUrl ?? null,
         package_to:           args.packageTo,
         package_from:         args.packageFrom,
         reactivation_month:   args.reactivationMonth,

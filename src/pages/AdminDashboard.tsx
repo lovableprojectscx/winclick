@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { useProducts } from "@/hooks/useProducts";
+import { useToast } from "@/hooks/use-toast";
+import { useProducts, useCategories } from "@/hooks/useProducts";
 import {
   useAllAffiliates, useAllOrders, useAllPayments,
   useApprovePayment, useRejectPayment, useBreakageCommissions,
   useUpdateAffiliate, useUpdateProduct, useCreateProduct,
-  useUpdateBusinessSettings,
+  useUpdateBusinessSettings, useDeleteAffiliate, useUpdateAffiliateStatus,
+  useAffiliateReferralTree, useAffiliatePayments, useUpdateOrderStatus,
+  useCreateCategory, useUpdateCategory, useDeleteCategory, useDeleteProduct,
   type OrderWithItems, type PaymentWithAffiliate,
 } from "@/hooks/useAdmin";
 import { useBusinessSettings } from "@/hooks/useAffiliate";
@@ -15,7 +18,7 @@ import {
   Settings, ShoppingBag, Users, Package, BarChart3, Wallet, CreditCard,
   Gamepad2, AlertTriangle, Search, Eye, CheckCircle, XCircle, ArrowUpRight,
   ArrowDownRight, TrendingUp, Trophy, Target,
-  DollarSign, Download, MoreHorizontal, Edit2, Trash2, Plus, Star,
+  DollarSign, Download, Edit2, Trash2, Plus, Tag,
 } from "lucide-react";
 
 const tabs = [
@@ -60,22 +63,30 @@ interface PaymentRowProps {
   p: PaymentWithAffiliate;
   extraCols?: React.ReactNode;
   onApprove: (p: PaymentWithAffiliate) => void;
-  onReject: (p: PaymentWithAffiliate) => void;
+  onReject:  (p: PaymentWithAffiliate) => void;
+  onView:    (p: PaymentWithAffiliate) => void;
   isPending: boolean;
 }
 
-const PaymentRow = ({ p, extraCols, onApprove, onReject, isPending }: PaymentRowProps) => (
+const PaymentRow = ({ p, extraCols, onApprove, onReject, onView, isPending }: PaymentRowProps) => (
   <tr style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
     <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{p.affiliate?.name ?? "—"}</td>
     <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{p.affiliate?.affiliate_code ?? "—"}</td>
     {extraCols}
     <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {p.amount.toLocaleString()}</td>
     <td className="px-4 py-3">
-      {p.receipt_url ? (
-        <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
-          <Eye size={11} /> Ver
-        </a>
-      ) : <span className="font-jakarta text-xs text-wo-crema-muted">—</span>}
+      <button
+        onClick={() => onView(p)}
+        className={`flex items-center gap-1 font-jakarta text-xs font-bold px-2 py-1 rounded transition-colors ${
+          p.receipt_url
+            ? "text-primary hover:bg-primary/10"
+            : "text-wo-crema/30 cursor-not-allowed"
+        }`}
+        disabled={!p.receipt_url}
+        title={p.receipt_url ? "Ver comprobante" : "Sin comprobante"}
+      >
+        <Eye size={11} /> {p.receipt_url ? "Ver" : "—"}
+      </button>
     </td>
     <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(p.created_at).toLocaleDateString("es-PE")}</td>
     <td className="px-4 py-3">
@@ -84,23 +95,32 @@ const PaymentRow = ({ p, extraCols, onApprove, onReject, isPending }: PaymentRow
       </span>
     </td>
     <td className="px-4 py-3">
-      {p.status === "pendiente" && (
-        <div className="flex gap-1">
-          <button onClick={() => onApprove(p)} disabled={isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-secondary/15 text-wo-crema-muted hover:text-secondary transition-colors">
-            <CheckCircle size={11} /> Aprobar
-          </button>
-          <button onClick={() => onReject(p)} disabled={isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-destructive/15 text-wo-crema-muted hover:text-destructive transition-colors">
-            <XCircle size={11} /> Rechazar
-          </button>
-        </div>
-      )}
+      <div className="flex gap-1">
+        <button
+          onClick={() => onView(p)}
+          className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema transition-colors"
+          title="Revisar comprobante y cambiar estado"
+        >
+          <Eye size={11} /> Revisar
+        </button>
+        {p.status === "pendiente" && (
+          <>
+            <button onClick={() => onApprove(p)} disabled={isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-secondary/15 text-wo-crema-muted hover:text-secondary transition-colors">
+              <CheckCircle size={11} /> Aprobar
+            </button>
+            <button onClick={() => onReject(p)} disabled={isPending} className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-2 py-1 rounded hover:bg-destructive/15 text-wo-crema-muted hover:text-destructive transition-colors">
+              <XCircle size={11} /> Rechazar
+            </button>
+          </>
+        )}
+      </div>
     </td>
   </tr>
 );
 
 export default function AdminDashboard() {
-  const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [activeTab,            setActiveTab]            = useState("resumen");
   const [openSettings,         setOpenSettings]         = useState(false);
@@ -109,20 +129,27 @@ export default function AdminDashboard() {
   const [affiliateStatusFilter,setAffiliateStatusFilter]= useState<"todos" | "active" | "suspended" | "pending">("todos");
   const [paymentSubTab,        setPaymentSubTab]        = useState<"activaciones" | "reactivaciones" | "upgrades" | "retiros" | "recargas">("activaciones");
   const [remanentFilter,       setRemanentFilter]       = useState("todos");
-  const [viewingAffiliate,     setViewingAffiliate]     = useState<Affiliate | null>(null);
+  const [viewingAffiliate,     setViewingAffiliate]     = useState<any | null>(null);
   const [editingAffiliate,     setEditingAffiliate]     = useState<Affiliate | null>(null);
   const [viewingOrder,         setViewingOrder]         = useState<OrderWithItems | null>(null);
   const [viewingProduct,       setViewingProduct]       = useState<Product | null>(null);
   const [newProductModal,      setNewProductModal]      = useState(false);
+  const [viewingPayment,       setViewingPayment]       = useState<PaymentWithAffiliate | null>(null);
+  const [confirmDeleteId,      setConfirmDeleteId]      = useState<string | null>(null);
+  const [confirmDeleteProductId, setConfirmDeleteProductId] = useState<string | null>(null);
+  const [affDetailTab,         setAffDetailTab]         = useState<"info" | "pagos" | "red">("info");
 
   // Settings form state (métodos de pago)
-  const [settingsYape,  setSettingsYape]  = useState("");
-  const [settingsPlin,  setSettingsPlin]  = useState("");
-  const [settingsBank,  setSettingsBank]  = useState("");
-  const [settingsAcct,  setSettingsAcct]  = useState("");
-  const [settingsWA,    setSettingsWA]    = useState("");
-  const [settingsPhone, setSettingsPhone] = useState("");
-  const [settingsSaved, setSettingsSaved] = useState(false);
+  const [settingsYape,    setSettingsYape]    = useState("");
+  const [settingsPlin,    setSettingsPlin]    = useState("");
+  const [settingsHolder,  setSettingsHolder]  = useState("");
+  const [settingsBank,    setSettingsBank]    = useState("");
+  const [settingsAcct,    setSettingsAcct]    = useState("");
+  const [settingsWA,      setSettingsWA]      = useState("");
+  const [settingsPhone,   setSettingsPhone]   = useState("");
+  const [settingsSaved,   setSettingsSaved]   = useState(false);
+  const [settingsQrUrl,   setSettingsQrUrl]   = useState("");
+  const [settingsQrFile,  setSettingsQrFile]  = useState<File | null>(null);
 
   // Edit affiliate form state
   const [affName,     setAffName]     = useState("");
@@ -130,33 +157,59 @@ export default function AdminDashboard() {
   const [affPackage,  setAffPackage]  = useState("");
 
   // Edit product form state
-  const [prodName,    setProdName]    = useState("");
-  const [prodPrice,   setProdPrice]   = useState("");
-  const [prodStock,   setProdStock]   = useState("");
-  const [prodDesc,    setProdDesc]    = useState("");
+  const [prodName,       setProdName]       = useState("");
+  const [prodPrice,      setProdPrice]      = useState("");
+  const [prodStock,      setProdStock]      = useState("");
+  const [prodDesc,       setProdDesc]       = useState("");
+  const [prodImg,        setProdImg]        = useState("");
+  const [prodCategoryId, setProdCategoryId] = useState<string | null>(null);
+  const [prodIsActive,   setProdIsActive]   = useState(true);
 
   // New product form state
-  const [newProdName,  setNewProdName]  = useState("");
-  const [newProdPrice, setNewProdPrice] = useState("");
-  const [newProdStock, setNewProdStock] = useState("");
-  const [newProdDesc,  setNewProdDesc]  = useState("");
-  const [newProdImg,   setNewProdImg]   = useState("");
+  const [newProdName,       setNewProdName]       = useState("");
+  const [newProdPrice,      setNewProdPrice]       = useState("");
+  const [newProdStock,      setNewProdStock]       = useState("");
+  const [newProdDesc,       setNewProdDesc]        = useState("");
+  const [newProdImg,        setNewProdImg]         = useState("");
+  const [newProdCategoryId, setNewProdCategoryId]  = useState<string | null>(null);
+
+  // Category management state
+  const [catalogSubTab,  setCatalogSubTab]  = useState<"productos" | "categorias">("productos");
+  const [catModal,       setCatModal]       = useState(false);
+  const [editingCat,     setEditingCat]     = useState<{ id: string; name: string; icon: string | null; color: string | null } | null>(null);
+  const [catName,        setCatName]        = useState("");
+  const [catColor,       setCatColor]       = useState("#F59E0B");
+  const [confirmDeleteCatId, setConfirmDeleteCatId] = useState<string | null>(null);
 
   // Data hooks
   const { data: affiliates = [], isLoading: loadingAffiliates } = useAllAffiliates();
   const { data: orders = [],     isLoading: loadingOrders }     = useAllOrders();
   const { data: payments = [],   isLoading: loadingPayments }   = useAllPayments();
   const { data: breakage = [] }                                 = useBreakageCommissions();
-  const { data: products = [],   isLoading: loadingProducts }   = useProducts(undefined, true);
+  const { data: products = [],    isLoading: loadingProducts }   = useProducts(undefined, true);
+  const { data: categories = [],  isLoading: loadingCategories } = useCategories();
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
   const approvePayment        = useApprovePayment();
   const rejectPayment         = useRejectPayment();
   const updateAffiliate       = useUpdateAffiliate();
   const updateProduct         = useUpdateProduct();
   const createProduct         = useCreateProduct();
   const updateBusinessSettings = useUpdateBusinessSettings();
+  const deleteProduct          = useDeleteProduct();
+  const deleteAffiliate       = useDeleteAffiliate();
+  const updateAffiliateStatus = useUpdateAffiliateStatus();
+  const updateOrderStatus     = useUpdateOrderStatus();
   const { data: bizSettings } = useBusinessSettings();
 
-  if (!isAdmin) { navigate("/login-afiliado"); return null; }
+  // ─── Datos del afiliado seleccionado ──────────────────────────────────────
+  const { data: selectedReferralTree = [] } = useAffiliateReferralTree(viewingAffiliate?.id ?? null);
+  const { data: selectedPayments = [] }     = useAffiliatePayments(viewingAffiliate?.id ?? null);
+
+  const packageDepth: Record<string, number> = { "Básico": 3, "Intermedio": 7, "VIP": 10 };
+  const depthUnlocked = viewingAffiliate ? packageDepth[viewingAffiliate.package] || 10 : 10;
+  const visibleReferralTree = selectedReferralTree.filter(r => r.level <= depthUnlocked);
 
   // ─── Derived aggregates ───────────────────────────────────────────────────
   const totalRevenue     = orders.reduce((s, o) => s + o.total, 0);
@@ -195,36 +248,98 @@ export default function AdminDashboard() {
     recargas.filter((x) => x.status === "pendiente").length;
 
   const handleApprove = async (p: PaymentWithAffiliate) => {
-    await approvePayment.mutateAsync(p.id);
+    try {
+      await approvePayment.mutateAsync(p.id);
+      setViewingPayment(null);
+      toast({ title: "✓ Pago aprobado", description: `${p.affiliate?.name ?? "Afiliado"} — S/ ${p.amount.toFixed(2)}` });
+    } catch (err) {
+      toast({ title: "Error al aprobar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
   };
   const handleReject = async (p: PaymentWithAffiliate) => {
-    await rejectPayment.mutateAsync(p.id);
+    try {
+      await rejectPayment.mutateAsync(p.id);
+      setViewingPayment(null);
+      toast({ title: "Pago rechazado", description: `${p.affiliate?.name ?? "Afiliado"} notificado.` });
+    } catch (err) {
+      toast({ title: "Error al rechazar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
+  };
+  const handleView = (p: PaymentWithAffiliate) => {
+    setViewingPayment(p);
+  };
+
+  const handleDeleteAffiliate = async (id: string) => {
+    try {
+      await deleteAffiliate.mutateAsync(id);
+      setConfirmDeleteId(null);
+      setViewingAffiliate(null);
+      toast({ title: "Afiliado eliminado" });
+    } catch (err) {
+      toast({ title: "Error al eliminar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: "active" | "suspended" | "pending") => {
+    try {
+      await updateAffiliateStatus.mutateAsync({ id, status });
+      // Sync modal snapshot so badge + buttons reflect new state immediately
+      setViewingAffiliate((prev: any) => prev ? { ...prev, account_status: status } : null);
+      const statusLabel = status === "active" ? "Activo" : status === "suspended" ? "Suspendido" : "Pendiente";
+      toast({ title: `Estado actualizado: ${statusLabel}` });
+    } catch (err) {
+      toast({ title: "Error al cambiar estado", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
   };
 
   const handleOpenSettings = () => {
     setSettingsYape(bizSettings?.yape_number ?? "");
     setSettingsPlin(bizSettings?.plin_number ?? "");
+    setSettingsHolder(bizSettings?.account_holder_name ?? "");
     setSettingsBank(bizSettings?.bank_name ?? "");
     setSettingsAcct(bizSettings?.bank_account ?? "");
     setSettingsWA(bizSettings?.whatsapp_number ?? "");
     setSettingsPhone(bizSettings?.contact_phone ?? "");
+    setSettingsQrUrl(bizSettings?.yape_qr_url ?? "");
+    setSettingsQrFile(null);
     setSettingsSaved(false);
     setOpenSettings(true);
   };
 
   const handleSaveSettings = async () => {
-    if (!bizSettings?.id) return;
-    await updateBusinessSettings.mutateAsync({
-      id:               bizSettings.id,
-      yape_number:      settingsYape,
-      plin_number:      settingsPlin,
-      bank_name:        settingsBank,
-      bank_account:     settingsAcct,
-      whatsapp_number:  settingsWA,
-      contact_phone:    settingsPhone,
-      contact_email:    bizSettings.contact_email ?? undefined,
-    });
-    setSettingsSaved(true);
+    if (!bizSettings?.id) {
+      toast({ title: "Error", description: "No se encontró la configuración del negocio.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      let finalQrUrl = settingsQrUrl;
+      if (settingsQrFile) {
+        const fileExt = settingsQrFile.name.split('.').pop();
+        const fileName = `qr-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from("receipts").upload(`settings/${fileName}`, settingsQrFile);
+        if (uploadError) throw new Error("Error al subir QR: " + uploadError.message);
+        const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(`settings/${fileName}`);
+        finalQrUrl = publicUrl;
+      }
+
+      await updateBusinessSettings.mutateAsync({
+        id:                   bizSettings.id,
+        yape_number:          settingsYape,
+        plin_number:          settingsPlin,
+        account_holder_name:  settingsHolder,
+        yape_qr_url:          finalQrUrl,
+        bank_name:            settingsBank,
+        bank_account:         settingsAcct,
+        whatsapp_number:      settingsWA,
+        contact_phone:        settingsPhone,
+        contact_email:        bizSettings.contact_email ?? undefined,
+      });
+      setSettingsSaved(true);
+      toast({ title: "✓ Métodos de pago guardados" });
+    } catch (err) {
+      toast({ title: "Error al guardar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
   };
 
   const openEditAffiliate = (a: Affiliate) => {
@@ -236,8 +351,13 @@ export default function AdminDashboard() {
 
   const handleSaveAffiliate = async () => {
     if (!editingAffiliate) return;
-    await updateAffiliate.mutateAsync({ id: editingAffiliate.id, name: affName, yape_number: affYape, pkg: affPackage });
-    setEditingAffiliate(null);
+    try {
+      await updateAffiliate.mutateAsync({ id: editingAffiliate.id, name: affName, yape_number: affYape, pkg: affPackage });
+      setEditingAffiliate(null);
+      toast({ title: "✓ Afiliado actualizado" });
+    } catch (err) {
+      toast({ title: "Error al guardar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
   };
 
   const openEditProduct = (p: Product) => {
@@ -245,32 +365,89 @@ export default function AdminDashboard() {
     setProdPrice(p.price.toFixed(2));
     setProdStock(String(p.stock));
     setProdDesc(p.description ?? "");
+    setProdImg(p.image_url ?? "");
+    setProdCategoryId(p.category_id ?? null);
+    setProdIsActive(p.is_active);
     setViewingProduct(p);
   };
 
   const handleSaveProduct = async () => {
     if (!viewingProduct) return;
-    await updateProduct.mutateAsync({
-      id:          viewingProduct.id,
-      name:        prodName,
-      price:       parseFloat(prodPrice) || 0,
-      stock:       parseInt(prodStock, 10) || 0,
-      description: prodDesc,
-    });
-    setViewingProduct(null);
+    try {
+      await updateProduct.mutateAsync({
+        id:          viewingProduct.id,
+        name:        prodName,
+        price:       parseFloat(prodPrice) || 0,
+        stock:       parseInt(prodStock, 10) || 0,
+        description: prodDesc,
+        image_url:   prodImg,
+        is_active:   prodIsActive,
+        category_id: prodCategoryId,
+      });
+      setViewingProduct(null);
+      toast({ title: "✓ Producto actualizado" });
+    } catch (err) {
+      toast({ title: "Error al guardar producto", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
   };
 
   const handleCreateProduct = async () => {
-    await createProduct.mutateAsync({
-      name:        newProdName,
-      price:       parseFloat(newProdPrice) || 0,
-      stock:       parseInt(newProdStock, 10) || 0,
-      description: newProdDesc,
-      image_url:   newProdImg,
-      is_active:   true,
-    });
-    setNewProductModal(false);
-    setNewProdName(""); setNewProdPrice(""); setNewProdStock(""); setNewProdDesc(""); setNewProdImg("");
+    try {
+      await createProduct.mutateAsync({
+        name:        newProdName,
+        price:       parseFloat(newProdPrice) || 0,
+        stock:       parseInt(newProdStock, 10) || 0,
+        description: newProdDesc,
+        image_url:   newProdImg,
+        is_active:   true,
+        category_id: newProdCategoryId,
+      });
+      setNewProductModal(false);
+      setNewProdName(""); setNewProdPrice(""); setNewProdStock(""); setNewProdDesc(""); setNewProdImg(""); setNewProdCategoryId(null);
+      toast({ title: "✓ Producto creado" });
+    } catch (err) {
+      toast({ title: "Error al crear producto", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
+  };
+
+  const openCatCreate = () => {
+    setEditingCat(null);
+    setCatName("");
+    setCatColor("#F59E0B");
+    setCatModal(true);
+  };
+
+  const openCatEdit = (c: { id: string; name: string; icon: string | null; color: string | null }) => {
+    setEditingCat(c);
+    setCatName(c.name);
+    setCatColor(c.color ?? "#F59E0B");
+    setCatModal(true);
+  };
+
+  const handleSaveCategory = async () => {
+    if (!catName.trim()) return;
+    try {
+      if (editingCat) {
+        await updateCategory.mutateAsync({ id: editingCat.id, name: catName.trim(), color: catColor });
+        toast({ title: "✓ Categoría actualizada" });
+      } else {
+        await createCategory.mutateAsync({ name: catName.trim(), color: catColor });
+        toast({ title: "✓ Categoría creada" });
+      }
+      setCatModal(false);
+    } catch (err) {
+      toast({ title: "Error al guardar categoría", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await deleteCategory.mutateAsync(id);
+      setConfirmDeleteCatId(null);
+      toast({ title: "Categoría eliminada" });
+    } catch (err) {
+      toast({ title: "Error al eliminar categoría", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+    }
   };
 
 
@@ -396,7 +573,11 @@ export default function AdminDashboard() {
                   }`}>{f.charAt(0).toUpperCase() + f.slice(1)}</button>
                 ))}
               </div>
-              <button className="flex items-center gap-1.5 font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema px-3 py-1.5 rounded-wo-pill bg-wo-carbon">
+              <button
+                onClick={() => toast({ title: "Exportar — Próximamente", description: "Esta función estará disponible pronto." })}
+                className="flex items-center gap-1.5 font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema px-3 py-1.5 rounded-wo-pill bg-wo-carbon"
+                style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}
+              >
                 <Download size={12} /> Exportar
               </button>
             </div>
@@ -480,62 +661,89 @@ export default function AdminDashboard() {
             </div>
 
             {loadingAffiliates ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-wo-grafito rounded-wo-card h-[200px] animate-pulse" style={cardStyle} />
+                  <div key={i} className="bg-wo-carbon/40 rounded-wo-card h-[220px] animate-pulse shadow-lg" style={cardStyle} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredAffiliates.map((a) => (
-                  <div key={a.id} className="bg-wo-grafito rounded-wo-card p-5 hover:border-primary/30 transition-colors" style={cardStyle}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-jakarta font-bold text-xs">
-                        {a.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
+                  <div key={a.id} className="relative bg-wo-carbon rounded-wo-card p-5 group hover:border-primary/40 transition-all duration-300 shadow-xl" style={cardStyle}>
+                    <div className="flex items-start gap-4 mb-5">
+                      <div className="w-12 h-12 rounded-full bg-wo-grafito flex items-center justify-center font-syne font-bold text-lg text-primary overflow-hidden shrink-0 shadow-inner" style={{ border: "0.5px solid rgba(255,255,255,0.08)" }}>
+                        {a.name.charAt(0)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-jakarta font-semibold text-sm text-wo-crema truncate">{a.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>{a.package}</span>
-                          <span className={`font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill ${
-                            a.account_status === "active"    ? "bg-secondary/12 text-secondary" :
-                            a.account_status === "suspended" ? "bg-destructive/12 text-destructive" :
-                            "bg-primary/12 text-primary"
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-syne font-bold text-wo-crema text-base truncate pr-6 leading-tight" title={a.name}>{a.name}</h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                          <span className="text-[9px] font-jakarta font-extrabold px-1.5 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-wider">{a.package}</span>
+                          <span className={`font-jakarta text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                            a.account_status === "active"    ? "bg-secondary/10 text-secondary" :
+                            a.account_status === "suspended" ? "bg-destructive/10 text-destructive" :
+                            "bg-wo-crema/5 text-wo-crema-muted"
                           }`}>
-                            {a.account_status === "active" ? "● Activo" : a.account_status === "suspended" ? "● Suspendido" : "⏳ Pendiente"}
+                            {a.account_status === "active" ? "Activo" : a.account_status === "suspended" ? "Suspendido" : "Pendiente"}
                           </span>
                         </div>
+                        {a.sponsor?.name && (
+                          <div className="mt-2 flex items-center gap-1.5 bg-secondary/5 px-2 py-1 rounded-lg border border-secondary/10 w-fit">
+                            <span className="text-[8px] font-jakarta font-bold text-secondary uppercase opacity-70">Sponsor:</span>
+                            <span className="text-[10px] font-jakarta font-medium text-wo-crema truncate max-w-[120px]">{a.sponsor.name}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div>
-                        <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Ventas</p>
-                        <p className="font-syne font-bold text-sm text-primary">S/ {(a.total_sales ?? 0).toFixed(2)}</p>
+
+                    <div className="grid grid-cols-2 gap-2.5 mb-5">
+                      <div className="bg-wo-grafito/40 p-2.5 rounded-xl border border-white/[0.03]">
+                        <p className="font-jakarta text-[8px] text-wo-crema-muted uppercase tracking-tighter mb-0.5">Ventas Totales</p>
+                        <p className="font-syne font-extrabold text-sm text-primary">S/ {(a.total_sales ?? 0).toFixed(2)}</p>
                       </div>
-                      <div>
-                        <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Paquete</p>
-                        <p className="font-syne font-bold text-sm text-wo-crema">{a.package ?? "—"}</p>
+                      <div className="bg-wo-grafito/40 p-2.5 rounded-xl border border-white/[0.03]">
+                        <p className="font-jakarta text-[8px] text-wo-crema-muted uppercase tracking-tighter mb-0.5">Red de Referidos</p>
+                        <p className="font-syne font-extrabold text-sm text-wo-crema">{a.referral_count ?? 0} <span className="text-[10px] font-normal opacity-50">ref.</span></p>
                       </div>
-                      <div>
-                        <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Comisiones</p>
-                        <p className="font-syne font-bold text-sm text-secondary">S/ {(a.total_commissions ?? 0).toFixed(2)}</p>
+                      <div className="bg-wo-grafito/40 p-2.5 rounded-xl border border-white/[0.03]">
+                        <p className="font-jakarta text-[8px] text-wo-crema-muted uppercase tracking-tighter mb-0.5">Comisiones</p>
+                        <p className="font-syne font-extrabold text-sm text-secondary">S/ {(a.total_commissions ?? 0).toFixed(2)}</p>
                       </div>
-                      <div>
-                        <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Referidos</p>
-                        <p className="font-syne font-bold text-sm text-wo-crema">{a.referral_count ?? 0}</p>
+                      <div className="bg-wo-grafito/40 p-2.5 rounded-xl border border-white/[0.03]">
+                        <p className="font-jakarta text-[8px] text-wo-crema-muted uppercase tracking-tighter mb-0.5">Código Afiliado</p>
+                        <p className="font-syne font-extrabold text-[11px] text-wo-crema/40 truncate">{a.affiliate_code}</p>
                       </div>
                     </div>
-                    <div className="pt-3 flex items-center justify-between" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
-                      <span className="font-jakarta text-[10px] text-wo-crema-muted">{a.affiliate_code}</span>
-                      <div className="flex gap-1">
-                        <button onClick={() => setViewingAffiliate(a)} className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"><Eye size={12} /></button>
-                        <button onClick={() => openEditAffiliate(a)} className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"><Edit2 size={12} /></button>
-                      </div>
+
+                    <div className="flex gap-2 pt-4 border-t border-white/[0.06]">
+                      <button 
+                        onClick={() => { setViewingAffiliate(a); setAffDetailTab("info"); }} 
+                        className="flex-1 flex items-center justify-center gap-2 font-jakarta font-bold text-xs py-2.5 rounded-xl bg-wo-carbon border border-white/5 hover:bg-wo-grafito hover:border-white/10 transition-all text-wo-crema-muted hover:text-wo-crema shadow-sm"
+                      >
+                        <Eye size={12} className="text-primary" /> Ver Detalle
+                      </button>
+                      <button 
+                        onClick={() => openEditAffiliate(a)} 
+                        className="p-2.5 rounded-xl bg-wo-carbon border border-white/5 hover:bg-wo-grafito hover:border-white/10 transition-all text-wo-crema-muted hover:text-wo-crema shadow-sm"
+                        title="Editar"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                      <button 
+                        onClick={() => setConfirmDeleteId(a.id)} 
+                        className="p-2.5 rounded-xl bg-destructive/5 border border-destructive/10 hover:bg-destructive/20 transition-all text-destructive shadow-sm"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 ))}
                 {filteredAffiliates.length === 0 && (
-                  <div className="col-span-3 text-center py-12 font-jakarta text-sm text-wo-crema-muted">No hay afiliados</div>
+                  <div className="col-span-full text-center py-24 bg-wo-carbon/20 rounded-wo-card border-2 border-dashed border-white/5">
+                    <Users size={40} className="mx-auto text-wo-crema/5 mb-4" />
+                    <p className="font-jakarta text-sm text-wo-crema-muted font-medium">No se encontraron afiliados para "{affiliateSearch}"</p>
+                    <button onClick={() => {setAffiliateSearch(""); setAffiliateStatusFilter("todos");}} className="mt-4 text-xs font-bold text-primary hover:underline">Limpiar filtros</button>
+                  </div>
                 )}
               </div>
             )}
@@ -545,60 +753,165 @@ export default function AdminDashboard() {
         {/* =================== CATÁLOGO =================== */}
         {activeTab === "catalogo" && (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="font-jakarta text-sm text-wo-crema-muted">{products.length} productos</p>
-              <button onClick={() => setNewProductModal(true)} className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn hover:bg-primary/90 transition-colors">
-                <Plus size={12} /> Nuevo Producto
+            {/* Sub-tabs */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCatalogSubTab("productos")}
+                className={`flex items-center gap-1.5 font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn transition-colors ${catalogSubTab === "productos" ? "bg-primary text-primary-foreground" : "bg-wo-grafito text-wo-crema-muted hover:text-wo-crema"}`}
+                style={catalogSubTab !== "productos" ? cardStyle : {}}
+              >
+                <Package size={12} /> Productos ({products.length})
+              </button>
+              <button
+                onClick={() => setCatalogSubTab("categorias")}
+                className={`flex items-center gap-1.5 font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn transition-colors ${catalogSubTab === "categorias" ? "bg-primary text-primary-foreground" : "bg-wo-grafito text-wo-crema-muted hover:text-wo-crema"}`}
+                style={catalogSubTab !== "categorias" ? cardStyle : {}}
+              >
+                <Tag size={12} /> Categorías ({categories.length})
               </button>
             </div>
-            <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead><tr style={rowBorder}>
-                    {["Producto", "Precio", "Stock", "Rating", "Estado", "Acciones"].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
-                    ))}
-                  </tr></thead>
-                  <tbody>
-                    {loadingProducts ? (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">Cargando...</td></tr>
-                    ) : products.map((p) => (
-                      <tr key={p.id} style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <img src={p.image_url ?? ""} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                            <div>
-                              <span className="font-jakarta text-sm text-wo-crema font-medium">{p.name}</span>
-                              {p.organic && <span className="ml-2 text-[9px] font-jakarta font-bold px-1.5 py-0.5 rounded-wo-pill bg-secondary/15 text-secondary">ORG</span>}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {p.price.toFixed(2)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`font-jakarta text-xs font-bold ${p.stock <= 10 ? "text-destructive" : p.stock <= 30 ? "text-primary" : "text-wo-crema-muted"}`}>
-                            {p.stock} {p.stock <= 10 && "⚠️"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="font-jakarta text-xs text-primary flex items-center gap-1"><Star size={10} className="fill-primary" /> {p.rating ?? 0}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`font-jakarta text-[10px] font-bold ${p.is_active ? "text-secondary" : "text-destructive"}`}>
-                            {p.is_active ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-1">
-                            <button onClick={() => openEditProduct(p)} className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"><Edit2 size={12} /></button>
-                            <button className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-destructive"><Trash2 size={12} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+            {/* ---- Sub-tab: Productos ---- */}
+            {catalogSubTab === "productos" && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-jakarta text-sm text-wo-crema-muted">{products.length} productos</p>
+                  <button onClick={() => setNewProductModal(true)} className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn hover:bg-primary/90 transition-colors">
+                    <Plus size={12} /> Nuevo Producto
+                  </button>
+                </div>
+                <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead><tr style={rowBorder}>
+                        {["Producto", "Categoría", "Precio", "Stock", "Estado", "Acciones"].map((h) => (
+                          <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>
+                        {loadingProducts ? (
+                          <tr><td colSpan={6} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">Cargando...</td></tr>
+                        ) : products.map((p) => {
+                          const cat = categories.find((c) => c.id === p.category_id);
+                          return (
+                            <tr key={p.id} style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  {p.image_url ? (
+                                  <img src={p.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-wo-carbon flex items-center justify-center text-wo-crema/20 text-xs">—</div>
+                                )}
+                                  <div>
+                                    <span className="font-jakarta text-sm text-wo-crema font-medium">{p.name}</span>
+                                    {p.organic && <span className="ml-2 text-[9px] font-jakarta font-bold px-1.5 py-0.5 rounded-wo-pill bg-secondary/15 text-secondary">ORG</span>}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                {cat ? (
+                                  <span
+                                    className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill"
+                                    style={{ background: (cat.color ?? "#F59E0B") + "22", color: cat.color ?? "#F59E0B", border: `0.5px solid ${cat.color ?? "#F59E0B"}44` }}
+                                  >
+                                    {cat.name}
+                                  </span>
+                                ) : (
+                                  <span className="font-jakarta text-[10px] text-wo-crema/30">—</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {p.price.toFixed(2)}</td>
+                              <td className="px-4 py-3">
+                                <span className={`font-jakarta text-xs font-bold ${p.stock <= 10 ? "text-destructive" : p.stock <= 30 ? "text-primary" : "text-wo-crema-muted"}`}>
+                                  {p.stock} {p.stock <= 10 && "⚠️"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`font-jakarta text-[10px] font-bold ${p.is_active ? "text-secondary" : "text-destructive"}`}>
+                                  {p.is_active ? "Activo" : "Inactivo"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex gap-1">
+                                  <button onClick={() => openEditProduct(p)} className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"><Edit2 size={12} /></button>
+                                  <button onClick={() => setConfirmDeleteProductId(p.id)} className="p-1.5 rounded hover:bg-destructive/10 text-wo-crema-muted hover:text-destructive"><Trash2 size={12} /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* ---- Sub-tab: Categorías ---- */}
+            {catalogSubTab === "categorias" && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-jakarta text-sm text-wo-crema-muted">{categories.length} categorías — se usan como filtros en el catálogo público</p>
+                  <button onClick={openCatCreate} className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn hover:bg-primary/90 transition-colors">
+                    <Plus size={12} /> Nueva Categoría
+                  </button>
+                </div>
+                <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
+                  {loadingCategories ? (
+                    <p className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">Cargando...</p>
+                  ) : categories.length === 0 ? (
+                    <div className="px-4 py-12 text-center">
+                      <Tag size={28} className="mx-auto text-wo-crema/20 mb-3" />
+                      <p className="font-jakarta text-sm text-wo-crema-muted">No hay categorías aún</p>
+                      <p className="font-jakarta text-xs text-wo-crema/30 mt-1">Crea una categoría y asígnala a los productos</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead><tr style={rowBorder}>
+                          {["Categoría", "Color", "Productos", "Acciones"].map((h) => (
+                            <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>
+                          {categories.map((c) => {
+                            const prodCount = products.filter((p) => p.category_id === c.id).length;
+                            return (
+                              <tr key={c.id} style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
+                                <td className="px-4 py-3">
+                                  <span className="font-jakarta text-sm text-wo-crema font-medium">{c.name}</span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full border border-white/10" style={{ background: c.color ?? "#F59E0B" }} />
+                                    <span className="font-jakarta text-xs text-wo-crema-muted">{c.color ?? "—"}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="font-jakarta text-xs text-wo-crema-muted">{prodCount} producto{prodCount !== 1 ? "s" : ""}</span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex gap-1">
+                                    <button onClick={() => openCatEdit(c)} className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"><Edit2 size={12} /></button>
+                                    <button
+                                      onClick={() => setConfirmDeleteCatId(c.id)}
+                                      className="p-1.5 rounded hover:bg-wo-carbon text-wo-crema-muted hover:text-destructive"
+                                      title={prodCount > 0 ? `Desasignará ${prodCount} producto(s)` : "Eliminar"}
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -651,7 +964,11 @@ export default function AdminDashboard() {
                 {[...products].sort((a, b) => a.stock - b.stock).slice(0, 5).map((p, i) => (
                   <div key={p.id} className="flex items-center gap-3">
                     <span className="font-syne font-bold text-sm text-wo-crema-muted w-5">{i + 1}</span>
-                    <img src={p.image_url ?? ""} alt="" className="w-8 h-8 rounded object-cover" />
+                    {p.image_url ? (
+                      <img src={p.image_url} alt="" className="w-8 h-8 rounded object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-wo-carbon flex items-center justify-center text-wo-crema/20 text-[10px]">—</div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-jakarta text-xs text-wo-crema truncate">{p.name}</p>
                     </div>
@@ -771,7 +1088,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {activaciones.map((p) => (
-                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} onView={handleView} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3">
                             <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>
                               {p.package_to ?? "—"}
@@ -789,7 +1106,7 @@ export default function AdminDashboard() {
             {/* Reactivaciones */}
             {paymentSubTab === "reactivaciones" && (
               <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
-                <p className="px-4 pt-4 font-jakarta text-xs text-wo-crema-muted">Reactivaciones S/ 300 mensuales.</p>
+                <p className="px-4 pt-4 font-jakarta text-xs text-wo-crema-muted">Reactivaciones (Compras mensuales de S/ 300 acumulables).</p>
                 <div className="overflow-x-auto mt-3">
                   <table className="w-full">
                     <thead><tr style={rowBorder}>
@@ -799,7 +1116,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {reactivaciones.map((p) => (
-                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} onView={handleView} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema font-semibold">{p.reactivation_month ?? "—"}</td>
                         } />
                       ))}
@@ -823,7 +1140,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {upgrades.map((p) => (
-                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} onView={handleView} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">
                             <span className="text-wo-crema-muted">{p.package_from}</span> → <span className="font-bold text-primary">{p.package_to}</span>
                           </td>
@@ -849,7 +1166,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {retiros.map((p) => (
-                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} onView={handleView} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{p.withdrawal_method ?? "—"}</td>
                         } />
                       ))}
@@ -873,7 +1190,7 @@ export default function AdminDashboard() {
                     </tr></thead>
                     <tbody>
                       {recargas.map((p) => (
-                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
+                        <PaymentRow key={p.id} p={p} onApprove={handleApprove} onReject={handleReject} onView={handleView} isPending={approvePayment.isPending || rejectPayment.isPending} extraCols={
                           <td className="px-4 py-3 font-syne font-bold text-sm text-secondary">S/ {p.wallet_credit_amount ?? p.amount}</td>
                         } />
                       ))}
@@ -891,7 +1208,10 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-syne font-bold text-lg text-wo-crema">Sistema de Gamificación</h2>
-              <button className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn">
+              <button
+                onClick={() => toast({ title: "Nueva Misión — Próximamente", description: "La gestión de misiones estará disponible en la próxima versión." })}
+                className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn hover:bg-primary/90"
+              >
                 <Plus size={12} /> Nueva Misión
               </button>
             </div>
@@ -1022,6 +1342,269 @@ export default function AdminDashboard() {
         )}
       </div>
 
+
+      {/* ========== MODAL: Detalle completo del Afiliado ========== */}
+      {viewingAffiliate && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewingAffiliate(null)}>
+          <div className="bg-wo-grafito rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="px-6 py-4 flex items-center gap-4" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+              <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-jakarta font-bold text-sm shrink-0">
+                {viewingAffiliate.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-syne font-bold text-lg text-wo-crema truncate">{viewingAffiliate.name}</h3>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>{viewingAffiliate.package}</span>
+                  <span className={`font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill ${
+                    viewingAffiliate.account_status === "active"    ? "bg-secondary/12 text-secondary" :
+                    viewingAffiliate.account_status === "suspended" ? "bg-destructive/12 text-destructive" :
+                    "bg-primary/12 text-primary"
+                  }`}>
+                    {viewingAffiliate.account_status === "active" ? "● Activo" : viewingAffiliate.account_status === "suspended" ? "● Suspendido" : "⏳ Pendiente"}
+                  </span>
+                  <span className="font-jakarta text-[10px] text-wo-crema-muted">{viewingAffiliate.affiliate_code}</span>
+                </div>
+              </div>
+              {/* Cambiar estado rápido */}
+              <div className="flex gap-1 shrink-0">
+                {(["active","suspended","pending"] as const).map((s) => (
+                  <button
+                    key={s}
+                    disabled={viewingAffiliate.account_status === s || updateAffiliateStatus.isPending}
+                    onClick={() => handleStatusChange(viewingAffiliate.id, s)}
+                    className={`font-jakarta text-[9px] font-bold px-2 py-1 rounded transition-colors disabled:opacity-40 ${
+                      s === "active"    ? "hover:bg-secondary/15 hover:text-secondary text-wo-crema-muted" :
+                      s === "suspended" ? "hover:bg-destructive/15 hover:text-destructive text-wo-crema-muted" :
+                      "hover:bg-primary/15 hover:text-primary text-wo-crema-muted"
+                    } ${viewingAffiliate.account_status === s ? (
+                      s === "active" ? "bg-secondary/15 text-secondary" :
+                      s === "suspended" ? "bg-destructive/15 text-destructive" :
+                      "bg-primary/15 text-primary"
+                    ) : ""}`}
+                  >
+                    {s === "active" ? "Activo" : s === "suspended" ? "Suspender" : "Pendiente"}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setViewingAffiliate(null)} className="text-wo-crema-muted hover:text-wo-crema text-xl leading-none ml-2">✕</button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 px-6 pt-3 pb-0" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+              {([
+                { id: "info",  label: "Información" },
+                { id: "pagos", label: `Pagos (${selectedPayments.length})` },
+                { id: "red",   label: `Red de referidos (${visibleReferralTree.length})` },
+              ] as const).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setAffDetailTab(t.id)}
+                  className={`font-jakarta text-xs font-medium px-4 py-2.5 border-b-2 transition-colors -mb-px ${
+                    affDetailTab === t.id
+                      ? "border-primary text-primary"
+                      : "border-transparent text-wo-crema-muted hover:text-wo-crema"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Body */}
+            <div className="overflow-y-auto flex-1 p-6">
+
+              {/* ── Tab: Información ── */}
+              {affDetailTab === "info" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      { label: "Email",       value: viewingAffiliate.email ?? "—" },
+                      { label: "DNI",         value: viewingAffiliate.dni ?? "—" },
+                      { label: "Número Yape",  value: viewingAffiliate.yape_number ?? "—" },
+                      { label: "Referidos",   value: viewingAffiliate.referral_count ?? 0 },
+                      { label: "Ventas",      value: `S/ ${(viewingAffiliate.total_sales ?? 0).toFixed(2)}` },
+                      { label: "Comisiones",  value: `S/ ${(viewingAffiliate.total_commissions ?? 0).toFixed(2)}` },
+                      { label: "Patrocinador", value: viewingAffiliate.sponsor?.name ?? "Sin patrocinador" },
+                      { label: "Registro",    value: new Date(viewingAffiliate.created_at).toLocaleDateString("es-PE") },
+                      { label: "Últ. Activa", value: viewingAffiliate.last_reactivation_at ? new Date(viewingAffiliate.last_reactivation_at).toLocaleDateString("es-PE") : "—" },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-wo-carbon rounded-xl p-3" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+                        <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-1">{label}</p>
+                        <p className="font-jakarta text-sm font-bold text-wo-crema truncate" title={String(value)}>{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => { setViewingAffiliate(null); openEditAffiliate(viewingAffiliate); }}
+                      className="flex-1 flex items-center justify-center gap-1.5 font-jakarta font-bold text-sm py-2.5 rounded-xl transition-colors"
+                      style={{ background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.1)", color: "hsl(var(--wo-crema))" }}
+                    >
+                      <Edit2 size={13} /> Editar datos
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(viewingAffiliate.id)}
+                      className="flex items-center justify-center gap-1.5 font-jakarta font-bold text-sm px-5 py-2.5 rounded-xl transition-colors"
+                      style={{ background: "rgba(231,76,60,0.1)", color: "rgb(231,76,60)", border: "0.5px solid rgba(231,76,60,0.3)" }}
+                    >
+                      <Trash2 size={13} /> Eliminar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Tab: Pagos ── */}
+              {affDetailTab === "pagos" && (
+                <div className="space-y-3">
+                  {selectedPayments.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="font-jakarta text-sm text-wo-crema-muted">Sin comprobantes registrados</p>
+                    </div>
+                  ) : selectedPayments.map((pago) => (
+                    <div key={pago.id} className="bg-wo-carbon rounded-xl p-4 flex items-start gap-4" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+                      {/* Miniatura boucher */}
+                      <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-wo-grafito">
+                        {pago.receipt_url ? (
+                          <img src={pago.receipt_url} alt="boucher" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display="none"; }} />
+                        ) : (
+                          <span className="text-2xl opacity-30">📷</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-jakarta text-xs font-bold text-wo-crema">
+                            {{ activacion: "Activación", upgrade: "Upgrade", retiro: "Retiro", reactivacion: "Reactivación", recarga_billetera: "Recarga" }[pago.type] ?? pago.type}
+                          </span>
+                          <span className={`font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill ${statusBadge(pago.status)}`}>
+                            {pago.status.charAt(0).toUpperCase() + pago.status.slice(1)}
+                          </span>
+                        </div>
+                        <p className="font-syne font-bold text-base text-primary">S/ {pago.amount.toFixed(2)}</p>
+                        <p className="font-jakarta text-[10px] text-wo-crema-muted mt-0.5">{new Date(pago.created_at).toLocaleString("es-PE")}</p>
+                        {/* Acciones inline */}
+                        {pago.status === "pendiente" && (
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => handleApprove({ ...pago, affiliate: { name: viewingAffiliate.name, affiliate_code: viewingAffiliate.affiliate_code } } as any)}
+                              disabled={approvePayment.isPending}
+                              className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                              style={{ background: "rgba(30,192,213,0.12)", color: "rgb(30,192,213)", border: "0.5px solid rgba(30,192,213,0.3)" }}
+                            >
+                              <CheckCircle size={10} /> Aprobar
+                            </button>
+                            <button
+                              onClick={() => handleReject({ ...pago, affiliate: { name: viewingAffiliate.name, affiliate_code: viewingAffiliate.affiliate_code } } as any)}
+                              disabled={rejectPayment.isPending}
+                              className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                              style={{ background: "rgba(231,76,60,0.1)", color: "rgb(231,76,60)", border: "0.5px solid rgba(231,76,60,0.3)" }}
+                            >
+                              <XCircle size={10} /> Rechazar
+                            </button>
+                            {pago.receipt_url && (
+                              <a href={pago.receipt_url} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1 font-jakarta text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors text-wo-crema-muted hover:text-primary"
+                                style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                              >
+                                <Eye size={10} /> Ver boucher
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Tab: Red de referidos ── */}
+              {affDetailTab === "red" && (
+                <div className="space-y-2">
+                  {visibleReferralTree.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="font-jakarta text-sm text-wo-crema-muted">Sin referidos en los niveles de su paquete</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Agrupar por nivel */}
+                      {Array.from(new Set(visibleReferralTree.map((r) => r.level))).map((lvl) => (
+                        <div key={lvl}>
+                          <div className="flex items-center gap-2 mb-2 mt-3">
+                            <span className="font-jakarta text-[10px] font-bold text-primary uppercase">Nivel {lvl}</span>
+                            <div className="flex-1 h-px bg-primary/20" />
+                            <span className="font-jakarta text-[10px] text-wo-crema-muted">
+                              {visibleReferralTree.filter((r) => r.level === lvl).length} persona(s)
+                            </span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {visibleReferralTree.filter((r) => r.level === lvl).map((r) => (
+                              <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
+                                <div className="w-8 h-8 rounded-full bg-wo-grafito flex items-center justify-center font-jakarta text-[10px] font-bold text-primary shrink-0">
+                                  {r.referred?.name.split(" ").map((n) => n[0]).join("").substring(0, 2) ?? "?"}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-jakarta text-xs font-bold text-wo-crema truncate">{r.referred?.name ?? "—"}</p>
+                                  <p className="font-jakarta text-[10px] text-wo-crema-muted">{r.referred?.affiliate_code ?? "—"} · {r.referred?.package ?? "—"}</p>
+                                </div>
+                                <span className={`font-jakarta text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                  r.referred?.account_status === "active"    ? "bg-secondary/15 text-secondary" :
+                                  r.referred?.account_status === "suspended" ? "bg-destructive/15 text-destructive" :
+                                  "bg-primary/15 text-primary"
+                                }`}>
+                                  {r.referred?.account_status ?? "—"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========== MODAL: Confirmar borrado ========== */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-wo-grafito rounded-2xl max-w-sm w-full p-6" style={cardStyle}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-destructive/15 flex items-center justify-center">
+                <Trash2 size={16} className="text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-syne font-bold text-base text-wo-crema">Eliminar afiliado</h3>
+                <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            <p className="font-jakarta text-sm text-wo-crema-muted mb-6">
+              Se eliminarán también todos sus referidos, pagos y vínculos de red.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleDeleteAffiliate(confirmDeleteId)}
+                disabled={deleteAffiliate.isPending}
+                className="flex-1 font-jakarta font-bold text-sm py-3 rounded-xl transition-colors disabled:opacity-60"
+                style={{ background: "rgba(231,76,60,0.15)", color: "rgb(231,76,60)", border: "0.5px solid rgba(231,76,60,0.4)" }}
+              >
+                {deleteAffiliate.isPending ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 font-jakarta font-bold text-sm py-3 rounded-xl transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", color: "hsl(var(--wo-crema))", border: "0.5px solid rgba(255,255,255,0.1)" }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ========== MODAL: Configuración ========== */}
       {openSettings && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setOpenSettings(false)}>
@@ -1079,7 +1662,7 @@ export default function AdminDashboard() {
                     "Básico: activación S/ 100 · niveles 1 al 3",
                     "Intermedio: activación S/ 2,000 · niveles 1 al 7",
                     "VIP / Élite: activación S/ 10,000 · niveles 1 al 10",
-                    "Reactivación mensual: S/ 300 desde el mes 2",
+                    "Reactivación mensual: Compras acumuladas S/ 300 desde el mes 2",
                   ].map((rule) => (
                     <div key={rule} className="flex gap-2 items-start py-2" style={rowBorder}>
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
@@ -1116,6 +1699,7 @@ export default function AdminDashboard() {
               <p className="font-jakarta text-xs text-wo-crema-muted mb-4">Estos datos se muestran a los afiliados cuando realizan pagos.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
+                  { label: "Nombre del titular", value: settingsHolder, setter: setSettingsHolder, placeholder: "Juan Pérez / Winclick SAC" },
                   { label: "Yape (número)", value: settingsYape, setter: setSettingsYape, placeholder: "987654321" },
                   { label: "Plin (número)", value: settingsPlin, setter: setSettingsPlin, placeholder: "987654321" },
                   { label: "Banco", value: settingsBank, setter: setSettingsBank, placeholder: "BCP, Interbank..." },
@@ -1134,6 +1718,54 @@ export default function AdminDashboard() {
                     />
                   </div>
                 ))}
+                
+                <div className="sm:col-span-2 mt-2">
+                  <label className="font-jakarta text-[11px] text-wo-crema-muted mb-2 block">
+                    Código QR de cobro (Yape / Plin / cualquier billetera)
+                  </label>
+                  <div className="flex items-start gap-4">
+                    {settingsQrUrl ? (
+                      <div className="relative shrink-0">
+                        <img src={settingsQrUrl} alt="QR pago" className="w-28 h-28 rounded-xl object-contain bg-white p-1.5" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+                        <button
+                          type="button"
+                          onClick={() => { setSettingsQrUrl(""); setSettingsQrFile(null); setSettingsSaved(false); }}
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center text-[10px] font-bold hover:bg-destructive/80"
+                          title="Quitar QR"
+                        >✕</button>
+                      </div>
+                    ) : (
+                      <div className="w-28 h-28 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.12)" }}>
+                        <span className="font-jakarta text-[10px] text-wo-crema/30 text-center px-2">Sin QR</span>
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-2">
+                      <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">
+                        Sube la imagen QR de tu cuenta Yape, Plin o cualquier billetera digital. Se mostrará automáticamente a los clientes en el checkout y en la billetera de afiliados.
+                      </p>
+                      <label className="inline-flex items-center gap-2 bg-wo-grafito text-wo-crema font-jakarta font-semibold text-xs px-4 py-2 rounded-wo-btn hover:bg-wo-carbon cursor-pointer transition-colors" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
+                        {settingsQrUrl ? "Cambiar QR" : "Subir QR"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              setSettingsQrFile(f);
+                              setSettingsQrUrl(URL.createObjectURL(f));
+                              setSettingsSaved(false);
+                            }
+                          }}
+                        />
+                      </label>
+                      {settingsQrFile && (
+                        <p className="font-jakarta text-[10px] text-secondary">✓ Nueva imagen seleccionada — guarda para aplicar</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
               </div>
               <div className="flex items-center gap-3 mt-4">
                 <button
@@ -1159,40 +1791,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ========== MODAL: Ver Afiliado ========== */}
-      {viewingAffiliate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewingAffiliate(null)}>
-          <div className="bg-wo-grafito rounded-2xl max-w-lg w-full p-6 relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setViewingAffiliate(null)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-syne font-bold text-lg">
-                {viewingAffiliate.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
-              </div>
-              <div>
-                <h3 className="font-syne font-bold text-lg text-wo-crema">{viewingAffiliate.name}</h3>
-                <p className="font-jakarta text-xs text-wo-crema-muted">{viewingAffiliate.email}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: "Código",      value: viewingAffiliate.affiliate_code },
-                { label: "Paquete",     value: viewingAffiliate.package ?? "—" },
-                { label: "Ventas",      value: `S/ ${(viewingAffiliate.total_sales ?? 0).toFixed(2)}` },
-                { label: "Comisiones",  value: `S/ ${(viewingAffiliate.total_commissions ?? 0).toFixed(2)}` },
-                { label: "Referidos",   value: viewingAffiliate.referral_count ?? 0 },
-                { label: "Yape",        value: viewingAffiliate.yape_number ?? "—" },
-                { label: "Estado",      value: viewingAffiliate.account_status === "active" ? "✅ Activo" : viewingAffiliate.account_status === "suspended" ? "⛔ Suspendido" : "⏳ Pendiente" },
-                { label: "Registro",    value: new Date(viewingAffiliate.created_at).toLocaleDateString("es-PE") },
-              ].map((item) => (
-                <div key={item.label}>
-                  <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">{item.label}</p>
-                  <p className="font-jakarta text-sm text-wo-crema font-medium">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========== MODAL: Editar Afiliado ========== */}
       {editingAffiliate && (
@@ -1244,6 +1842,20 @@ export default function AdminDashboard() {
               <div><p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Email</p><p className="font-jakarta text-sm text-wo-crema">{viewingOrder.customer_email ?? "—"}</p></div>
               <div><p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Método</p><p className="font-jakarta text-sm text-wo-crema">{viewingOrder.payment_method === "wallet" ? "Billetera" : "Efectivo"}</p></div>
               <div><p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Estado</p><p className="font-jakarta text-sm text-primary">{viewingOrder.status}</p></div>
+              {viewingOrder.shipping_address && (
+                <div className="col-span-2">
+                  <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase">Dirección de envío</p>
+                  <p className="font-jakarta text-sm text-wo-crema">{viewingOrder.shipping_address} {viewingOrder.shipping_city ? `(${viewingOrder.shipping_city})` : ""}</p>
+                </div>
+              )}
+              {viewingOrder.shipping_voucher_url && (
+                <div className="col-span-2">
+                  <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-1">Comprobante</p>
+                  <a href={viewingOrder.shipping_voucher_url} target="_blank" rel="noreferrer" className="text-secondary text-sm hover:underline font-jakarta font-medium flex items-center gap-1.5 bg-secondary/10 w-fit px-3 py-1.5 rounded-lg">
+                    <span>Ver Imagen / PDF</span>
+                  </a>
+                </div>
+              )}
             </div>
             <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }} className="pt-4">
               <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-2">Productos</p>
@@ -1258,6 +1870,40 @@ export default function AdminDashboard() {
                 <span className="font-syne font-bold text-primary">S/ {viewingOrder.total.toFixed(2)}</span>
               </div>
             </div>
+
+            {/* ── Cambiar estado del pedido ── */}
+            <div className="mt-5 pt-4" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
+              <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-2">Cambiar estado</p>
+              <div className="flex flex-wrap gap-2">
+                {(["procesando", "enviado", "entregado", "cancelado"] as const).filter(
+                  (s) => s !== viewingOrder.status
+                ).map((s) => (
+                  <button
+                    key={s}
+                    disabled={updateOrderStatus.isPending}
+                    onClick={async () => {
+                      await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
+                      setViewingOrder({ ...viewingOrder, status: s });
+                    }}
+                    className={`font-jakarta text-xs font-semibold px-3 py-1.5 rounded-wo-pill transition-colors ${
+                      s === "entregado" ? "bg-secondary/15 text-secondary hover:bg-secondary/25" :
+                      s === "cancelado" ? "bg-destructive/15 text-destructive hover:bg-destructive/25" :
+                      "bg-primary/10 text-primary hover:bg-primary/20"
+                    }`}
+                  >
+                    {s === "entregado" ? "✓ Marcar entregado" :
+                     s === "enviado"   ? "↑ Marcar enviado"   :
+                     s === "cancelado" ? "✕ Cancelar pedido"  :
+                     "⏳ En procesando"}
+                  </button>
+                ))}
+              </div>
+              {viewingOrder.status === "entregado" && (
+                <p className="font-jakarta text-[11px] text-secondary mt-2 flex items-center gap-1.5">
+                  <CheckCircle size={12} /> Pedido aprobado — el sistema procesó la activación/reactivación del afiliado automáticamente.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1268,10 +1914,15 @@ export default function AdminDashboard() {
           <div className="bg-wo-grafito rounded-2xl max-w-lg w-full p-6 relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setViewingProduct(null)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
             <div className="flex gap-4 mb-6">
-              <img src={viewingProduct.image_url ?? ""} alt="" className="w-20 h-20 rounded-xl object-cover" />
+              {(prodImg || viewingProduct.image_url) ? (
+                <img src={prodImg || viewingProduct.image_url || ""} alt="" className="w-20 h-20 rounded-xl object-cover bg-wo-carbon" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              ) : (
+                <div className="w-20 h-20 rounded-xl bg-wo-carbon flex items-center justify-center text-wo-crema/20 text-xs">Sin imagen</div>
+              )}
               <div>
                 <h3 className="font-syne font-bold text-lg text-wo-crema">{prodName}</h3>
                 <p className="font-jakarta text-xs text-wo-crema-muted">Stock: {prodStock}</p>
+                <p className={`font-jakarta text-[10px] font-bold mt-0.5 ${prodIsActive ? "text-secondary" : "text-destructive"}`}>{prodIsActive ? "Activo" : "Inactivo"}</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -1279,17 +1930,41 @@ export default function AdminDashboard() {
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Nombre</label>
                 <input value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
-              <div>
-                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Precio (S/)</label>
-                <input value={prodPrice} onChange={(e) => setProdPrice(e.target.value)} type="number" step="0.01" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Precio (S/)</label>
+                  <input value={prodPrice} onChange={(e) => setProdPrice(e.target.value)} type="number" step="0.01" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+                </div>
+                <div>
+                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Stock</label>
+                  <input value={prodStock} onChange={(e) => setProdStock(e.target.value)} type="number" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+                </div>
               </div>
               <div>
-                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Stock</label>
-                <input value={prodStock} onChange={(e) => setProdStock(e.target.value)} type="number" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">URL de imagen</label>
+                <input value={prodImg} onChange={(e) => setProdImg(e.target.value)} placeholder="https://..." className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+              </div>
+              <div>
+                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Categoría</label>
+                <select
+                  value={prodCategoryId ?? ""}
+                  onChange={(e) => setProdCategoryId(e.target.value || null)}
+                  className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary"
+                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Descripción</label>
                 <textarea value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} rows={3} className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary resize-none" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="prodIsActive" checked={prodIsActive} onChange={(e) => setProdIsActive(e.target.checked)} className="rounded" />
+                <label htmlFor="prodIsActive" className="font-jakarta text-xs text-wo-crema-muted cursor-pointer">Producto activo (visible en catálogo)</label>
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={handleSaveProduct} disabled={updateProduct.isPending} className="flex-1 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-2.5 rounded-xl hover:bg-wo-oro-dark disabled:opacity-50">
@@ -1327,6 +2002,20 @@ export default function AdminDashboard() {
                 <input value={newProdImg} onChange={(e) => setNewProdImg(e.target.value)} placeholder="https://..." className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
               <div>
+                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Categoría</label>
+                <select
+                  value={newProdCategoryId ?? ""}
+                  onChange={(e) => setNewProdCategoryId(e.target.value || null)}
+                  className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary"
+                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Descripción</label>
                 <textarea value={newProdDesc} onChange={(e) => setNewProdDesc(e.target.value)} rows={3} placeholder="Descripción del producto..." className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary resize-none" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
@@ -1340,6 +2029,246 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* ========== MODAL: Crear / Editar Categoría ========== */}
+      {catModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setCatModal(false)}>
+          <div className="bg-wo-grafito rounded-2xl max-w-sm w-full p-6 relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setCatModal(false)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
+            <h3 className="font-syne font-bold text-lg text-wo-crema mb-6">{editingCat ? "Editar Categoría" : "Nueva Categoría"}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Nombre</label>
+                <input
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  placeholder="Ej: Vitaminas"
+                  className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary"
+                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+              <div>
+                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Color (usado en etiquetas y filtros)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={catColor}
+                    onChange={(e) => setCatColor(e.target.value)}
+                    className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0 p-0"
+                  />
+                  <span className="font-jakarta text-sm text-wo-crema-muted">{catColor}</span>
+                  <span
+                    className="font-jakarta text-xs font-bold px-3 py-1 rounded-wo-pill"
+                    style={{ background: catColor + "22", color: catColor, border: `0.5px solid ${catColor}44` }}
+                  >
+                    {catName || "Vista previa"}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSaveCategory}
+                  disabled={createCategory.isPending || updateCategory.isPending || !catName.trim()}
+                  className="flex-1 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-2.5 rounded-xl hover:bg-wo-oro-dark disabled:opacity-50"
+                >
+                  {(createCategory.isPending || updateCategory.isPending) ? "Guardando..." : editingCat ? "Guardar cambios" : "Crear categoría"}
+                </button>
+                <button onClick={() => setCatModal(false)} className="px-4 font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2.5 rounded-xl bg-wo-carbon" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========== MODAL: Confirmar eliminar producto ========== */}
+      {confirmDeleteProductId && (() => {
+        const prod = products.find((p) => p.id === confirmDeleteProductId);
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setConfirmDeleteProductId(null)}>
+            <div className="bg-wo-grafito rounded-2xl max-w-sm w-full p-6 relative" style={{ border: "0.5px solid rgba(239,68,68,0.3)" }} onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-syne font-bold text-lg text-wo-crema mb-2">¿Eliminar producto?</h3>
+              <p className="font-jakarta text-sm text-wo-crema-muted mb-1">
+                Vas a eliminar <span className="text-wo-crema font-semibold">"{prod?.name}"</span>.
+              </p>
+              <p className="font-jakarta text-xs text-destructive/80 mb-5">Esta acción no se puede deshacer.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => {
+                    try {
+                      await deleteProduct.mutateAsync(confirmDeleteProductId);
+                      setConfirmDeleteProductId(null);
+                      toast({ title: "Producto eliminado" });
+                    } catch (err) {
+                      toast({ title: "Error al eliminar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
+                    }
+                  }}
+                  disabled={deleteProduct.isPending}
+                  className="flex-1 bg-destructive text-white font-jakarta font-bold text-sm py-2.5 rounded-xl hover:bg-destructive/80 disabled:opacity-50"
+                >
+                  {deleteProduct.isPending ? "Eliminando..." : "Sí, eliminar"}
+                </button>
+                <button onClick={() => setConfirmDeleteProductId(null)} className="px-4 font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2.5 rounded-xl bg-wo-carbon" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ========== MODAL: Confirmar eliminar categoría ========== */}
+      {confirmDeleteCatId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setConfirmDeleteCatId(null)}>
+          <div className="bg-wo-grafito rounded-2xl max-w-sm w-full p-6 relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-syne font-bold text-lg text-wo-crema mb-2">¿Eliminar categoría?</h3>
+            {(() => {
+              const cat = categories.find((c) => c.id === confirmDeleteCatId);
+              const count = products.filter((p) => p.category_id === confirmDeleteCatId).length;
+              return (
+                <div className="space-y-4">
+                  <p className="font-jakarta text-sm text-wo-crema-muted">
+                    Vas a eliminar <span className="text-wo-crema font-bold">"{cat?.name}"</span>.
+                    {count > 0 && (
+                      <span className="text-primary"> Los {count} producto(s) asignados quedarán sin categoría.</span>
+                    )}
+                  </p>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => handleDeleteCategory(confirmDeleteCatId)}
+                      disabled={deleteCategory.isPending}
+                      className="flex-1 bg-destructive text-white font-jakarta font-bold text-sm py-2.5 rounded-xl hover:bg-destructive/80 disabled:opacity-50"
+                    >
+                      {deleteCategory.isPending ? "Eliminando..." : "Sí, eliminar"}
+                    </button>
+                    <button onClick={() => setConfirmDeleteCatId(null)} className="px-4 font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-2.5 rounded-xl bg-wo-carbon" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>Cancelar</button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* ========== MODAL: Revisar Comprobante de Pago ========== */}
+      {viewingPayment && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[70] flex items-center justify-center p-4 overflow-y-auto" onClick={() => setViewingPayment(null)}>
+          <div className="bg-wo-grafito rounded-[2rem] w-full max-w-4xl relative overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[500px]" 
+               style={{ ...cardStyle, background: "linear-gradient(145deg, #1A1A1A 0%, #0D0D0D 100%)" }} 
+               onClick={(e) => e.stopPropagation()}>
+            
+            {/* Cerrar mobile */}
+            <button onClick={() => setViewingPayment(null)} className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/5 text-wo-crema-muted hover:text-wo-crema transition-colors md:hidden">✕</button>
+
+            {/* Panel Izquierdo: Visor de Comprobante */}
+            <div className="flex-1 bg-black/40 flex flex-col items-center justify-center p-8 relative min-h-[400px]" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="absolute top-6 left-8 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="font-jakarta text-[10px] font-bold text-wo-crema/40 uppercase tracking-[0.2em]">Visor de Validación</span>
+              </div>
+              
+              {viewingPayment.receipt_url ? (
+                <div className="relative group w-full h-full flex items-center justify-center">
+                  <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
+                  <img
+                    src={viewingPayment.receipt_url}
+                    alt="Boucher de pago"
+                    className="max-h-[500px] w-auto max-w-full object-contain rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 relative z-0 transition-transform hover:scale-[1.02]"
+                  />
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-md px-4 py-2 rounded-wo-pill border border-white/10">
+                    <a href={viewingPayment.receipt_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 font-jakarta text-[11px] font-bold text-wo-crema">
+                      <ArrowUpRight size={14} className="text-primary" /> Abrir imagen completa
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-4 text-center opacity-30">
+                  <Package size={48} className="text-wo-crema-muted" />
+                  <p className="font-jakarta text-sm text-wo-crema-muted">No se adjuntó comprobante para este {viewingPayment.type}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Panel Derecho: Detalles y Decisión */}
+            <div className="w-full md:w-[380px] p-10 flex flex-col">
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill uppercase tracking-wider ${statusBadge(viewingPayment.status)}`}>
+                    {viewingPayment.status}
+                  </span>
+                  <button onClick={() => setViewingPayment(null)} className="hidden md:block text-wo-crema-muted hover:text-wo-crema text-xl leading-none">✕</button>
+                </div>
+                <h3 className="font-syne font-bold text-2xl text-wo-crema mb-1">Revisar Pago</h3>
+                <p className="font-jakarta text-sm text-wo-crema-muted">{viewingPayment.affiliate?.name ?? "Afiliado no identificado"}</p>
+                <p className="font-syne font-bold text-primary text-xs tracking-widest mt-1 opacity-70">{viewingPayment.affiliate?.affiliate_code ?? "—"}</p>
+              </div>
+
+              <div className="space-y-6 flex-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/[0.03]">
+                    <p className="font-jakarta text-[9px] text-wo-crema-muted uppercase mb-1">Monto Enviado</p>
+                    <p className="font-syne font-bold text-xl text-primary">S/ {viewingPayment.amount.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/[0.03]">
+                    <p className="font-jakarta text-[9px] text-wo-crema-muted uppercase mb-1">Transacción</p>
+                    <p className="font-syne font-bold text-sm text-wo-crema capitalize">
+                      {{ activacion: "Activación", upgrade: "Upgrade", retiro: "Retiro", reactivacion: "Reactivación", recarga_billetera: "Recarga" }[viewingPayment.type] ?? viewingPayment.type}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 bg-white/[0.02] p-5 rounded-2xl border border-white/[0.02]">
+                  {[
+                    { label: "Fecha Registro", value: new Date(viewingPayment.created_at).toLocaleString("es-PE", { dateStyle: 'medium', timeStyle: 'short' }) },
+                    ...(viewingPayment.package_to ? [{ label: "Destino Package", value: viewingPayment.package_to }] : []),
+                    ...(viewingPayment.withdrawal_method ? [{ label: "Método de Pago", value: viewingPayment.withdrawal_method }] : []),
+                    ...(viewingPayment.withdrawal_account ? [{ label: "Cuenta Destino", value: viewingPayment.withdrawal_account }] : []),
+                  ].map((item) => (
+                    <div key={item.label} className="flex justify-between items-center text-[11px] font-jakarta">
+                      <span className="text-wo-crema-muted opacity-60">{item.label}</span>
+                      <span className="text-wo-crema font-medium">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Acciones */}
+              <div className="mt-10 space-y-3">
+                {viewingPayment.status === "pendiente" ? (
+                  <>
+                    <button
+                      onClick={() => handleApprove(viewingPayment)}
+                      disabled={approvePayment.isPending}
+                      className="w-full group relative flex items-center justify-center gap-3 bg-secondary text-secondary-foreground font-jakarta font-extrabold text-sm py-4 rounded-2xl transition-all hover:shadow-[0_0_30px_rgba(30,192,213,0.3)] disabled:opacity-50 overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-white/10 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300" />
+                      <CheckCircle size={18} className="relative z-10" />
+                      <span className="relative z-10">{approvePayment.isPending ? "Procesando..." : "Confirmar y Aprobar"}</span>
+                    </button>
+                    <button
+                      onClick={() => handleReject(viewingPayment)}
+                      disabled={rejectPayment.isPending}
+                      className="w-full flex items-center justify-center gap-3 bg-destructive/10 text-destructive border border-destructive/20 font-jakarta font-bold text-sm py-4 rounded-2xl transition-all hover:bg-destructive/20 disabled:opacity-50"
+                    >
+                      <XCircle size={18} />
+                      {rejectPayment.isPending ? "Rechazando..." : "Rechazar Comprobante"}
+                    </button>
+                  </>
+                ) : (
+                  <div className={`flex flex-col items-center gap-2 p-6 rounded-2xl border ${statusBadge(viewingPayment.status)}`}>
+                    <p className="font-jakarta text-[10px] font-bold uppercase opacity-50">Estado de la transacción</p>
+                    <div className="flex items-center gap-2 font-syne font-bold text-lg">
+                      {viewingPayment.status === "aprobado" ? <CheckCircle size={20} /> : <XCircle size={20} />}
+                      {viewingPayment.status.toUpperCase()}
+                    </div>
+                  </div>
+                )}
+                <p className="font-jakarta text-[10px] text-center text-wo-crema-muted mt-4 opacity-40">
+                  ID Transacción: {viewingPayment.id}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
