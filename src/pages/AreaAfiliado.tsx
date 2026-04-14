@@ -12,13 +12,6 @@ const PACKAGES: { name: PackageType; depthUnlocked: number; investment: number }
   { name: "VIP",         depthUnlocked: 10, investment: 10000 },
 ];
 
-const missions = [
-  { name: "Primera venta",       progress: 1,   target: 1,   points: 50,  status: "completada" as const, icon: "🛒" },
-  { name: "Refiere 3 socios",    progress: 2,   target: 3,   points: 100, status: "progreso"   as const, icon: "👥" },
-  { name: "Alcanza 500 ventas",  progress: 320, target: 500, points: 200, status: "progreso"   as const, icon: "📊" },
-  { name: "Vende 10 productos",  progress: 4,   target: 10,  points: 150, status: "progreso"   as const, icon: "📦" },
-];
-
 export default function AreaAfiliado() {
   const { affiliate, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -357,16 +350,6 @@ export default function AreaAfiliado() {
             )}
           </div>
         </div>
-
-        {/* Missions — EN PAUSA (descomentar cuando se reactive el módulo de gamificación)
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="font-syne font-bold text-lg text-wo-crema">Misiones activas</h3>
-            ...
-          </div>
-          ...
-        </div>
-        */}
 
         </>}
 
