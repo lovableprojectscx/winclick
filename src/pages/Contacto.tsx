@@ -51,14 +51,33 @@ export default function Contacto() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+    <div className="min-h-screen bg-background pb-16">
+
+      {/* Banner hero */}
+      <div className="relative overflow-hidden pt-16" style={{ minHeight: "240px" }}>
+        <img
+          src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&h=400&fit=crop&crop=center&auto=format&q=80"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(105deg, rgba(5,12,28,0.96) 0%, rgba(5,12,28,0.75) 60%, rgba(5,12,28,0.5) 100%)" }} />
+        <div className="relative z-10 flex flex-col justify-center h-full px-6 sm:px-12 lg:px-16 py-16">
+          <p className="font-jakarta text-[11px] font-bold tracking-[0.22em] uppercase text-primary mb-3">Winclick · Soporte</p>
+          <h1 className="font-syne font-extrabold text-[38px] sm:text-[52px] text-wo-crema leading-[1.05] mb-2">
+            ¿Tienes dudas?<br />Estamos aquí.
+          </h1>
+          <p className="font-jakarta text-[16px] text-wo-crema-muted max-w-md">
+            Te respondemos en menos de 24 horas.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
 
           {/* Left — Info */}
-          <div>
-            <h1 className="font-syne font-extrabold text-[26px] text-wo-crema mb-4">¿Tienes dudas? Estamos aquí.</h1>
-            <p className="font-jakarta text-sm text-wo-crema-muted mb-8">Contáctanos y te responderemos en menos de 24 horas.</p>
+          <div className="pt-2">
+            <h2 className="font-syne font-extrabold text-[22px] text-wo-crema mb-6">Canales de contacto</h2>
 
             <div className="space-y-4 mb-8">
               <a
@@ -151,27 +170,4 @@ export default function Contacto() {
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2 p-3 rounded-wo-btn" style={{ background: "rgba(231,76,60,0.08)", border: "0.5px solid rgba(231,76,60,0.3)" }}>
-                    <AlertCircle size={14} className="text-destructive shrink-0 mt-0.5" />
-                    <p className="font-jakarta text-xs text-destructive">{error}</p>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn-bounce w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors flex items-center justify-center gap-2 min-h-[52px] disabled:opacity-60"
-                >
-                  <Send size={14} /> {submitting ? "Enviando..." : "Enviar mensaje"}
-                </button>
-                <p className="font-jakarta text-[11px] text-wo-crema/30 text-center">
-                  Tu mensaje llega directo a {EMAIL}
-                </p>
-              </form>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+                  <div className="flex items-start gap-2 p-3 rounded-wo-btn" style={{ background: "rgba(231,76,60,0.08)", border: "0.5px solid rg

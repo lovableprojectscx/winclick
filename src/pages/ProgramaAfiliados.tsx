@@ -23,27 +23,53 @@ export default function ProgramaAfiliados() {
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
       {/* Hero */}
-      <section className="relative min-h-[420px] flex items-center overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&h=600&fit=crop&crop=center&auto=format&q=80"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(105deg, rgba(5,12,28,0.95) 0%, rgba(5,12,28,0.82) 60%, rgba(5,12,28,0.55) 100%)" }} />
-        <div className="max-w-3xl mx-auto px-4 text-center relative z-10 py-20">
-          <h1 className="font-syne font-extrabold text-[36px] md:text-[48px] text-wo-crema leading-tight mb-4">
-            Sé tu propio jefe.<br /><span className="text-primary">Gana con tu red.</span>
-          </h1>
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {["Desde S/ 100", "Comisiones inmediatas", "Soporte dedicado"].map((s) => (
-              <span key={s} className="font-jakarta text-xs text-wo-crema-muted px-3 py-1.5 rounded-wo-pill bg-wo-carbon/70 backdrop-blur-sm" style={{ border: "0.5px solid rgba(255,255,255,0.12)" }}>
-                {s}
-              </span>
-            ))}
+      <section className="relative min-h-screen flex overflow-hidden bg-wo-obsidiana">
+        {/* LEFT — texto */}
+        <div className="flex-1 flex items-center px-6 sm:px-10 lg:px-16 relative z-10" style={{ paddingTop: "96px", paddingBottom: "64px" }}>
+          <div className="w-full max-w-[540px]">
+            <p className="font-jakarta text-[11px] font-bold tracking-[0.22em] uppercase text-primary mb-7">
+              Programa de Afiliados · Winclick Perú
+            </p>
+            <h1 className="font-syne font-extrabold text-[44px] sm:text-[54px] lg:text-[64px] leading-[1.05] tracking-[-0.02em] text-wo-crema mb-6">
+              Sé tu propio jefe.<br /><span className="text-primary">Gana con tu red.</span>
+            </h1>
+            <p className="font-jakarta text-[16px] text-wo-crema-muted leading-[1.7] mb-10 max-w-[420px]">
+              Únete al programa de socios Winclick. Comisiones inmediatas, red de 10 niveles y soporte dedicado desde el día 1.
+            </p>
+            <Link to="/registro-afiliado" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-[15px] px-8 py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors min-h-[52px]">
+              <Star size={15} /> Registrarme ahora →
+            </Link>
+            <div className="flex flex-wrap gap-6 mt-12 pt-8" style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)" }}>
+              {["Desde S/ 100", "Comisiones inmediatas", "Soporte dedicado"].map((s) => (
+                <span key={s} className="font-jakarta text-[12px] text-wo-crema-muted">{s}</span>
+              ))}
+            </div>
           </div>
-          <Link to="/registro-afiliado" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm px-8 py-4 rounded-wo-btn hover:bg-wo-oro-dark">
-            <Star size={14} /> Registrarme ahora
-          </Link>
+        </div>
+
+        {/* RIGHT — foto con persona visible (desktop) */}
+        <div className="hidden lg:block relative w-[46vw] shrink-0 min-h-screen">
+          <img
+            src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=960&h=1080&fit=crop&crop=top&auto=format&q=88"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, hsl(214,30%,5%) 0%, transparent 22%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(214,30%,5%) 0%, transparent 18%)" }} />
+          <div className="absolute bottom-14 left-10 bg-wo-grafito/90 backdrop-blur-md rounded-xl px-5 py-4" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
+            <p className="font-syne font-extrabold text-[22px] text-primary">25%</p>
+            <p className="font-jakarta text-[12px] text-wo-crema mt-0.5">Comisión máxima acumulada</p>
+          </div>
+        </div>
+
+        {/* Mobile: imagen de fondo */}
+        <div className="absolute inset-0 lg:hidden">
+          <img
+            src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=1000&fit=crop&crop=top&auto=format&q=75"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.88) 0%, rgba(5,12,28,0.75) 50%, rgba(5,12,28,0.95) 100%)" }} />
         </div>
       </section>
 
@@ -215,37 +241,4 @@ export default function ProgramaAfiliados() {
               <div key={i} style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between py-4 text-left">
                   <span className="font-jakarta font-medium text-sm text-wo-crema">{f.q}</span>
-                  {openFaq === i ? <ChevronUp size={16} className="text-primary shrink-0" /> : <ChevronDown size={16} className="text-wo-crema-muted shrink-0" />}
-                </button>
-                {openFaq === i && (
-                  <p className="font-jakarta text-sm text-wo-crema-muted pb-4 leading-relaxed">{f.a}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="relative py-24 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1400&h=500&fit=crop&crop=center&auto=format&q=75"
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(5,12,28,0.93) 0%, rgba(5,12,28,0.88) 100%)" }} />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.1) 0%, transparent 60%)" }} />
-        </div>
-        <div className="max-w-lg mx-auto px-4 text-center relative z-10">
-          <h2 className="font-syne font-extrabold text-[32px] text-wo-crema mb-2">Empieza hoy.</h2>
-          <p className="font-jakarta text-sm text-wo-crema-muted mb-8">Tu red empieza con una decisión.</p>
-          <Link to="/registro-afiliado" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm px-9 py-4 rounded-xl hover:bg-wo-oro-dark">
-            <Star size={14} /> Crear mi cuenta gratis
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
-}
+                  {openFaq

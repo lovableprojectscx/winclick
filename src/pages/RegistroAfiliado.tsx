@@ -180,46 +180,57 @@ export default function RegistroAfiliado() {
   return (
     <div className="min-h-screen bg-background pt-16">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-64px)]">
-        {/* Left - Benefits */}
-        <div className="bg-wo-grafito p-8 lg:p-12 flex flex-col justify-center">
-          <Link to="/" className="font-syne font-extrabold text-lg mb-2">
-            <img src="/logo-winclick.png" alt="Winclick" className="h-8 w-auto" />
-          </Link>
-          <p className="font-jakarta text-sm text-wo-crema-muted mb-10">Tu éxito a un solo click</p>
+        {/* Left - Foto lifestyle + beneficios */}
+        <div className="relative overflow-hidden flex flex-col justify-center">
+          {/* Foto de fondo */}
+          <img
+            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900&h=1080&fit=crop&crop=center&auto=format&q=85"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, rgba(5,12,28,0.93) 0%, rgba(5,12,28,0.78) 60%, rgba(5,12,28,0.92) 100%)" }} />
 
-          <div className="space-y-6 mb-10">
-            {[
-              { emoji: "💰", title: "Comisiones hasta 25%", desc: "Gana por tus ventas y las de tu red completa." },
-              { emoji: "👥", title: "Red en múltiples niveles", desc: "10 niveles de profundidad para maximizar ganancias." },
-              { emoji: "🛡️", title: "Soporte y herramientas", desc: "Tu tienda online, dashboard y soporte dedicado." },
-            ].map((b, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="w-10 h-10 rounded-wo-icon bg-primary/15 flex items-center justify-center text-lg shrink-0">{b.emoji}</div>
-                <div>
-                  <h3 className="font-jakarta font-semibold text-sm text-wo-crema">{b.title}</h3>
-                  <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5">{b.desc}</p>
+          {/* Contenido encima */}
+          <div className="relative z-10 p-8 lg:p-12 flex flex-col justify-center min-h-full">
+            <Link to="/" className="mb-2 inline-block">
+              <img src="/logo-winclick.png" alt="Winclick" className="h-8 w-auto" />
+            </Link>
+            <p className="font-jakarta text-[13px] text-wo-crema-muted mb-10">Tu éxito a un solo click</p>
+
+            <div className="space-y-7 mb-10">
+              {[
+                { icon: "💰", title: "Comisiones hasta 25%", desc: "Gana por tus ventas y las de tu red completa." },
+                { icon: "👥", title: "Red en múltiples niveles", desc: "10 niveles de profundidad para maximizar ganancias." },
+                { icon: "🛡️", title: "Soporte y herramientas", desc: "Tu tienda online, dashboard y soporte dedicado." },
+              ].map((b, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center text-xl shrink-0">{b.icon}</div>
+                  <div>
+                    <h3 className="font-jakarta font-bold text-[14px] text-wo-crema">{b.title}</h3>
+                    <p className="font-jakarta text-[13px] text-wo-crema-muted mt-0.5 leading-relaxed">{b.desc}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {step === 3 && (
-            <div className="bg-wo-carbon rounded-wo-card p-5 mb-6" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-              <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-2">Resumen de tu elección</p>
-              <p className="font-jakarta font-bold text-sm text-wo-crema">{selectedPkg.name}</p>
-              <p className="font-syne font-extrabold text-xl text-primary mt-1">Meta: S/ {selectedPkg.investment.toLocaleString()}</p>
-              <p className="font-jakarta text-[11px] text-secondary mt-1">Niveles 1–{selectedPkg.depthUnlocked} desbloqueados</p>
+              ))}
             </div>
-          )}
 
-          <div className="bg-wo-carbon rounded-wo-card p-5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-            <h4 className="font-jakarta font-semibold text-sm text-wo-crema mb-2">¿Cuánto puedo ganar?</h4>
-            <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">Con solo 5 referidos directos activos y una red de 50 personas, podrías ganar entre S/ 500 y S/ 2,000 mensuales.</p>
+            {step === 3 && (
+              <div className="bg-wo-carbon/80 backdrop-blur-sm rounded-wo-card p-5 mb-6" style={{ border: "0.5px solid rgba(232,116,26,0.3)" }}>
+                <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-2">Resumen de tu elección</p>
+                <p className="font-jakarta font-bold text-sm text-wo-crema">{selectedPkg.name}</p>
+                <p className="font-syne font-extrabold text-xl text-primary mt-1">Meta: S/ {selectedPkg.investment.toLocaleString()}</p>
+                <p className="font-jakarta text-[11px] text-secondary mt-1">Niveles 1–{selectedPkg.depthUnlocked} desbloqueados</p>
+              </div>
+            )}
+
+            <div className="bg-wo-carbon/80 backdrop-blur-sm rounded-wo-card p-5" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
+              <h4 className="font-jakarta font-semibold text-[14px] text-wo-crema mb-2">¿Cuánto puedo ganar?</h4>
+              <p className="font-jakarta text-[13px] text-wo-crema-muted leading-relaxed">Con 5 referidos activos y red de 50 personas: entre <span className="text-primary font-semibold">S/ 500 y S/ 2,000/mes</span>.</p>
+            </div>
+
+            <Link to="/login-afiliado" className="font-jakarta text-[13px] text-primary hover:underline mt-8 inline-block">
+              ¿Ya tienes cuenta? → Iniciar sesión
+            </Link>
           </div>
-
-          <Link to="/login-afiliado" className="font-jakarta text-sm text-primary hover:underline mt-8">
-            ¿Ya tienes cuenta? → Iniciar sesión
-          </Link>
         </div>
 
         {/* Right - Steps */}
@@ -403,22 +414,4 @@ export default function RegistroAfiliado() {
                   </div>
                 )}
 
-                <button
-                  onClick={handleFinalSubmit}
-                  disabled={submitting}
-                  className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {submitting ? "Creando cuenta..." : "Crear mi cuenta ahora →"}
-                </button>
-
-                <button type="button" onClick={() => setStep(2)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
-                  ← Cambiar paquete
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+                <b

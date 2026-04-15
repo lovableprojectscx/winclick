@@ -72,43 +72,54 @@ export default function AreaAfiliado() {
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-16">
-      {/* Header */}
-      <div className="bg-wo-grafito" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      {/* Header — banner de bienvenida */}
+      <div className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(214,30%,6%) 0%, hsl(214,25%,10%) 100%)", borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 20% 60%, rgba(232,116,26,0.10) 0%, transparent 60%)" }} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="font-jakarta font-semibold text-base text-wo-crema">Hola, {affiliate.name.split(" ")[0]} 👋</span>
-              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.25)" }}>
-                {affiliate.package}
-              </span>
+            {/* Izquierda: avatar + saludo */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center font-syne font-bold text-[17px] text-primary shrink-0" style={{ background: "rgba(232,116,26,0.15)", border: "1.5px solid rgba(232,116,26,0.35)" }}>
+                {affiliate.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-syne font-extrabold text-[20px] text-wo-crema">Hola, {affiliate.name.split(" ")[0]} 👋</span>
+                  <span className="text-[10px] font-jakarta font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(232,116,26,0.15)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.35)" }}>
+                    {affiliate.package}
+                  </span>
+                  <span className="flex items-center gap-1 text-secondary font-jakarta text-[11px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> En línea
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+                  {isPending ? (
+                    <span className="flex items-center gap-1.5 font-jakarta text-xs text-wo-crema/30">
+                      <Lock size={10} /> Tienda disponible al activar
+                    </span>
+                  ) : (
+                    <>
+                      <Link to={`/tienda/${affiliate.affiliate_code}`} className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
+                        Ver mi tienda <ExternalLink size={10} />
+                      </Link>
+                      <Link to="/editar-tienda" className="font-jakarta text-xs text-wo-crema-muted hover:text-secondary flex items-center gap-1 transition-colors">
+                        Editar tienda ✏️
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={copyCode} className="flex items-center gap-2 bg-wo-carbon px-3 py-1.5 rounded-lg font-jakarta text-xs text-wo-crema" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                {affiliate.affiliate_code} {copied ? <Check size={12} className="text-secondary" /> : <Copy size={12} />}
+            {/* Derecha: código + logout */}
+            <div className="flex items-center gap-2">
+              <button onClick={copyCode} className="flex items-center gap-2 font-jakarta text-xs text-wo-crema px-3 py-2 rounded-lg transition-colors hover:bg-wo-carbon" style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.1)" }}>
+                <span className="font-bold text-primary">{affiliate.affiliate_code}</span>
+                {copied ? <Check size={12} className="text-secondary" /> : <Copy size={12} className="text-wo-crema-muted" />}
               </button>
-              <button onClick={() => { logout(); navigate("/"); }} className="font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema px-3 py-1.5 rounded-lg" style={{ border: "0.5px solid rgba(248,244,236,0.2)" }}>
-                <LogOut size={12} />
+              <button onClick={() => { logout(); navigate("/"); }} className="w-9 h-9 flex items-center justify-center text-wo-crema-muted hover:text-wo-crema rounded-lg transition-colors" style={{ border: "0.5px solid rgba(248,244,236,0.15)" }} title="Cerrar sesión">
+                <LogOut size={14} />
               </button>
             </div>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            {isPending ? (
-              <span className="flex items-center gap-1.5 font-jakarta text-xs text-wo-crema/30">
-                <Lock size={10} /> Tienda disponible al activar cuenta
-              </span>
-            ) : (
-              <>
-                <Link to={`/tienda/${affiliate.affiliate_code}`} className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
-                  Ver mi tienda → <ExternalLink size={10} />
-                </Link>
-                <Link to="/editar-tienda" className="font-jakarta text-xs text-secondary hover:underline flex items-center gap-1">
-                  Editar tienda ✏️
-                </Link>
-              </>
-            )}
-            <span className="flex items-center gap-1 text-secondary font-jakarta text-[11px] ml-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> En línea
-            </span>
           </div>
         </div>
       </div>
@@ -152,7 +163,7 @@ export default function AreaAfiliado() {
       {/* Tab Navigation */}
       <div className="sticky top-16 z-20 bg-wo-grafito" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto">
+          <div className="flex overflow-x-auto scrollbar-hide" style={{ overflowY: "hidden" }}>
             {([
               { id: "inicio",     label: "Inicio",      icon: "🏠" },
               { id: "pedidos",    label: "Mis Pedidos", icon: "📦" },
@@ -180,32 +191,30 @@ export default function AreaAfiliado() {
         {/* ── Tab: Inicio ─────────────────────────────────────────── */}
         {activeTab === "inicio" && <>
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { label: "VENTAS TOTALES",      value: `S/ ${totalSales.toLocaleString()}`,   change: "",    up: true, color: "text-primary",   icon: <ShoppingBag size={16} /> },
-            { label: "COMISIONES GANADAS",  value: `S/ ${totalComm.toLocaleString()}`,    change: "",    up: true, color: "text-primary",   icon: <DollarSign size={16} /> },
-            { label: "REFERIDOS DIRECTOS",  value: String(affiliate.referral_count ?? 0), change: "",    up: true, color: "text-wo-crema",  icon: <Users size={16} /> },
+            { label: "Ventas totales",     value: `S/ ${totalSales.toLocaleString()}`,    icon: <ShoppingBag size={18} />, accent: "rgba(232,116,26,1)",    accentBg: "rgba(232,116,26,0.12)" },
+            { label: "Comisiones ganadas", value: `S/ ${totalComm.toLocaleString()}`,     icon: <DollarSign  size={18} />, accent: "rgba(232,116,26,1)",    accentBg: "rgba(232,116,26,0.12)" },
+            { label: "Referidos directos", value: String(affiliate.referral_count ?? 0),  icon: <Users       size={18} />, accent: "rgba(30,192,213,1)",    accentBg: "rgba(30,192,213,0.12)" },
           ].map((kpi, i) => (
-            <div key={i} className="bg-wo-grafito rounded-wo-card p-5 relative overflow-hidden" style={{ border: isSuspended ? "0.5px solid rgba(239,68,68,0.2)" : isPending ? "0.5px solid rgba(232,116,26,0.2)" : "0.5px solid rgba(255,255,255,0.07)" }}>
-              {isSuspended && (
-                <div className="absolute top-2 right-2">
-                  <span className="font-jakarta font-bold text-[9px] px-1.5 py-0.5 rounded-wo-pill" style={{ background: "rgba(239,68,68,0.12)", color: "rgb(239,68,68)", border: "0.5px solid rgba(239,68,68,0.3)" }}>
-                    SUSPENDIDO
-                  </span>
+            <div key={i} className="bg-wo-grafito rounded-2xl p-5 relative overflow-hidden" style={{ border: isSuspended ? "0.5px solid rgba(239,68,68,0.2)" : isPending ? "0.5px solid rgba(232,116,26,0.15)" : "0.5px solid rgba(255,255,255,0.08)" }}>
+              {/* Línea de acento superior */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl" style={{ background: isSuspended || isPending ? "transparent" : kpi.accent }} />
+
+              <div className="flex items-start justify-between mb-4">
+                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase tracking-wider font-medium">{kpi.label}</p>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: isSuspended || isPending ? "rgba(255,255,255,0.04)" : kpi.accentBg, color: isSuspended || isPending ? "rgba(255,255,255,0.2)" : kpi.accent }}>
+                  {kpi.icon}
                 </div>
-              )}
-              {isPending && (
-                <div className="absolute top-2 right-2">
-                  <span className="font-jakarta font-bold text-[9px] px-1.5 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.3)" }}>
-                    PENDIENTE
-                  </span>
-                </div>
-              )}
-              <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-medium">{kpi.label}</p>
-              <p className={`font-syne font-extrabold text-[28px] mt-1 ${isSuspended || isPending ? "text-wo-crema/40" : kpi.color}`}>{kpi.value}</p>
-              <div className={`font-jakarta text-xs font-medium mt-1 ${isSuspended || isPending ? "text-wo-crema/30" : "text-wo-crema-muted"}`}>
-                {kpi.icon}
               </div>
+              <p className={`font-syne font-extrabold text-[30px] leading-none ${isSuspended || isPending ? "text-wo-crema/30" : "text-wo-crema"}`}>
+                {kpi.value}
+              </p>
+              {(isSuspended || isPending) && (
+                <p className="font-jakarta text-[10px] mt-2" style={{ color: isSuspended ? "rgb(239,68,68)" : "hsl(var(--wo-oro))" }}>
+                  {isSuspended ? "● Suspendido" : "● Pendiente de activar"}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -328,24 +337,39 @@ export default function AreaAfiliado() {
         )}
 
         {/* Tu Paquete */}
-        <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(232,116,26,0.07) 0%, rgba(10,18,40,0.5) 100%)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.1) 0%, transparent 70%)", transform: "translate(30%, -30%)" }} />
+          <div className="flex flex-wrap items-center justify-between gap-5 relative z-10">
             <div>
-              <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-2">Tu paquete actual</p>
-              <div className="flex items-center gap-3">
-                <span className="font-jakarta font-bold text-sm px-3 py-1 rounded-wo-pill bg-primary text-primary-foreground">{currentPackage.name}</span>
-                <span className="font-jakarta text-[11px] text-wo-crema-muted">
-                  Niveles <strong className="text-primary">1–{currentPackage.depthUnlocked}</strong> de 10 desbloqueados
+              <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase tracking-wider mb-3">Tu paquete actual</p>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="font-jakarta font-bold text-sm px-3 py-1.5 rounded-full bg-primary text-white">{currentPackage.name}</span>
+                <span className="font-jakarta text-[13px] text-wo-crema-muted">
+                  <strong className="text-primary">{currentPackage.depthUnlocked}</strong> de 10 niveles activos
                 </span>
               </div>
+              {/* Barra de progreso de niveles */}
+              <div className="flex gap-1">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-2 flex-1 rounded-full"
+                    style={{
+                      background: i < currentPackage.depthUnlocked
+                        ? "hsl(var(--wo-oro))"
+                        : "rgba(255,255,255,0.08)"
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="font-jakarta text-[11px] text-wo-crema/40 mt-2">{10 - currentPackage.depthUnlocked} niveles más con {nextPackage?.name ?? "nivel máximo"}</p>
             </div>
             {nextPackage && !isPending && (
               <button
                 onClick={() => setShowUpgradeModal(true)}
-                className="flex items-center gap-2 font-jakarta font-bold text-xs px-4 py-2.5 rounded-wo-btn transition-colors hover:bg-primary hover:text-primary-foreground"
-                style={{ border: "0.5px solid rgba(232,116,26,0.35)", color: "hsl(var(--wo-oro))" }}
+                className="flex items-center gap-2 font-jakarta font-bold text-[14px] px-6 py-3.5 rounded-xl bg-primary text-white hover:bg-wo-oro-dark transition-colors shrink-0 min-h-[48px]"
               >
-                <ArrowUpCircle size={13} /> Mejorar a {nextPackage.name}
+                <ArrowUpCircle size={16} /> Mejorar a {nextPackage.name}
               </button>
             )}
           </div>
@@ -763,51 +787,4 @@ export default function AreaAfiliado() {
                 <input
                   type="text"
                   value={profileCity}
-                  onChange={(e) => setProfileCity(e.target.value)}
-                  placeholder="Ej: Miraflores, Lima"
-                  className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
-                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
-                />
-              </div>
-              <div>
-                <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">Número Yape / Plin (Opcional)</label>
-                <input
-                  type="tel"
-                  value={profileYape}
-                  onChange={(e) => setProfileYape(e.target.value)}
-                  placeholder="Ej: 987 654 321"
-                  className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
-                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
-                />
-              </div>
-            </div>
-            <button
-              disabled={updatingProfile || saveSuccess}
-              onClick={async () => {
-                setUpdatingProfile(true);
-                try {
-                  await updateProfile.mutateAsync({
-                    shipping_address: profileAddress,
-                    shipping_city: profileCity,
-                    phone: profilePhone,
-                    yape_number: profileYape,
-                  });
-                  setSaveSuccess(true);
-                  setTimeout(() => {
-                    setShowProfileModal(false);
-                    setSaveSuccess(false);
-                  }, 1200);
-                } finally {
-                  setUpdatingProfile(false);
-                }
-              }}
-              className={`w-full font-jakarta font-bold text-sm py-3 mt-6 rounded-wo-btn transition-colors disabled:cursor-not-allowed ${saveSuccess ? "bg-secondary text-white border-transparent" : "bg-primary text-primary-foreground hover:bg-wo-oro-dark disabled:opacity-40"}`}
-            >
-              {saveSuccess ? "¡Guardado exitosamente!" : updatingProfile ? "Guardando..." : "Guardar mis datos"}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                  onChange={(e) => setProfileCity(e.target

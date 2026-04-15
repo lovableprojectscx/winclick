@@ -72,17 +72,24 @@ export default function LoginAfiliado() {
   return (
     <div className="min-h-screen bg-background pt-16">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-64px)]">
-        {/* Left panel — solo desktop */}
-        <div className="hidden lg:flex flex-col justify-center p-12 relative overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(var(--wo-obsidiana)), hsl(var(--wo-grafito)))" }}>
-          <div className="absolute top-20 right-20 w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(232,116,26,0.12) 0%, transparent 70%)" }} />
-          <div className="relative z-10">
-            <h2 className="font-syne font-extrabold text-[36px] text-wo-crema leading-tight mb-6">
+        {/* Left panel — foto lifestyle (solo desktop) */}
+        <div className="hidden lg:block relative overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=1080&fit=crop&crop=top&auto=format&q=85"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(5,12,28,0.88) 0%, rgba(5,12,28,0.55) 100%)" }} />
+          <div className="relative z-10 h-full flex flex-col justify-center p-12">
+            <h2 className="font-syne font-extrabold text-[38px] text-wo-crema leading-[1.1] mb-5">
               Bienvenido de vuelta<br />a <span className="text-primary">tu negocio.</span>
             </h2>
-            <p className="font-jakarta text-sm text-wo-crema-muted mb-8">Tu red sigue creciendo mientras no estás.</p>
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-wo-pill" style={{ background: "rgba(30,192,213,0.12)", border: "0.5px solid rgba(30,192,213,0.25)" }}>
+            <p className="font-jakarta text-[15px] text-wo-crema-muted mb-10 max-w-xs">
+              Tu red sigue creciendo mientras no estás. Revisa tus comisiones del día.
+            </p>
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-wo-pill w-fit" style={{ background: "rgba(30,192,213,0.12)", border: "0.5px solid rgba(30,192,213,0.3)" }}>
               <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-              <span className="font-jakarta text-xs text-secondary font-medium">+2,400 socios activos ahora</span>
+              <span className="font-jakarta text-xs text-secondary font-semibold">+2,400 socios activos ahora</span>
             </span>
           </div>
         </div>
@@ -201,15 +208,4 @@ export default function LoginAfiliado() {
                       style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                     >
                       <span className="font-bold text-yellow-400">{acc.label}</span>
-                      <span className="text-wo-crema-muted ml-2">{acc.email}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
+                      <span className="tex

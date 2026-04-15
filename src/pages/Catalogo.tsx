@@ -28,10 +28,28 @@ export default function Catalogo() {
   });
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="font-syne font-extrabold text-[26px] sm:text-[30px] text-wo-crema mb-1">Catálogo</h1>
-        <p className="font-jakarta text-sm text-wo-crema-muted mb-6">Explora nuestros productos premium.</p>
+    <div className="min-h-screen bg-background pb-16">
+
+      {/* Banner hero */}
+      <div className="relative overflow-hidden pt-16" style={{ minHeight: "260px" }}>
+        <img
+          src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&h=400&fit=crop&crop=center&auto=format&q=80"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(105deg, rgba(5,12,28,0.95) 0%, rgba(5,12,28,0.7) 60%, rgba(5,12,28,0.45) 100%)" }} />
+        <div className="relative z-10 flex flex-col justify-center h-full px-6 sm:px-12 lg:px-16 py-16">
+          <p className="font-jakarta text-[11px] font-bold tracking-[0.22em] uppercase text-primary mb-3">Winclick · Tienda</p>
+          <h1 className="font-syne font-extrabold text-[38px] sm:text-[52px] text-wo-crema leading-[1.05] mb-2">
+            Productos Premium
+          </h1>
+          <p className="font-jakarta text-[16px] text-wo-crema-muted max-w-md">
+            Orgánicos, naturales y de alta recompra. Vende lo que la gente ama.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
 
         {/* Search */}
         <div className="relative mb-5">
@@ -87,25 +105,4 @@ export default function Catalogo() {
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {filtered.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Search size={40} className="text-wo-crema-muted opacity-30" />
-            <p className="font-jakarta text-sm text-wo-crema-muted text-center">Sin resultados para "{search || "esta categoría"}"</p>
-            <button
-              onClick={() => { setSearch(""); setActiveCategoryId("all"); }}
-              className="font-jakarta text-sm text-wo-crema/80 px-5 py-3 rounded-wo-btn hover:text-wo-crema transition-colors min-h-[44px]"
-              style={{ border: "0.5px solid rgba(248,244,236,0.2)" }}
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 
