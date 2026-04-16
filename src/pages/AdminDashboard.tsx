@@ -10,6 +10,8 @@ import {
   useUpdateBusinessSettings, useDeleteAffiliate, useUpdateAffiliateStatus,
   useAffiliateReferralTree, useAffiliatePayments, useUpdateOrderStatus,
   useCreateCategory, useUpdateCategory, useDeleteCategory, useDeleteProduct,
+  usePendingCommissions, useTotalWallets,
+  useAllWallets, useAllPendingCommissions,
   type OrderWithItems, type PaymentWithAffiliate,
 } from "@/hooks/useAdmin";
 import { useBusinessSettings } from "@/hooks/useAffiliate";
@@ -117,7 +119,9 @@ export default function AdminDashboard() {
   const [affiliateSearch,      setAffiliateSearch]      = useState("");
   const [affiliateStatusFilter,setAffiliateStatusFilter]= useState<"todos" | "active" | "suspended" | "pending">("todos");
   const [paymentSubTab,        setPaymentSubTab]        = useState<"activaciones" | "reactivaciones" | "upgrades" | "retiros" | "recargas">("activaciones");
+  const [billeraSubTab,        setBilleraSubTab]        = useState<"saldos" | "retiros" | "por_acreditar">("saldos");
   const [remanentFilter,       setRemanentFilter]       = useState("todos");
+  const [activeTooltip,        setActiveTooltip]        = useState<string | null>(null);
   const [viewingAffiliate,     setViewingAffiliate]     = useState<any | null>(null);
   const [editingAffiliate,     setEditingAffiliate]     = useState<Affiliate | null>(null);
   const [viewingOrder,         setViewingOrder]         = useState<OrderWithItems | null>(null);
@@ -190,7 +194,11 @@ export default function AdminDashboard() {
   const deleteAffiliate       = useDeleteAffiliate();
   const updateAffiliateStatus = useUpdateAffiliateStatus();
   const updateOrderStatus     = useUpdateOrderStatus();
-  const { data: bizSettings } = useBusinessSettings();
+  const { data: bizSettings }           = useBusinessSettings();
+  const { data: pendingComms }          = usePendingCommissions();
+  const { data: totalWallets }          = useTotalWallets();
+  const { data: allWallets = [] }       = useAllWallets();
+  const { data: pendingCommRows = [] }  = useAllPendingCommissions();
 
   // ─── Datos del afiliado seleccionado ──────────────────────────────────────
   const { data: selectedReferralTree = [] } = useAffiliateReferralTree(viewingAffiliate?.id ?? null);
@@ -204,7 +212,7 @@ export default function AdminDashboard() {
   const totalRevenue     = orders.reduce((s, o) => s + o.total, 0);
   const totalCommissions = affiliates.reduce((s, a) => s + (a.total_commissions ?? 0), 0);
   const pendingWithdrawals = payments.filter((p) => p.type === "retiro" && p.status === "pendiente").reduce((s, p) => s + p.amount, 0);
-  const totalRemanentes  = breakage.filter((r) => r.status === "pending").reduce((s, r) => s + r.amount, 0);
+  const totalRemanentes  = breakage.filter((r) => r.status === "rejected").reduce((s, r) => s + r.amount, 0);
 
   // ─── Filtered data ────────────────────────────────────────────────────────
   const filteredOrders = orderFilter === "todos" ? orders : orders.filter((o) => o.status === orderFilter);
@@ -224,7 +232,7 @@ export default function AdminDashboard() {
 
   const filteredRemanentes = breakage.filter((r) => {
     if (remanentFilter === "todos")     return true;
-    if (remanentFilter === "pendiente") return r.status === "pending";
+    if (remanentFilter === "pendiente") return r.status === "rejected"; // breakage se crea con status='rejected'
     if (remanentFilter === "resuelto")  return r.status === "paid";
     return true;
   });
@@ -478,44 +486,119 @@ export default function AdminDashboard() {
 
         {/* =================== RESUMEN =================== */}
         {activeTab === "resumen" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Ventas totales",    value: `S/ ${totalRevenue.toFixed(2)}`,  icon: <DollarSign size={16} />, color: "text-primary",    up: true },
-                { label: "Pedidos",           value: orders.length,                    icon: <ShoppingBag size={16} />, color: "text-secondary",  up: true },
-                { label: "Afiliados activos", value: affiliates.filter((a) => a.account_status === "active").length, icon: <Users size={16} />, color: "text-primary", up: true },
-                { label: "Inventario bajo",   value: products.filter((p) => p.stock <= 10).length, icon: <AlertTriangle size={16} />, color: "text-destructive", up: false },
-              ].map((kpi, i) => (
-                <div key={i} className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">{kpi.label}</p>
-                    <span className="text-wo-crema-muted">{kpi.icon}</span>
-                  </div>
-                  <p className={`font-syne font-extrabold text-[28px] ${kpi.color}`}>{kpi.value}</p>
-                  <p className={`font-jakarta text-xs font-medium mt-1 ${kpi.up ? "text-secondary" : "text-destructive"}`}>
-                    {kpi.up ? <ArrowUpRight size={10} className="inline" /> : <ArrowDownRight size={10} className="inline" />} en tiempo real
-                  </p>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-6" onClick={() => setActiveTooltip(null)}>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Comisiones acumuladas</p>
-                <p className="font-syne font-extrabold text-xl text-primary">S/ {totalCommissions.toFixed(2)}</p>
-                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">Total pagado a red</p>
-              </div>
-              <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Retiros pendientes</p>
-                <p className="font-syne font-extrabold text-xl text-primary">S/ {pendingWithdrawals.toFixed(2)}</p>
-                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{retiros.filter((w) => w.status === "pendiente").length} solicitudes</p>
-              </div>
-              <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Remanentes sin asignar</p>
-                <p className="font-syne font-extrabold text-xl text-destructive">S/ {totalRemanentes.toFixed(2)}</p>
-                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{breakage.filter((r) => r.status === "pending").length} pendientes</p>
-              </div>
-            </div>
+            {/* Helper tooltip inline */}
+            {(() => {
+              const TT = ({ id, text }: { id: string; text: string }) => (
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setActiveTooltip(activeTooltip === id ? null : id)}
+                    className="w-5 h-5 rounded-full flex items-center justify-center font-jakarta text-[10px] font-bold text-wo-crema-muted hover:text-wo-crema transition-colors"
+                    style={{ border: "0.5px solid rgba(255,255,255,0.15)" }}
+                    title="Ver descripción"
+                  >?</button>
+                  {activeTooltip === id && (
+                    <div className="absolute right-0 top-7 z-50 w-60 rounded-lg p-3 font-jakarta text-xs text-wo-crema leading-relaxed shadow-2xl" style={{ background: "#0a1228", border: "0.5px solid rgba(255,255,255,0.12)" }}>
+                      {text}
+                    </div>
+                  )}
+                </div>
+              );
+
+              const kpis = [
+                { label: "Ventas totales",    value: `S/ ${totalRevenue.toFixed(2)}`,  icon: <DollarSign size={16} />, color: "text-primary",     up: true,  desc: "Suma de todos los pedidos registrados en el sistema, sin importar su estado." },
+                { label: "Pedidos",           value: orders.length,                    icon: <ShoppingBag size={16} />, color: "text-secondary",  up: true,  desc: "Cantidad total de pedidos realizados en la tienda, incluyendo pendientes, procesando y entregados." },
+                { label: "Afiliados activos", value: affiliates.filter((a) => a.account_status === "active").length, icon: <Users size={16} />, color: "text-primary", up: true, desc: "Afiliados con cuenta activa que pueden generar comisiones. No incluye cuentas pendientes ni suspendidas." },
+                { label: "Inventario bajo",   value: products.filter((p) => p.stock <= 10).length, icon: <AlertTriangle size={16} />, color: "text-destructive", up: false, desc: "Productos con 10 o menos unidades en stock. Requiere reabastecimiento pronto." },
+              ];
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {kpis.map((kpi, i) => (
+                      <div key={i} className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">{kpi.label}</p>
+                          <div className="flex items-center gap-2">
+                            <TT id={`kpi-${i}`} text={kpi.desc} />
+                            <span className="text-wo-crema-muted">{kpi.icon}</span>
+                          </div>
+                        </div>
+                        <p className={`font-syne font-extrabold text-[28px] ${kpi.color}`}>{kpi.value}</p>
+                        <p className={`font-jakarta text-xs font-medium mt-1 ${kpi.up ? "text-secondary" : "text-destructive"}`}>
+                          {kpi.up ? <ArrowUpRight size={10} className="inline" /> : <ArrowDownRight size={10} className="inline" />} en tiempo real
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      {
+                        label: "Comisiones acumuladas",
+                        value: `S/ ${totalCommissions.toFixed(2)}`,
+                        color: "text-primary",
+                        sub: "Total histórico pagado a red",
+                        id: "kpi-comm",
+                        desc: "Suma histórica de todas las comisiones acreditadas a afiliados desde el inicio. No representa lo que se debe ahora, sino el total que ya se ha pagado.",
+                      },
+                      {
+                        label: "Retiros pendientes",
+                        value: `S/ ${pendingWithdrawals.toFixed(2)}`,
+                        color: "text-primary",
+                        sub: `${retiros.filter((w) => w.status === "pendiente").length} solicitudes`,
+                        id: "kpi-ret",
+                        desc: "Monto total de solicitudes de retiro de billetera que los afiliados han enviado y aún no han sido aprobadas ni pagadas.",
+                      },
+                      {
+                        label: "Remanentes sin asignar",
+                        value: `S/ ${totalRemanentes.toFixed(2)}`,
+                        color: "text-destructive",
+                        sub: `${breakage.filter((r) => r.status === "rejected").length} sin asignar`,
+                        id: "kpi-rem",
+                        desc: "Comisiones generadas que no llegaron al afiliado porque su paquete no alcanzaba ese nivel o su cuenta estaba inactiva. El dinero queda en la empresa como ingreso adicional.",
+                      },
+                    ].map((c) => (
+                      <div key={c.id} className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">{c.label}</p>
+                          <TT id={c.id} text={c.desc} />
+                        </div>
+                        <p className={`font-syne font-extrabold text-xl ${c.color}`}>{c.value}</p>
+                        <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{c.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Obligaciones financieras pendientes */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(231,76,60,0.25)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">Comisiones por pagar</p>
+                        <div className="flex items-center gap-2">
+                          <TT id="kpi-topay" text="Comisiones reales generadas por ventas ya entregadas, pendientes de acreditar en las billeteras de los afiliados. Esto es deuda real con tu red." />
+                          <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill bg-destructive/15 text-destructive">DEBE</span>
+                        </div>
+                      </div>
+                      <p className="font-syne font-extrabold text-2xl text-destructive">S/ {(pendingComms?.total ?? 0).toFixed(2)}</p>
+                      <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{pendingComms?.count ?? 0} comisiones pendientes de liquidar a la red</p>
+                    </div>
+                    <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(255,184,0,0.2)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">Total en billeteras</p>
+                        <div className="flex items-center gap-2">
+                          <TT id="kpi-wallets" text="Saldo total acumulado en las billeteras digitales de todos los afiliados. Este dinero ya fue acreditado y los afiliados pueden usarlo para comprar o retirarlo." />
+                          <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill bg-primary/15 text-primary">BILLETERAS</span>
+                        </div>
+                      </div>
+                      <p className="font-syne font-extrabold text-2xl text-primary">S/ {(totalWallets?.total ?? 0).toFixed(2)}</p>
+                      <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{allWallets.filter((w) => w.balance > 0).length} afiliados con saldo activo</p>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
 
             {/* Last orders */}
             <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
@@ -971,62 +1054,186 @@ export default function AdminDashboard() {
 
         {/* =================== BILLETERA =================== */}
         {activeTab === "billetera" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-5">
+
+            {/* KPIs billetera */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">Retiros pendientes</p>
-                <p className="font-syne font-extrabold text-[28px] text-primary mt-1">S/ {pendingWithdrawals.toFixed(2)}</p>
+                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Total en billeteras</p>
+                <p className="font-syne font-extrabold text-[26px] text-primary">{(totalWallets?.total ?? 0).toFixed(2) === "0.00" ? "S/ 0.00" : `S/ ${(totalWallets?.total ?? 0).toFixed(2)}`}</p>
+                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{allWallets.filter((w) => w.balance > 0).length} con saldo activo</p>
+              </div>
+              <div className="bg-wo-grafito rounded-wo-card p-5" style={{ border: "0.5px solid rgba(231,76,60,0.25)" }}>
+                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Por acreditar</p>
+                <p className="font-syne font-extrabold text-[26px] text-destructive">S/ {(pendingComms?.total ?? 0).toFixed(2)}</p>
+                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{pendingComms?.count ?? 0} comisiones pendientes</p>
               </div>
               <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">Solicitudes retiro</p>
-                <p className="font-syne font-extrabold text-[28px] text-secondary mt-1">{retiros.length}</p>
+                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Retiros pendientes</p>
+                <p className="font-syne font-extrabold text-[26px] text-primary">S/ {pendingWithdrawals.toFixed(2)}</p>
+                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">{retiros.filter((w) => w.status === "pendiente").length} solicitudes</p>
               </div>
               <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase">Recargas totales</p>
-                <p className="font-syne font-extrabold text-[28px] text-wo-crema mt-1">{recargas.length}</p>
+                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase mb-1">Total obligaciones</p>
+                <p className="font-syne font-extrabold text-[26px] text-destructive">
+                  S/ {((pendingComms?.total ?? 0) + (totalWallets?.total ?? 0) + pendingWithdrawals).toFixed(2)}
+                </p>
+                <p className="font-jakarta text-xs text-wo-crema-muted mt-1">Por acreditar + billeteras + retiros</p>
               </div>
             </div>
 
-            <div className="bg-wo-grafito rounded-wo-card p-5" style={cardStyle}>
-              <h3 className="font-jakarta font-semibold text-sm text-wo-crema mb-4">Solicitudes de retiro</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead><tr style={rowBorder}>
-                    {["Afiliado", "Código", "Monto", "Método", "Cuenta", "Fecha", "Estado", "Acciones"].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
-                    ))}
-                  </tr></thead>
-                  <tbody>
-                    {retiros.map((w) => (
-                      <tr key={w.id} style={rowBorder}>
-                        <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{w.affiliate?.name ?? "—"}</td>
-                        <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.affiliate?.affiliate_code ?? "—"}</td>
-                        <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {w.amount.toFixed(2)}</td>
-                        <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.withdrawal_method ?? "—"}</td>
-                        <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.withdrawal_account ?? "—"}</td>
-                        <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(w.created_at).toLocaleDateString("es-PE")}</td>
-                        <td className="px-4 py-3">
-                          <span className={`font-jakarta text-xs font-bold px-2 py-0.5 rounded-wo-pill ${statusBadge(w.status)}`}>
-                            {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {w.status === "pendiente" && (
-                            <div className="flex gap-1">
-                              <button onClick={() => handleApprove(w)} className="p-1.5 rounded hover:bg-secondary/15 text-wo-crema-muted hover:text-secondary"><CheckCircle size={12} /></button>
-                              <button onClick={() => handleReject(w)} className="p-1.5 rounded hover:bg-destructive/15 text-wo-crema-muted hover:text-destructive"><XCircle size={12} /></button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    {retiros.length === 0 && (
-                      <tr><td colSpan={8} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">Sin solicitudes de retiro</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            {/* Sub-tabs */}
+            <div className="flex gap-2 border-b pb-3" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+              {([
+                { id: "saldos",        label: "Saldos por afiliado",   badge: allWallets.filter((w) => w.balance > 0).length },
+                { id: "retiros",       label: "Solicitudes de retiro", badge: retiros.filter((w) => w.status === "pendiente").length },
+                { id: "por_acreditar", label: "Por acreditar",         badge: pendingComms?.count ?? 0 },
+              ] as const).map((st) => (
+                <button
+                  key={st.id}
+                  onClick={() => setBilleraSubTab(st.id)}
+                  className={`flex items-center gap-1.5 font-jakarta text-xs font-medium px-4 py-2 rounded-wo-pill transition-colors ${billeraSubTab === st.id ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"}`}
+                >
+                  {st.label}
+                  {st.badge > 0 && (
+                    <span className={`font-bold text-[10px] px-1.5 py-0.5 rounded-full ${billeraSubTab === st.id ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
+                      {st.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
+
+            {/* ── Saldos por afiliado ── */}
+            {billeraSubTab === "saldos" && (() => {
+              // user_credits.user_id → affiliates.user_id (join client-side, sin FK en DB)
+              const walletsWithAffiliate = allWallets.map((w) => ({
+                ...w,
+                aff: affiliates.find((a) => a.user_id === w.user_id) ?? null,
+              }));
+              return (
+                <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
+                  <p className="px-5 pt-4 font-jakarta text-xs text-wo-crema-muted">
+                    Saldo disponible en billetera de cada afiliado — monto que puede retirar.
+                  </p>
+                  <div className="overflow-x-auto mt-3">
+                    <table className="w-full">
+                      <thead><tr style={rowBorder}>
+                        {["Afiliado", "Código", "Email", "Paquete", "Saldo disponible", "Actualizado"].map((h) => (
+                          <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>
+                        {walletsWithAffiliate.map((w) => (
+                          <tr key={w.id} style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
+                            <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{w.aff?.name ?? "—"}</td>
+                            <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.aff?.affiliate_code ?? "—"}</td>
+                            <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.email}</td>
+                            <td className="px-4 py-3">
+                              <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))" }}>
+                                {w.aff?.package ?? "—"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`font-syne font-bold text-sm ${w.balance > 0 ? "text-secondary" : "text-wo-crema-muted"}`}>
+                                S/ {w.balance.toFixed(2)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">
+                              {new Date(w.updated_at).toLocaleDateString("es-PE")}
+                            </td>
+                          </tr>
+                        ))}
+                        {allWallets.length === 0 && (
+                          <tr><td colSpan={6} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">Sin registros de billetera aún</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Solicitudes de retiro ── */}
+            {billeraSubTab === "retiros" && (
+              <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr style={rowBorder}>
+                      {["Afiliado", "Código", "Monto", "Método", "Cuenta", "Fecha", "Estado", "Acciones"].map((h) => (
+                        <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {retiros.map((w) => (
+                        <tr key={w.id} style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{w.affiliate?.name ?? "—"}</td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.affiliate?.affiliate_code ?? "—"}</td>
+                          <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {w.amount.toFixed(2)}</td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.withdrawal_method ?? "—"}</td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{w.withdrawal_account ?? "—"}</td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(w.created_at).toLocaleDateString("es-PE")}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-jakarta text-xs font-bold px-2 py-0.5 rounded-wo-pill ${statusBadge(w.status)}`}>
+                              {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {w.status === "pendiente" && (
+                              <div className="flex gap-1">
+                                <button onClick={() => handleApprove(w)} className="p-1.5 rounded hover:bg-secondary/15 text-wo-crema-muted hover:text-secondary"><CheckCircle size={12} /></button>
+                                <button onClick={() => handleReject(w)} className="p-1.5 rounded hover:bg-destructive/15 text-wo-crema-muted hover:text-destructive"><XCircle size={12} /></button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {retiros.length === 0 && (
+                        <tr><td colSpan={8} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">Sin solicitudes de retiro</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── Por acreditar (comisiones pendientes a liquidar) ── */}
+            {billeraSubTab === "por_acreditar" && (
+              <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
+                <p className="px-5 pt-4 font-jakarta text-xs text-wo-crema-muted">
+                  Comisiones generadas por ventas entregadas que aún no se han acreditado en las billeteras de los afiliados.
+                </p>
+                <div className="overflow-x-auto mt-3">
+                  <table className="w-full">
+                    <thead><tr style={rowBorder}>
+                      {["Afiliado", "Código", "Nivel", "Pedido", "Monto", "Fecha"].map((h) => (
+                        <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {pendingCommRows.map((c) => (
+                        <tr key={c.id} style={rowBorder} className="hover:bg-wo-carbon/30 transition-colors">
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema">{c.affiliate?.name ?? "—"}</td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{c.affiliate?.affiliate_code ?? "—"}</td>
+                          <td className="px-4 py-3">
+                            <span className="font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-wo-pill bg-secondary/10 text-secondary">
+                              Niv. {c.level}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted font-mono">{c.order_id?.slice(0, 8) ?? "—"}…</td>
+                          <td className="px-4 py-3 font-syne font-bold text-sm text-destructive">S/ {c.amount.toFixed(2)}</td>
+                          <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(c.created_at).toLocaleDateString("es-PE")}</td>
+                        </tr>
+                      ))}
+                      {pendingCommRows.length === 0 && (
+                        <tr><td colSpan={6} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">No hay comisiones pendientes de acreditar</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 

@@ -208,4 +208,15 @@ export default function LoginAfiliado() {
                       style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                     >
                       <span className="font-bold text-yellow-400">{acc.label}</span>
-                      <span className="tex
+                      <span className="text-wo-crema-muted ml-2">{acc.email}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

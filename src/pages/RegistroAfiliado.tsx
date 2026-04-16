@@ -414,4 +414,22 @@ export default function RegistroAfiliado() {
                   </div>
                 )}
 
-                <b
+                <button
+                  onClick={handleFinalSubmit}
+                  disabled={submitting}
+                  className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Creando cuenta..." : "Crear mi cuenta ahora →"}
+                </button>
+
+                <button type="button" onClick={() => setStep(2)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
+                  ← Cambiar paquete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

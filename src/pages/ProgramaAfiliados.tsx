@@ -241,4 +241,41 @@ export default function ProgramaAfiliados() {
               <div key={i} style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between py-4 text-left">
                   <span className="font-jakarta font-medium text-sm text-wo-crema">{f.q}</span>
-                  {openFaq
+                  {openFaq === i ? <ChevronUp size={16} className="text-primary shrink-0" /> : <ChevronDown size={16} className="text-wo-crema-muted shrink-0" />}
+                </button>
+                {openFaq === i && (
+                  <p className="font-jakarta text-sm text-wo-crema-muted pb-4 leading-relaxed">{f.a}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative overflow-hidden min-h-[480px] flex items-center">
+        <img
+          src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&h=600&fit=crop&crop=center&auto=format&q=80"
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(105deg, rgba(5,12,28,0.94) 0%, rgba(5,12,28,0.80) 55%, rgba(5,12,28,0.50) 100%)" }} />
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-20 relative z-10 w-full">
+          <div className="max-w-[520px]">
+            <p className="font-jakarta text-[11px] font-bold tracking-[0.22em] uppercase text-primary mb-5">Registro gratuito</p>
+            <h2 className="font-syne font-extrabold text-[38px] sm:text-[48px] text-wo-crema leading-[1.05] mb-5">
+              Empieza hoy.<br />Tu red empieza contigo.
+            </h2>
+            <p className="font-jakarta text-[16px] text-wo-crema-muted leading-[1.7] mb-10 max-w-[400px]">
+              Una decisión cambia todo. Regístrate gratis y empieza a construir tu red desde hoy.
+            </p>
+            <Link to="/registro-afiliado" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-[15px] px-8 py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors min-h-[52px]">
+              <Star size={15} /> Crear mi cuenta gratis
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

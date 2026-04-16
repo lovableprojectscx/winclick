@@ -112,7 +112,7 @@ export function useBreakageCommissions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("commissions")
-        .select("*, affiliate:affiliates(name, affiliate_code)")
+        .select("*, affiliate:affiliates!commissions_affiliate_id_fkey(name, affiliate_code)")
         .eq("is_breakage", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -147,14 +147,18 @@ export function useUpdateOrderStatus() {
 
 // ─── Actualizar afiliado ──────────────────────────────────────────────────────
 
+const PACKAGE_DEPTH: Record<string, number> = { "VIP": 10, "Intermedio": 7, "Básico": 3 };
+
 export function useUpdateAffiliate() {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, name, yape_number, pkg }: { id: string; name: string; yape_number: string; pkg: string }) => {
+      // Sincronizar depth_unlocked según paquete — evita el bug de depth desincronizado
+      const depth_unlocked = PACKAGE_DEPTH[pkg] ?? 3;
       const { error } = await supabase
         .from("affiliates")
-        .update({ name, yape_number, package: pkg })
+        .update({ name, yape_number, package: pkg, depth_unlocked })
         .eq("id", id);
       if (error) throw error;
     },
@@ -347,6 +351,99 @@ export function useAffiliatePayments(affiliateId: string | null) {
       return data ?? [];
     },
     staleTime: 15_000,
+  });
+}
+
+// ─── Comisiones pendientes por pagar — resumen (para KPI Resumen) ─────────────
+
+export function usePendingCommissions() {
+  return useQuery<{ total: number; count: number }>({
+    queryKey: ["admin-pending-commissions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commissions")
+        .select("amount")
+        .eq("is_breakage", false)
+        .eq("status", "pending");
+      if (error) throw error;
+      const rows = data ?? [];
+      return {
+        total: rows.reduce((s: number, r: any) => s + (r.amount ?? 0), 0),
+        count: rows.length,
+      };
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ─── Total en billeteras — resumen (para KPI Resumen) ────────────────────────
+
+export function useTotalWallets() {
+  return useQuery<{ total: number; count: number }>({
+    queryKey: ["admin-total-wallets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_credits")
+        .select("balance");
+      if (error) throw error;
+      const rows = data ?? [];
+      return {
+        total: rows.reduce((s: number, r: any) => s + (r.balance ?? 0), 0),
+        count: rows.length,
+      };
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ─── Saldos detallados de billeteras (user_credits + user_id join client-side)
+// user_credits no tiene FK directa a affiliates — se une por user_id en el componente
+
+export type WalletRow = {
+  id: string;
+  user_id: string;
+  balance: number;
+  email: string;
+  updated_at: string;
+};
+
+export function useAllWallets() {
+  return useQuery<WalletRow[]>({
+    queryKey: ["admin-all-wallets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_credits")
+        .select("id, user_id, balance, email, updated_at")
+        .order("balance", { ascending: false });
+      if (error) throw error;
+      return (data as WalletRow[]) ?? [];
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ─── Comisiones pendientes detalladas (para tabla Por acreditar) ──────────────
+// Usa FK hint explícito porque commissions tiene DOS FKs a affiliates
+// (affiliate_id y originator_id), lo que genera ambigüedad en PostgREST
+
+export type PendingCommissionRow = Commission & {
+  affiliate: { name: string; affiliate_code: string } | null;
+};
+
+export function useAllPendingCommissions() {
+  return useQuery<PendingCommissionRow[]>({
+    queryKey: ["admin-all-pending-commissions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commissions")
+        .select("*, affiliate:affiliates!commissions_affiliate_id_fkey(name, affiliate_code)")
+        .eq("is_breakage", false)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data as PendingCommissionRow[]) ?? [];
+    },
+    staleTime: 30_000,
   });
 }
 

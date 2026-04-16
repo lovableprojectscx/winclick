@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Star, Check, Shield, Leaf, Truck, ArrowLeft } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,7 @@ export default function ProductDetail() {
   
   const { data: product, isLoading } = useProduct(id ?? "");
   const { addItem, setIsOpen, setAffiliateCode } = useCart();
+  const { affiliate } = useAuth();
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
@@ -33,14 +35,21 @@ export default function ProductDetail() {
     );
   }
 
+  // Precio según contexto (igual que ProductCard)
+  const displayPrice = refCode
+    ? (product.public_price ?? product.price)
+    : affiliate
+      ? (product.partner_price ?? product.price)
+      : product.price;
+
   const handleAdd = () => {
-    addItem(product);
+    addItem(product, displayPrice);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
   const handleBuyNow = () => {
-    addItem(product);
+    addItem(product, displayPrice);
     setIsOpen(true);
   };
 
@@ -121,7 +130,7 @@ export default function ProductDetail() {
 
             {/* Price */}
             <div className="rounded-wo-btn p-4 mb-5" style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
-              <span className="font-syne font-extrabold text-[34px] text-primary">S/ {product.price.toFixed(2)}</span>
+              <span className="font-syne font-extrabold text-[34px] text-primary">S/ {displayPrice.toFixed(2)}</span>
             </div>
 
             {/* Description */}
@@ -167,7 +176,7 @@ export default function ProductDetail() {
       {/* Sticky mobile bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-wo-grafito/95 backdrop-blur-md px-4 py-3 z-40 safe-area-inset-bottom" style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)" }}>
         <div className="flex items-center gap-3 max-w-lg mx-auto">
-          <span className="font-syne font-extrabold text-xl text-primary shrink-0">S/ {product.price.toFixed(2)}</span>
+          <span className="font-syne font-extrabold text-xl text-primary shrink-0">S/ {displayPrice.toFixed(2)}</span>
           <button
             onClick={handleAdd}
             disabled={(product.stock ?? 0) === 0}

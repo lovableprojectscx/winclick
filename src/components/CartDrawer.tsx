@@ -47,7 +47,7 @@ export default function CartDrawer() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-jakarta font-semibold text-sm text-wo-crema truncate leading-tight">{item.product.name}</p>
-                  <p className="font-syne font-bold text-primary text-sm mt-1">S/ {item.product.price.toFixed(2)}</p>
+                  <p className="font-syne font-bold text-primary text-sm mt-1">S/ {item.unitPrice.toFixed(2)}</p>
                   {/* Quantity controls — 44px tap targets */}
                   <div className="flex items-center gap-2 mt-2.5">
                     <button

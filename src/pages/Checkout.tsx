@@ -162,7 +162,7 @@ export default function Checkout() {
         items: items.map((i) => ({
           productId: i.product.id,
           name:      i.product.name,
-          price:     i.product.price,
+          price:     i.unitPrice,   // precio real (public/partner/standard según contexto)
           quantity:  i.quantity,
         })),
         affiliateCode: refCode || affiliateCode || undefined,
@@ -244,7 +244,7 @@ export default function Checkout() {
               {confirmedItems.map((item) => (
                 <div key={item.product.id} className="flex justify-between items-center gap-2">
                   <span className="font-jakarta text-xs text-wo-crema">{item.product.name} × {item.quantity}</span>
-                  <span className="font-jakarta text-xs text-primary font-semibold shrink-0">S/ {(item.product.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-jakarta text-xs text-primary font-semibold shrink-0">S/ {(item.unitPrice * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -514,7 +514,7 @@ export default function Checkout() {
 
             <button
               onClick={handleSubmit}
-              disabled={processing || (paymentMethod === "cash" && !receipt)}
+              disabled={processing || (paymentMethod === "cash" && !receipt) || (paymentMethod === "wallet" && walletBalance < total)}
               className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-35 disabled:cursor-not-allowed min-h-[52px]"
             >
               {processing ? "Procesando..." : paymentMethod === "wallet" ? `Pagar S/ ${total.toFixed(2)} con Billetera` : `Confirmar Pedido (S/ ${total.toFixed(2)})`}
@@ -529,7 +529,7 @@ export default function Checkout() {
                 {items.map((item) => (
                   <div key={item.product.id} className="flex justify-between gap-2">
                     <span className="font-jakarta text-sm text-wo-crema-muted">{item.product.name} × {item.quantity}</span>
-                    <span className="font-jakarta text-sm text-primary shrink-0">S/ {(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-jakarta text-sm text-primary shrink-0">S/ {(item.unitPrice * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>

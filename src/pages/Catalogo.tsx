@@ -105,4 +105,26 @@ export default function Catalogo() {
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {filtered.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Search size={40} className="text-wo-crema-muted opacity-30" />
+            <p className="font-jakarta text-sm text-wo-crema-muted text-center">Sin resultados para "{search || "esta categoría"}"</p>
+            <button
+              onClick={() => { setSearch(""); setActiveCategoryId("all"); }}
+              className="font-jakarta text-sm text-wo-crema/80 px-5 py-3 rounded-wo-btn hover:text-wo-crema transition-colors min-h-[44px]"
+              style={{ border: "0.5px solid rgba(248,244,236,0.2)" }}
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+

@@ -170,4 +170,27 @@ export default function Contacto() {
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2 p-3 rounded-wo-btn" style={{ background: "rgba(231,76,60,0.08)", border: "0.5px solid rg
+                  <div className="flex items-start gap-2 p-3 rounded-wo-btn" style={{ background: "rgba(231,76,60,0.08)", border: "0.5px solid rgba(231,76,60,0.3)" }}>
+                    <AlertCircle size={14} className="text-destructive shrink-0 mt-0.5" />
+                    <p className="font-jakarta text-xs text-destructive">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-bounce w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors flex items-center justify-center gap-2 min-h-[52px] disabled:opacity-60"
+                >
+                  <Send size={14} /> {submitting ? "Enviando..." : "Enviar mensaje"}
+                </button>
+                <p className="font-jakarta text-[11px] text-wo-crema/30 text-center">
+                  Tu mensaje llega directo a {EMAIL}
+                </p>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

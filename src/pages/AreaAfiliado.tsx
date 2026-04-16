@@ -787,4 +787,51 @@ export default function AreaAfiliado() {
                 <input
                   type="text"
                   value={profileCity}
-                  onChange={(e) => setProfileCity(e.target
+                  onChange={(e) => setProfileCity(e.target.value)}
+                  placeholder="Ej: Miraflores, Lima"
+                  className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
+                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+              <div>
+                <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">Número Yape / Plin (Opcional)</label>
+                <input
+                  type="tel"
+                  value={profileYape}
+                  onChange={(e) => setProfileYape(e.target.value)}
+                  placeholder="Ej: 987 654 321"
+                  className="w-full bg-wo-carbon font-jakarta text-sm text-wo-crema placeholder:text-wo-crema/30 px-4 py-3 rounded-wo-btn outline-none focus:ring-1 focus:ring-primary"
+                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+            </div>
+            <button
+              disabled={updatingProfile || saveSuccess}
+              onClick={async () => {
+                setUpdatingProfile(true);
+                try {
+                  await updateProfile.mutateAsync({
+                    shipping_address: profileAddress,
+                    shipping_city: profileCity,
+                    phone: profilePhone,
+                    yape_number: profileYape,
+                  });
+                  setSaveSuccess(true);
+                  setTimeout(() => {
+                    setShowProfileModal(false);
+                    setSaveSuccess(false);
+                  }, 1200);
+                } finally {
+                  setUpdatingProfile(false);
+                }
+              }}
+              className={`w-full font-jakarta font-bold text-sm py-3 mt-6 rounded-wo-btn transition-colors disabled:cursor-not-allowed ${saveSuccess ? "bg-secondary text-white border-transparent" : "bg-primary text-primary-foreground hover:bg-wo-oro-dark disabled:opacity-40"}`}
+            >
+              {saveSuccess ? "¡Guardado exitosamente!" : updatingProfile ? "Guardando..." : "Guardar mis datos"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

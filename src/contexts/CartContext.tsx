@@ -5,13 +5,14 @@ import { supabase } from "@/lib/supabase";
 export type { Product };
 
 export interface CartItem {
-  product:  Product;
-  quantity: number;
+  product:   Product;
+  quantity:  number;
+  unitPrice: number;   // precio real al momento de agregar (public_price, partner_price o price)
 }
 
 interface CartContextType {
   items:            CartItem[];
-  addItem:          (product: Product) => void;
+  addItem:          (product: Product, unitPrice?: number) => void;
   removeItem:       (productId: string) => void;
   updateQuantity:   (productId: string, quantity: number) => void;
   clearCart:        () => void;
@@ -46,11 +47,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem("wo_affiliate_code");
   }, [affiliateCode]);
 
-  const addItem = useCallback((product: Product) => {
+  const addItem = useCallback((product: Product, unitPrice?: number) => {
+    const resolvedPrice = unitPrice ?? product.price;
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: 1, unitPrice: resolvedPrice }];
     });
     setLastAddedId(product.id);
     setTimeout(() => setLastAddedId(null), 700);
@@ -80,7 +82,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const total     = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const total     = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (

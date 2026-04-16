@@ -23,17 +23,27 @@ const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba170
 
 export default function ProductCard({ product, affiliateCode }: Props) {
   const { addItem } = useCart();
-  const { session } = useAuth();
+  const { session, affiliate } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  
+
   const { toast } = useToast();
   const [added, setAdded] = useState(false);
   const isFav = favoriteIds.includes(product.id);
 
+  // Precio según contexto:
+  // - Con affiliateCode (tienda del afiliado) → public_price (precio cliente final)
+  // - Afiliado logueado comprando del catálogo principal → partner_price
+  // - Público sin contexto → price (precio estándar)
+  const displayPrice = affiliateCode
+    ? (product.public_price ?? product.price)
+    : affiliate
+      ? (product.partner_price ?? product.price)
+      : product.price;
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product);
+    addItem(product, displayPrice);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -80,7 +90,10 @@ export default function ProductCard({ product, affiliateCode }: Props) {
           ))}
           <span className="text-[11px] text-wo-crema-muted font-jakarta ml-1">{product.rating ?? "—"}</span>
         </div>
-        <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {product.price.toFixed(2)}</p>
+        <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
+        {affiliateCode && product.public_price && product.price !== product.public_price && (
+          <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.price.toFixed(2)}</p>
+        )}
         <div className="flex items-center justify-between mt-3 gap-2">
           <button
             onClick={handleAdd}

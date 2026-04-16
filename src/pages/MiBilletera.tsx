@@ -55,7 +55,7 @@ export default function MiBilletera() {
   const monthlyOrders = myOrders.filter((o) => o.created_at?.startsWith(thisMonth));
   const reactivationFee = settings?.reactivation_fee ?? 300;
   const monthlyDelivered = monthlyOrders
-    .filter((o) => o.status === "entregado" || o.status === "aprobado")
+    .filter((o) => o.status === "entregado")
     .reduce((s, o) => s + (o.total ?? 0), 0);
   const reactivationProgress = Math.min((monthlyDelivered / reactivationFee) * 100, 100);
 
