@@ -2073,22 +2073,18 @@ export default function AdminDashboard() {
 
       {/* ========== MODAL: Ver/Editar Producto ========== */}
       {viewingProduct && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewingProduct(null)}>
-          <div className="bg-wo-grafito rounded-2xl max-w-lg w-full p-6 relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setViewingProduct(null)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
-            <div className="flex gap-4 mb-6">
-              {(prodImg || viewingProduct.image_url) ? (
-                <img src={prodImg || viewingProduct.image_url || ""} alt="" className="w-20 h-20 rounded-xl object-cover bg-wo-carbon" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              ) : (
-                <div className="w-20 h-20 rounded-xl bg-wo-carbon flex items-center justify-center text-wo-crema/20 text-xs">Sin imagen</div>
-              )}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setViewingProduct(null)}>
+          <div className="bg-wo-grafito w-full sm:max-w-xl sm:rounded-2xl rounded-t-2xl relative flex flex-col max-h-[92vh]" style={cardStyle} onClick={(e) => e.stopPropagation()}>
+            {/* Header fijo */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
               <div>
-                <h3 className="font-syne font-bold text-lg text-wo-crema">{prodName}</h3>
-                <p className="font-jakarta text-xs text-wo-crema-muted">Stock: {prodStock}</p>
-                <p className={`font-jakarta text-[10px] font-bold mt-0.5 ${prodIsActive ? "text-secondary" : "text-destructive"}`}>{prodIsActive ? "Activo" : "Inactivo"}</p>
+                <h3 className="font-syne font-bold text-base text-wo-crema leading-tight">{prodName}</h3>
+                <p className={`font-jakarta text-[10px] font-bold mt-0.5 ${prodIsActive ? "text-secondary" : "text-destructive"}`}>{prodIsActive ? "● Activo" : "● Inactivo"}</p>
               </div>
+              <button onClick={() => setViewingProduct(null)} className="p-2 text-wo-crema-muted hover:text-wo-crema rounded-lg hover:bg-wo-carbon transition-colors">✕</button>
             </div>
-            <div className="space-y-4">
+            {/* Cuerpo con scroll */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
               <div>
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Nombre</label>
                 <input value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
@@ -2197,11 +2193,18 @@ export default function AdminDashboard() {
       )}
       {/* ========== MODAL: Nuevo Producto ========== */}
       {newProductModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setNewProductModal(false)}>
-          <div className="bg-wo-grafito rounded-2xl max-w-lg w-full p-6 relative" style={cardStyle} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setNewProductModal(false)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
-            <h3 className="font-syne font-bold text-lg text-wo-crema mb-6">Nuevo Producto</h3>
-            <div className="space-y-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setNewProductModal(false)}>
+          <div className="bg-wo-grafito w-full sm:max-w-xl sm:rounded-2xl rounded-t-2xl relative flex flex-col max-h-[92vh]" style={cardStyle} onClick={(e) => e.stopPropagation()}>
+            {/* Header fijo */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+              <div>
+                <h3 className="font-syne font-bold text-base text-wo-crema leading-tight">Nuevo Producto</h3>
+                <p className="font-jakarta text-[10px] text-wo-crema/40 mt-0.5">Completa los datos para crear el producto</p>
+              </div>
+              <button onClick={() => setNewProductModal(false)} className="p-2 text-wo-crema-muted hover:text-wo-crema rounded-lg hover:bg-wo-carbon transition-colors">✕</button>
+            </div>
+            {/* Cuerpo con scroll */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
               <div>
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Nombre</label>
                 <input value={newProdName} onChange={(e) => setNewProdName(e.target.value)} placeholder="Ej: Clorófila Líquida" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
@@ -2294,7 +2297,7 @@ export default function AdminDashboard() {
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Descripción</label>
                 <textarea value={newProdDesc} onChange={(e) => setNewProdDesc(e.target.value)} rows={3} placeholder="Descripción del producto..." className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary resize-none" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 pb-2">
                 <button onClick={handleCreateProduct} disabled={createProduct.isPending || !newProdName} className="flex-1 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-2.5 rounded-xl hover:bg-wo-oro-dark disabled:opacity-50">
                   {createProduct.isPending ? "Creando..." : "Crear producto"}
                 </button>

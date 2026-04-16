@@ -95,12 +95,20 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <Link
-                to="/registro-afiliado"
-                className="hidden md:flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2.5 rounded-lg hover:bg-wo-oro-dark transition-colors"
-              >
-                <Star size={12} /> Únete
-              </Link>
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to="/login-afiliado"
+                  className="font-jakarta font-semibold text-xs text-wo-crema-muted hover:text-wo-crema px-3 py-2.5 rounded-lg transition-colors hover:bg-wo-carbon"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  to="/registro-afiliado"
+                  className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2.5 rounded-lg hover:bg-wo-oro-dark transition-colors"
+                >
+                  <Star size={12} /> Únete
+                </Link>
+              </div>
             )}
 
             {/* Hamburger */}
@@ -145,20 +153,21 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <div className="py-2">
-                <Link
-                  to="/registro-afiliado"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn"
-                >
-                  <Star size={14} /> Únete gratis
-                </Link>
+              <div className="py-2 space-y-2">
                 <Link
                   to="/login-afiliado"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center font-jakarta text-sm text-wo-crema-muted py-3 mt-1"
+                  className="flex items-center justify-center font-jakarta font-bold text-sm text-wo-crema py-3.5 rounded-wo-btn bg-wo-carbon hover:bg-wo-carbon/80 transition-colors"
+                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
                 >
-                  Ya tengo cuenta →
+                  Iniciar sesión
+                </Link>
+                <Link
+                  to="/registro-afiliado"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-3.5 rounded-wo-btn hover:bg-wo-oro-dark transition-colors"
+                >
+                  <Star size={14} /> Únete gratis
                 </Link>
               </div>
             )}
