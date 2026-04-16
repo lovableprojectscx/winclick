@@ -772,7 +772,9 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           description: string | null
+          gallery_images: Json
           id: string
+          image_alt: string | null
           image_url: string | null
           is_active: boolean
           name: string
@@ -790,7 +792,9 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           description?: string | null
+          gallery_images?: Json
           id?: string
+          image_alt?: string | null
           image_url?: string | null
           is_active?: boolean
           name: string
@@ -808,7 +812,9 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           description?: string | null
+          gallery_images?: Json
           id?: string
+          image_alt?: string | null
           image_url?: string | null
           is_active?: boolean
           name?: string

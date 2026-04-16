@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Copy, Check, LogOut, ExternalLink, DollarSign, Users, ShoppingBag, AlertTriangle, Clock, Lock, ArrowUpCircle, X, MessageCircle, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";

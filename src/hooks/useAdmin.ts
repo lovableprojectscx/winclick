@@ -174,13 +174,23 @@ export function useUpdateProduct() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, name, price, stock, description, image_url, is_active, category_id }: {
-      id: string; name: string; price: number; stock: number; description: string;
-      image_url?: string; is_active?: boolean; category_id?: string | null;
+    mutationFn: async ({ id, name, price, partner_price, public_price, stock, description, image_url, image_alt, gallery_images, is_active, category_id }: {
+      id: string; name: string; price: number; partner_price?: number | null; public_price?: number | null;
+      stock: number; description: string; image_url?: string; image_alt?: string | null;
+      gallery_images?: { url: string; alt: string }[]; is_active?: boolean; category_id?: string | null;
     }) => {
       const { error } = await supabase
         .from("products")
-        .update({ name, price, stock, description, ...(image_url !== undefined && { image_url }), ...(is_active !== undefined && { is_active }), ...(category_id !== undefined && { category_id }) })
+        .update({
+          name, price, stock, description,
+          ...(partner_price    !== undefined && { partner_price }),
+          ...(public_price     !== undefined && { public_price  }),
+          ...(image_url        !== undefined && { image_url     }),
+          ...(image_alt        !== undefined && { image_alt     }),
+          ...(gallery_images   !== undefined && { gallery_images }),
+          ...(is_active        !== undefined && { is_active     }),
+          ...(category_id      !== undefined && { category_id   }),
+        })
         .eq("id", id);
       if (error) throw error;
     },
@@ -215,7 +225,11 @@ export function useCreateProduct() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (product: { name: string; price: number; stock: number; description: string; image_url: string; is_active: boolean; category_id?: string | null }) => {
+    mutationFn: async (product: {
+      name: string; price: number; partner_price?: number | null; public_price?: number | null;
+      stock: number; description: string; image_url: string; image_alt?: string | null;
+      gallery_images?: { url: string; alt: string }[]; is_active: boolean; category_id?: string | null;
+    }) => {
       const { error } = await supabase.from("products").insert({ ...product, organic: true });
       if (error) throw error;
     },
@@ -454,7 +468,19 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        // FK violation (23503) o 409 = producto referenciado en pedidos → desactivar
+        if (error.code === "23503" || (error as any).status === 409) {
+          const { error: deactivateErr } = await supabase
+            .from("products")
+            .update({ is_active: false })
+            .eq("id", id);
+          if (deactivateErr) throw deactivateErr;
+          return { deactivated: true };
+        }
+        throw error;
+      }
+      return { deactivated: false };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });

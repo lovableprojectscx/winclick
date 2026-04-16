@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ProductImageUploader, { type GalleryImage } from "@/components/ProductImageUploader";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts, useCategories } from "@/hooks/useProducts";
@@ -150,20 +151,28 @@ export default function AdminDashboard() {
   const [affPackage,  setAffPackage]  = useState("");
 
   // Edit product form state
-  const [prodName,       setProdName]       = useState("");
-  const [prodPrice,      setProdPrice]      = useState("");
-  const [prodStock,      setProdStock]      = useState("");
-  const [prodDesc,       setProdDesc]       = useState("");
-  const [prodImg,        setProdImg]        = useState("");
+  const [prodName,         setProdName]         = useState("");
+  const [prodPrice,        setProdPrice]        = useState("");
+  const [prodPartnerPrice, setProdPartnerPrice] = useState("");
+  const [prodPublicPrice,  setProdPublicPrice]  = useState("");
+  const [prodStock,        setProdStock]        = useState("");
+  const [prodDesc,         setProdDesc]         = useState("");
+  const [prodImg,          setProdImg]          = useState("");
+  const [prodImgAlt,       setProdImgAlt]       = useState("");
+  const [prodGallery,      setProdGallery]      = useState<GalleryImage[]>([]);
   const [prodCategoryId, setProdCategoryId] = useState<string | null>(null);
   const [prodIsActive,   setProdIsActive]   = useState(true);
 
   // New product form state
-  const [newProdName,       setNewProdName]       = useState("");
-  const [newProdPrice,      setNewProdPrice]       = useState("");
-  const [newProdStock,      setNewProdStock]       = useState("");
-  const [newProdDesc,       setNewProdDesc]        = useState("");
-  const [newProdImg,        setNewProdImg]         = useState("");
+  const [newProdName,         setNewProdName]         = useState("");
+  const [newProdPrice,        setNewProdPrice]        = useState("");
+  const [newProdPartnerPrice, setNewProdPartnerPrice] = useState("");
+  const [newProdPublicPrice,  setNewProdPublicPrice]  = useState("");
+  const [newProdStock,        setNewProdStock]        = useState("");
+  const [newProdDesc,         setNewProdDesc]         = useState("");
+  const [newProdImg,          setNewProdImg]          = useState("");
+  const [newProdImgAlt,       setNewProdImgAlt]       = useState("");
+  const [newProdGallery,      setNewProdGallery]      = useState<GalleryImage[]>([]);
   const [newProdCategoryId, setNewProdCategoryId]  = useState<string | null>(null);
 
   // Category management state
@@ -360,9 +369,13 @@ export default function AdminDashboard() {
   const openEditProduct = (p: Product) => {
     setProdName(p.name);
     setProdPrice(p.price.toFixed(2));
+    setProdPartnerPrice(p.partner_price != null ? p.partner_price.toFixed(2) : "");
+    setProdPublicPrice(p.public_price   != null ? p.public_price.toFixed(2)  : "");
     setProdStock(String(p.stock));
     setProdDesc(p.description ?? "");
     setProdImg(p.image_url ?? "");
+    setProdImgAlt((p as any).image_alt ?? "");
+    setProdGallery(((p as any).gallery_images as GalleryImage[]) ?? []);
     setProdCategoryId(p.category_id ?? null);
     setProdIsActive(p.is_active);
     setViewingProduct(p);
@@ -372,13 +385,17 @@ export default function AdminDashboard() {
     if (!viewingProduct) return;
     try {
       await updateProduct.mutateAsync({
-        id:          viewingProduct.id,
-        name:        prodName,
-        price:       parseFloat(prodPrice) || 0,
-        stock:       parseInt(prodStock, 10) || 0,
-        description: prodDesc,
-        image_url:   prodImg,
-        is_active:   prodIsActive,
+        id:            viewingProduct.id,
+        name:          prodName,
+        price:         parseFloat(prodPrice) || 0,
+        partner_price: prodPartnerPrice !== "" ? parseFloat(prodPartnerPrice) : null,
+        public_price:  prodPublicPrice  !== "" ? parseFloat(prodPublicPrice)  : null,
+        stock:         parseInt(prodStock, 10) || 0,
+        description:    prodDesc,
+        image_url:      prodImg,
+        image_alt:      prodImgAlt || null,
+        gallery_images: prodGallery,
+        is_active:      prodIsActive,
         category_id: prodCategoryId,
       });
       setViewingProduct(null);
@@ -391,16 +408,22 @@ export default function AdminDashboard() {
   const handleCreateProduct = async () => {
     try {
       await createProduct.mutateAsync({
-        name:        newProdName,
-        price:       parseFloat(newProdPrice) || 0,
-        stock:       parseInt(newProdStock, 10) || 0,
-        description: newProdDesc,
-        image_url:   newProdImg,
-        is_active:   true,
+        name:          newProdName,
+        price:         parseFloat(newProdPrice) || 0,
+        partner_price: newProdPartnerPrice !== "" ? parseFloat(newProdPartnerPrice) : null,
+        public_price:  newProdPublicPrice  !== "" ? parseFloat(newProdPublicPrice)  : null,
+        stock:         parseInt(newProdStock, 10) || 0,
+        description:    newProdDesc,
+        image_url:      newProdImg,
+        image_alt:      newProdImgAlt || null,
+        gallery_images: newProdGallery,
+        is_active:      true,
         category_id: newProdCategoryId,
       });
       setNewProductModal(false);
-      setNewProdName(""); setNewProdPrice(""); setNewProdStock(""); setNewProdDesc(""); setNewProdImg(""); setNewProdCategoryId(null);
+      setNewProdName(""); setNewProdPrice(""); setNewProdStock(""); setNewProdDesc("");
+      setNewProdImg(""); setNewProdImgAlt(""); setNewProdGallery([]); setNewProdCategoryId(null);
+      setNewProdPartnerPrice(""); setNewProdPublicPrice("");
       toast({ title: "✓ Producto creado" });
     } catch (err) {
       toast({ title: "Error al crear producto", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
@@ -856,7 +879,7 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead><tr style={rowBorder}>
-                        {["Producto", "Categoría", "Precio", "Stock", "Estado", "Acciones"].map((h) => (
+                        {["Producto", "Categoría", "Base", "Socio", "Cliente", "Stock", "Estado", "Acciones"].map((h) => (
                           <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
                         ))}
                       </tr></thead>
@@ -892,7 +915,9 @@ export default function AdminDashboard() {
                                   <span className="font-jakarta text-[10px] text-wo-crema/30">—</span>
                                 )}
                               </td>
-                              <td className="px-4 py-3 font-syne font-bold text-sm text-primary">S/ {p.price.toFixed(2)}</td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-wo-crema-muted">S/ {p.price.toFixed(2)}</td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-secondary">{p.partner_price != null ? `S/ ${p.partner_price.toFixed(2)}` : <span className="text-wo-crema/20 font-jakarta font-normal text-xs">—</span>}</td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-primary">{p.public_price != null ? `S/ ${p.public_price.toFixed(2)}` : <span className="text-wo-crema/20 font-jakarta font-normal text-xs">—</span>}</td>
                               <td className="px-4 py-3">
                                 <span className={`font-jakarta text-xs font-bold ${p.stock <= 10 ? "text-destructive" : p.stock <= 30 ? "text-primary" : "text-wo-crema-muted"}`}>
                                   {p.stock} {p.stock <= 10 && "⚠️"}
@@ -2068,20 +2093,76 @@ export default function AdminDashboard() {
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Nombre</label>
                 <input value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Precio (S/)</label>
-                  <input value={prodPrice} onChange={(e) => setProdPrice(e.target.value)} type="number" step="0.01" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+              {/* ── Precios ── */}
+              <div className="rounded-xl p-3 space-y-3" style={{ background: "rgba(232,116,26,0.05)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
+                <p className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-primary">Precios</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="font-jakarta text-[10px] text-wo-crema-muted mb-1 block">Base (S/)</label>
+                    <input
+                      value={prodPrice}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setProdPrice(v);
+                        const n = parseFloat(v);
+                        if (!isNaN(n) && n > 0) {
+                          setProdPartnerPrice((n * 0.72).toFixed(2));
+                          setProdPublicPrice((n * 1.20).toFixed(2));
+                        }
+                      }}
+                      type="number" step="0.01"
+                      className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-2 py-2 rounded-lg outline-none focus:ring-1 focus:ring-primary"
+                      style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-jakarta text-[10px] text-secondary">Socio (S/)</label>
+                      <button
+                        type="button"
+                        onClick={() => setProdPartnerPrice((parseFloat(prodPrice) * 0.75).toFixed(2))}
+                        className="font-jakarta text-[9px] text-secondary/70 hover:text-secondary underline"
+                      >−25%</button>
+                    </div>
+                    <input
+                      value={prodPartnerPrice}
+                      onChange={(e) => setProdPartnerPrice(e.target.value)}
+                      type="number" step="0.01" placeholder="auto"
+                      className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-2 py-2 rounded-lg outline-none focus:ring-1 focus:ring-secondary"
+                      style={{ border: "0.5px solid rgba(30,192,213,0.2)" }}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-jakarta text-[10px] text-primary">Cliente (S/)</label>
+                      <button
+                        type="button"
+                        onClick={() => setProdPublicPrice((parseFloat(prodPrice) * 1.18).toFixed(2))}
+                        className="font-jakarta text-[9px] text-primary/70 hover:text-primary underline"
+                      >+18%</button>
+                    </div>
+                    <input
+                      value={prodPublicPrice}
+                      onChange={(e) => setProdPublicPrice(e.target.value)}
+                      type="number" step="0.01" placeholder="auto"
+                      className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-2 py-2 rounded-lg outline-none focus:ring-1 focus:ring-primary"
+                      style={{ border: "0.5px solid rgba(232,116,26,0.2)" }}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Stock</label>
-                  <input value={prodStock} onChange={(e) => setProdStock(e.target.value)} type="number" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
-                </div>
+                <p className="font-jakarta text-[10px] text-wo-crema/30">Base = costo referencia · Socio = precio al afiliado · Cliente = precio en tienda pública</p>
               </div>
               <div>
-                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">URL de imagen</label>
-                <input value={prodImg} onChange={(e) => setProdImg(e.target.value)} placeholder="https://..." className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Stock</label>
+                  <input value={prodStock} onChange={(e) => setProdStock(e.target.value)} type="number" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
+              <ProductImageUploader
+                mainUrl={prodImg}
+                mainAlt={prodImgAlt}
+                onMainChange={(url, alt) => { setProdImg(url); setProdImgAlt(alt); }}
+                gallery={prodGallery}
+                onGalleryChange={setProdGallery}
+              />
               <div>
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Categoría</label>
                 <select
@@ -2125,20 +2206,76 @@ export default function AdminDashboard() {
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Nombre</label>
                 <input value={newProdName} onChange={(e) => setNewProdName(e.target.value)} placeholder="Ej: Clorófila Líquida" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Precio (S/)</label>
-                  <input value={newProdPrice} onChange={(e) => setNewProdPrice(e.target.value)} type="number" step="0.01" placeholder="0.00" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+              {/* ── Precios ── */}
+              <div className="rounded-xl p-3 space-y-3" style={{ background: "rgba(232,116,26,0.05)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
+                <p className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-primary">Precios</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="font-jakarta text-[10px] text-wo-crema-muted mb-1 block">Base (S/)</label>
+                    <input
+                      value={newProdPrice}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setNewProdPrice(v);
+                        const n = parseFloat(v);
+                        if (!isNaN(n) && n > 0) {
+                          setNewProdPartnerPrice((n * 0.72).toFixed(2));
+                          setNewProdPublicPrice((n * 1.20).toFixed(2));
+                        }
+                      }}
+                      type="number" step="0.01" placeholder="0.00"
+                      className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-2 py-2 rounded-lg outline-none focus:ring-1 focus:ring-primary"
+                      style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-jakarta text-[10px] text-secondary">Socio (S/)</label>
+                      <button
+                        type="button"
+                        onClick={() => setNewProdPartnerPrice((parseFloat(newProdPrice) * 0.75).toFixed(2))}
+                        className="font-jakarta text-[9px] text-secondary/70 hover:text-secondary underline"
+                      >−25%</button>
+                    </div>
+                    <input
+                      value={newProdPartnerPrice}
+                      onChange={(e) => setNewProdPartnerPrice(e.target.value)}
+                      type="number" step="0.01" placeholder="auto"
+                      className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-2 py-2 rounded-lg outline-none focus:ring-1 focus:ring-secondary"
+                      style={{ border: "0.5px solid rgba(30,192,213,0.2)" }}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-jakarta text-[10px] text-primary">Cliente (S/)</label>
+                      <button
+                        type="button"
+                        onClick={() => setNewProdPublicPrice((parseFloat(newProdPrice) * 1.18).toFixed(2))}
+                        className="font-jakarta text-[9px] text-primary/70 hover:text-primary underline"
+                      >+18%</button>
+                    </div>
+                    <input
+                      value={newProdPublicPrice}
+                      onChange={(e) => setNewProdPublicPrice(e.target.value)}
+                      type="number" step="0.01" placeholder="auto"
+                      className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-2 py-2 rounded-lg outline-none focus:ring-1 focus:ring-primary"
+                      style={{ border: "0.5px solid rgba(232,116,26,0.2)" }}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Stock</label>
-                  <input value={newProdStock} onChange={(e) => setNewProdStock(e.target.value)} type="number" placeholder="0" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
-                </div>
+                <p className="font-jakarta text-[10px] text-wo-crema/30">Base = costo referencia · Socio = precio al afiliado · Cliente = precio en tienda pública</p>
               </div>
               <div>
-                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">URL de imagen</label>
-                <input value={newProdImg} onChange={(e) => setNewProdImg(e.target.value)} placeholder="https://..." className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
+                <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Stock</label>
+                <input value={newProdStock} onChange={(e) => setNewProdStock(e.target.value)} type="number" placeholder="0" className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }} />
               </div>
+              <ProductImageUploader
+                mainUrl={newProdImg}
+                mainAlt={newProdImgAlt}
+                onMainChange={(url, alt) => { setNewProdImg(url); setNewProdImgAlt(alt); }}
+                gallery={newProdGallery}
+                onGalleryChange={setNewProdGallery}
+              />
               <div>
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Categoría</label>
                 <select
@@ -2233,9 +2370,13 @@ export default function AdminDashboard() {
                 <button
                   onClick={async () => {
                     try {
-                      await deleteProduct.mutateAsync(confirmDeleteProductId);
+                      const result = await deleteProduct.mutateAsync(confirmDeleteProductId);
                       setConfirmDeleteProductId(null);
-                      toast({ title: "Producto eliminado" });
+                      if ((result as any)?.deactivated) {
+                        toast({ title: "Producto desactivado", description: "Tiene pedidos asociados, así que fue desactivado en lugar de eliminado." });
+                      } else {
+                        toast({ title: "Producto eliminado" });
+                      }
                     } catch (err) {
                       toast({ title: "Error al eliminar", description: err instanceof Error ? err.message : "Intenta nuevamente.", variant: "destructive" });
                     }

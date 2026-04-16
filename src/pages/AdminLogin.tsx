@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Shield, Zap } from "lucide-react";
+import { Eye, EyeOff, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-
-const isDev = import.meta.env.DEV;
-
-// ─── Cuentas rápidas de testeo (solo visible en DEV) ──────────────────────────
-const DEV_ACCOUNTS = [
-  { label: "Admin", email: "admin@idenza.site", password: "admin123456" },
-];
 
 export default function AdminLogin() {
   const { login } = useAuth();
@@ -30,17 +23,6 @@ export default function AdminLogin() {
     const { error: loginError } = await login(email, password);
     setLoading(false);
     if (loginError) { setError("Credenciales incorrectas."); return; }
-    navigate("/admin-dashboard");
-  };
-
-  const quickLogin = async (acc: { email: string; password: string }) => {
-    setEmail(acc.email);
-    setPassword(acc.password);
-    setError("");
-    setLoading(true);
-    const { error: loginError } = await login(acc.email, acc.password);
-    setLoading(false);
-    if (loginError) { setError(`Error: ${loginError}`); return; }
     navigate("/admin-dashboard");
   };
 
@@ -112,30 +94,6 @@ export default function AdminLogin() {
           Esta URL no está enlazada desde el sitio público.
         </p>
 
-        {/* ── DEV: Acceso rápido ── */}
-        {isDev && (
-          <div className="mt-6 rounded-wo-card p-4" style={{ background: "rgba(255,200,0,0.05)", border: "0.5px solid rgba(255,200,0,0.2)" }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Zap size={12} className="text-yellow-400" />
-              <span className="font-jakarta font-bold text-[11px] text-yellow-400">DEV · Acceso rápido</span>
-            </div>
-            <div className="space-y-2">
-              {DEV_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => quickLogin(acc)}
-                  disabled={loading}
-                  className="w-full text-left px-3 py-2 rounded-wo-btn font-jakarta text-xs text-wo-crema hover:bg-wo-carbon transition-colors disabled:opacity-60"
-                  style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
-                >
-                  <span className="font-bold text-yellow-400">{acc.label}</span>
-                  <span className="text-wo-crema-muted ml-2">{acc.email}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

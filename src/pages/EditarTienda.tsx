@@ -6,6 +6,7 @@ import { useMyStoreConfig, useUpdateStoreConfig } from "@/hooks/useAffiliate";
 import {
   ArrowLeft, Save, Eye, Store, Palette, MessageCircle,
   Package, Check, Sparkles, Image as ImageIcon, Upload, Camera, Trash2,
+  Tag, AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -46,6 +47,7 @@ export default function EditarTienda() {
   const [storeWhatsapp,    setStoreWhatsapp]    = useState("");
   const [storeActive,      setStoreActive]      = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [customPrices,     setCustomPrices]     = useState<Record<string, string>>({});
   const [saving,           setSaving]           = useState(false);
   const [uploadingImage,   setUploadingImage]   = useState(false);
 
@@ -61,6 +63,12 @@ export default function EditarTienda() {
       setStoreWhatsapp(storeConfig.whatsapp ?? "");
       setStoreActive(storeConfig.is_public ?? true);
       setSelectedProducts(storeConfig.featured_product_ids ?? []);
+      if (storeConfig.custom_prices) {
+        const saved = storeConfig.custom_prices as Record<string, number>;
+        const asStrings: Record<string, string> = {};
+        Object.entries(saved).forEach(([id, price]) => { asStrings[id] = String(price); });
+        setCustomPrices(asStrings);
+      }
     }
   }, [storeConfig]);
 
@@ -117,6 +125,13 @@ export default function EditarTienda() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Convertir precios a números y filtrar entradas vacías
+      const pricesAsNumbers: Record<string, number> = {};
+      Object.entries(customPrices).forEach(([id, val]) => {
+        const n = parseFloat(val);
+        if (!isNaN(n) && n > 0) pricesAsNumbers[id] = n;
+      });
+
       await updateConfig.mutateAsync({
         store_name:           storeName,
         tagline:              storeTagline,
@@ -127,6 +142,7 @@ export default function EditarTienda() {
         whatsapp:             storeWhatsapp,
         is_public:            storeActive,
         featured_product_ids: selectedProducts,
+        custom_prices:        pricesAsNumbers,
       });
       toast({
         title: "✓ Tienda actualizada",
@@ -422,6 +438,135 @@ export default function EditarTienda() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Precios de mis productos */}
+        <div className="bg-wo-grafito rounded-wo-card p-6 space-y-5" style={cardStyle}>
+          <div className="flex items-center gap-2">
+            <Tag size={14} className="text-primary" />
+            <h3 className="font-jakarta font-semibold text-sm text-wo-crema">Precios de mis productos</h3>
+          </div>
+          <p className="font-jakarta text-xs text-wo-crema-muted">
+            Define a qué precio vendes cada producto en tu tienda. Winclick te cobra el{" "}
+            <span className="text-secondary font-semibold">Precio Socio</span> — la diferencia es tu ganancia directa.
+          </p>
+
+          {loadingProducts && (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-20 bg-wo-carbon rounded-xl animate-pulse" style={cardStyle} />
+              ))}
+            </div>
+          )}
+
+          {!loadingProducts && selectedProducts.length === 0 && (
+            <p className="font-jakarta text-xs text-wo-crema-muted py-2">
+              Selecciona productos destacados arriba para editar sus precios aquí.
+            </p>
+          )}
+
+          {!loadingProducts && selectedProducts.length > 0 && (
+            <div className="space-y-3">
+              {activeProducts.filter((p) => selectedProducts.includes(p.id)).map((product) => {
+                const partnerPrice = product.partner_price ?? product.price;
+                const suggestedPrice = product.public_price ?? product.price;
+                const myPriceStr = customPrices[product.id] ?? String(suggestedPrice.toFixed(2));
+                const myPrice = parseFloat(myPriceStr) || 0;
+                const margin = myPrice - partnerPrice;
+                const pct = partnerPrice > 0 ? (margin / partnerPrice) * 100 : 0;
+                const isBelowCost = myPrice > 0 && myPrice < partnerPrice;
+
+                return (
+                  <div
+                    key={product.id}
+                    className="bg-wo-carbon rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+                    style={cardStyle}
+                  >
+                    {/* Product info */}
+                    <div className="flex items-center gap-3 sm:w-48 flex-shrink-0">
+                      <img
+                        src={product.image_url ?? ""}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="font-jakarta text-sm text-wo-crema font-medium truncate">{product.name}</p>
+                        <p className="font-jakarta text-[11px] text-secondary mt-0.5">
+                          Socio: S/ {partnerPrice.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Price input */}
+                    <div className="flex-1">
+                      <label className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold tracking-wider block mb-1.5">
+                        Tú vendes a
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-jakarta text-sm text-wo-crema-muted">S/</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.50"
+                          value={myPriceStr}
+                          onChange={(e) =>
+                            setCustomPrices((prev) => ({ ...prev, [product.id]: e.target.value }))
+                          }
+                          className={`w-full bg-wo-grafito rounded-xl pl-9 pr-4 py-2.5 font-jakarta text-sm text-wo-crema focus:outline-none focus:ring-1 ${
+                            isBelowCost ? "ring-1 ring-destructive focus:ring-destructive" : "focus:ring-primary"
+                          }`}
+                          style={cardStyle}
+                        />
+                      </div>
+                      {isBelowCost && (
+                        <div className="flex items-center gap-1 mt-1.5">
+                          <AlertTriangle size={10} className="text-destructive flex-shrink-0" />
+                          <p className="font-jakarta text-[10px] text-destructive">
+                            Por debajo del precio socio — perderías dinero
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Margin display */}
+                    <div className="sm:w-36 flex-shrink-0">
+                      <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold tracking-wider mb-1">Tu ganancia</p>
+                      {myPrice > 0 && !isBelowCost ? (
+                        <div>
+                          <p className="font-syne font-bold text-base text-primary">
+                            S/ {margin.toFixed(2)}
+                          </p>
+                          <p className="font-jakarta text-[11px] text-wo-crema-muted">
+                            {pct.toFixed(1)}% margen
+                          </p>
+                        </div>
+                      ) : myPrice > 0 && isBelowCost ? (
+                        <p className="font-syne font-bold text-base text-destructive">
+                          − S/ {Math.abs(margin).toFixed(2)}
+                        </p>
+                      ) : (
+                        <p className="font-jakarta text-xs text-wo-crema-muted">Ingresa precio</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-wo-crema/5 flex items-center justify-between gap-3">
+            <p className="font-jakarta text-[11px] text-wo-crema-muted">
+              Los precios se guardan junto con todos los ajustes de tu tienda.
+            </p>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-5 py-2.5 rounded-wo-btn hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
+            >
+              {saving ? <span className="animate-spin">⏳</span> : <Save size={12} />}
+              {saving ? "Guardando..." : "Guardar precios"}
+            </button>
+          </div>
         </div>
 
         {/* Bottom save bar (mobile) */}
