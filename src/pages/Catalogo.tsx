@@ -1,15 +1,21 @@
 import { useState, useMemo } from "react";
 import { useSEO } from "@/hooks/useSEO";
-import { Search, X } from "lucide-react";
+import { Search, X, Zap, ArrowRight } from "lucide-react";
+import { useSearchParams, Link } from "react-router-dom";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
+
+const PROMO_DISCOUNT = 0.40;
+const PROMO_END = new Date("2026-04-30T23:59:59");
 
 export default function Catalogo() {
   const [search,            setSearch]            = useState("");
   const [activeCategoryId,  setActiveCategoryId]  = useState<string | "all">("all");
+  const [searchParams] = useSearchParams();
+  const isPromoAbril = searchParams.get("promo") === "abril" && new Date() < PROMO_END;
 
-  const { data: products = [],   isLoading: loadingProducts }   = useProducts();
-  const { data: categories = [], isLoading: loadingCategories } = useCategories();
+  const { data: products = [],   isLoading: loadingProducts,   isError: errorProducts }   = useProducts();
+  const { data: categories = [], isLoading: loadingCategories, isError: errorCategories } = useCategories();
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -21,6 +27,7 @@ export default function Catalogo() {
   }, [search, activeCategoryId, products]);
 
   const loading = loadingProducts || loadingCategories;
+  const hasError = !loading && (errorProducts || errorCategories);
   useSEO({
     title: "Productos Orgánicos y Premium Winclick Perú | Tienda Online",
     description: "Compra productos orgánicos y premium en Winclick Perú. Suplementos, proteínas, colágeno, detox y más. Envíos a Lima y todo el Perú. Gana comisiones revendiendo.",
@@ -50,6 +57,30 @@ export default function Catalogo() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+
+        {/* Banner Promo Abril */}
+        {isPromoAbril && (
+          <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-6"
+            style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.35)" }}>
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 text-primary">
+              <Zap size={18} className="fill-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-jakarta font-bold text-[13px] text-primary leading-tight">
+                Promo Abril · 40% OFF en tu kit de activación
+              </p>
+              <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">
+                Compra desde <strong className="text-wo-crema">S/ 72</strong> en productos (valor S/ 120) y activa tu cuenta de afiliado hoy.
+              </p>
+            </div>
+            <Link
+              to="/promo-abril"
+              className="flex items-center gap-1 font-jakarta text-[11px] font-bold text-primary hover:underline shrink-0"
+            >
+              Ver detalles <ArrowRight size={11} />
+            </Link>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative mb-5">
@@ -98,7 +129,19 @@ export default function Catalogo() {
         </div>
 
         {/* Grid */}
-        {loading ? (
+        {hasError ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <p className="font-jakarta text-sm text-wo-crema-muted text-center">
+              No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="font-jakarta text-sm font-bold text-primary px-5 py-3 rounded-wo-btn border border-primary/40 hover:bg-primary/10 transition-colors min-h-[44px]"
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-wo-grafito rounded-wo-card h-[260px] skeleton-shimmer" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }} />
@@ -107,7 +150,11 @@ export default function Catalogo() {
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {filtered.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                promoDiscount={isPromoAbril ? PROMO_DISCOUNT : undefined}
+              />
             ))}
           </div>
         ) : (

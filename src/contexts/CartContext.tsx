@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { Product } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
+import { toN } from "@/lib/utils";
 
 export type { Product };
 
@@ -48,7 +49,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [affiliateCode]);
 
   const addItem = useCallback((product: Product, unitPrice?: number) => {
-    const resolvedPrice = unitPrice ?? product.price;
+    const resolvedPrice = toN(unitPrice ?? product.price);
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);

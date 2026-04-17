@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
@@ -27,6 +28,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Terminos from "./pages/Terminos";
 import Privacidad from "./pages/Privacidad";
 import AdminLogin from "./pages/AdminLogin";
+import PromoAbril from "./pages/PromoAbril";
 import NotFound from "./pages/NotFound";
 
 const DevTools = import.meta.env.DEV
@@ -73,17 +75,55 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Only retry once — with the fetch timeout above the user sees
+      // an error within ~25s instead of hanging for minutes
+      retry: 1,
+      retryDelay: 1500,
+      // Treat cached data as fresh for 2 min — avoids redundant refetches
+      staleTime: 2 * 60 * 1000,
+      // Always attempt fetching even on slow/unreliable connections
+      networkMode: "always",
+    },
+  },
+});
+
+const PROMO_END = new Date("2026-04-30T23:59:59");
+function barInitiallyVisible() {
+  try { if (localStorage.getItem("promo_abril_bar_dismissed") === "1") return false; } catch {}
+  return new Date() < PROMO_END;
+}
 
 // Oculta Navbar y Footer en las páginas de tienda de afiliado
 function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const isTienda = pathname.startsWith("/tienda/");
+  const isTienda    = pathname.startsWith("/tienda/");
+  const isPromoPage = pathname === "/promo-abril";
+  const hideBarRoutes = ["/admin-dashboard", "/area-afiliado", "/mi-billetera", "/editar-tienda", "/admin-login"];
+  const showBar = !isTienda && !isPromoPage && !hideBarRoutes.some((r) => pathname.startsWith(r));
+
+  const [barVisible, setBarVisible] = useState(showBar && barInitiallyVisible());
+
+  const BAR_H = barVisible && showBar ? 36 : 0; // px — altura de la barra
+
   return (
     <>
-      {!isTienda && <Navbar />}
+      {showBar && (
+        <AnnouncementBar
+          visible={barVisible}
+          onDismiss={() => setBarVisible(false)}
+        />
+      )}
+      {!isTienda && <Navbar topOffset={BAR_H} />}
       <CartDrawer />
-      {children}
+      {/* Desplaza el bloque de contenido hacia abajo cuando la barra está activa.
+          Las páginas ya tienen pt-16 (64px) para limpiar la navbar; sólo
+          necesitamos empujarlas por la altura adicional de la barra. */}
+      <div style={{ marginTop: BAR_H }}>
+        {children}
+      </div>
       {!isTienda && <Footer />}
     </>
   );
@@ -117,6 +157,7 @@ const App = () => (
               <Route path="/terminos" element={<Terminos />} />
               <Route path="/privacidad" element={<Privacidad />} />
               <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/promo-abril" element={<PromoAbril />} />
               {import.meta.env.DEV && DevTools && (
                 <Route path="/dev-tools" element={<Suspense fallback={null}><DevTools /></Suspense>} />
               )}

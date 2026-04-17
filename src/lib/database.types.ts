@@ -1189,3 +1189,20 @@ export const Constants = {
     },
   },
 } as const
+
+// ── Convenience type aliases ─────────────────────────────────────────────────
+// These re-export table row types so the rest of the codebase can do:
+//   import type { Product, Affiliate, ... } from "@/lib/database.types"
+export type Product          = Tables<"products">
+export type Category         = Tables<"categories">
+export type Affiliate        = Tables<"affiliates">
+export type Order            = Tables<"orders">
+export type OrderItem        = Tables<"order_items">
+export type AffiliatePayment = Tables<"affiliate_payments">
+export type Commission       = Tables<"commissions">
+export type StoreConfig      = Tables<"affiliate_store_config">
+export type BusinessSettings = Tables<"business_settings">
+export type CreditTransaction = Tables<"credit_transactions">
+
+/** Paquetes de afiliado disponibles */
+export type PackageType = "Básico" | "Intermedio" | "VIP"

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone } from "lucide-react";
+import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone, Zap } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useAffiliate";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -89,6 +89,7 @@ export default function RegistroAfiliado() {
   const { toast } = useToast();
   const { data: bizSettings } = useBusinessSettings();
   const [searchParams] = useSearchParams();
+  const isPromoAbril = searchParams.get("promo") === "abril";
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
@@ -170,8 +171,13 @@ export default function RegistroAfiliado() {
       return;
     }
 
-    toast({ title: "¡Bienvenido a Winclick!", description: "Cuenta creada. Ya puedes acceder a tu panel — activa tu cuenta haciendo tu primera compra en el catálogo." });
-    navigate("/area-afiliado");
+    if (isPromoAbril) {
+      toast({ title: "¡Bienvenido a Winclick! 🎉", description: "Cuenta creada. Elige tu kit de activación con 40% OFF — el descuento ya está aplicado." });
+      navigate("/catalogo?promo=abril");
+    } else {
+      toast({ title: "¡Bienvenido a Winclick!", description: "Cuenta creada. Ya puedes acceder a tu panel — activa tu cuenta haciendo tu primera compra en el catálogo." });
+      navigate("/area-afiliado");
+    }
     setSubmitting(false);
   };
 
@@ -236,6 +242,23 @@ export default function RegistroAfiliado() {
         {/* Right - Steps */}
         <div className="p-8 lg:p-12 flex items-start lg:items-center overflow-y-auto">
           <div className="w-full max-w-md mx-auto">
+            {/* Banner Promo Abril */}
+            {isPromoAbril && (
+              <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-6"
+                style={{ background: "rgba(232,116,26,0.10)", border: "0.5px solid rgba(232,116,26,0.40)" }}>
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary">
+                  <Zap size={16} className="fill-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-jakarta font-bold text-[13px] text-primary leading-tight">Oferta de abril activa</p>
+                  <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">
+                    Al registrarte, elige tu kit con <strong className="text-wo-crema">40% OFF</strong> desde S/ 72 (valor S/ 120)
+                  </p>
+                </div>
+                <Link to="/promo-abril" className="font-jakarta text-[10px] text-primary hover:underline shrink-0">Ver promo</Link>
+              </div>
+            )}
+
             <StepBar step={step} />
 
             {/* ── STEP 1: Datos personales ── */}

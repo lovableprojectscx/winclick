@@ -8,20 +8,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
-  product:       Product;
+  product:        Product;
   affiliateCode?: string;
+  /** Descuento fraccional (0–1). Ej: 0.40 = 40% OFF. Se muestra el precio rebajado + tachado. */
+  promoDiscount?: number;
 }
 
-const CATEGORY_FALLBACK: Record<string, string> = {
-  "Detox":     "https://images.unsplash.com/photo-1622597467836-f3285f2131b8?w=600&h=600&fit=crop&auto=format&q=82",
-  "Vitaminas": "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=600&h=600&fit=crop&auto=format&q=82",
-  "Proteínas": "https://images.unsplash.com/photo-1579722820309-ad7660e21001?w=600&h=600&fit=crop&auto=format&q=82",
-  "Colágeno":  "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?w=600&h=600&fit=crop&auto=format&q=82",
-  "Naturales": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&h=600&fit=crop&auto=format&q=82",
-};
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
 
-export default function ProductCard({ product, affiliateCode }: Props) {
+export default function ProductCard({ product, affiliateCode, promoDiscount }: Props) {
   const { addItem } = useCart();
   const { session, affiliate } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -56,12 +51,12 @@ export default function ProductCard({ product, affiliateCode }: Props) {
       {/* Image */}
       <div className="relative h-[160px] sm:h-[180px] bg-wo-carbon overflow-hidden">
         <img
-          src={product.image_url || CATEGORY_FALLBACK[product.category ?? ""] || IMG_FALLBACK}
-          alt={product.name}
+          src={product.image_url || IMG_FALLBACK}
+          alt={product.image_alt || product.name}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = CATEGORY_FALLBACK[product.category ?? ""] ?? IMG_FALLBACK;
+            (e.currentTarget as HTMLImageElement).src = IMG_FALLBACK;
           }}
         />
         {(product.rating ?? 0) >= 4.5 && (
@@ -90,9 +85,24 @@ export default function ProductCard({ product, affiliateCode }: Props) {
           ))}
           <span className="text-[11px] text-wo-crema-muted font-jakarta ml-1">{product.rating ?? "—"}</span>
         </div>
-        <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
-        {affiliateCode && product.public_price && product.price !== product.public_price && (
-          <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.price.toFixed(2)}</p>
+        {promoDiscount ? (
+          <div className="mt-2">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded text-secondary"
+                style={{ background: "rgba(30,192,213,0.12)", border: "0.5px solid rgba(30,192,213,0.3)" }}>
+                -{Math.round(promoDiscount * 100)}%
+              </span>
+              <span className="font-jakarta text-[12px] text-wo-crema-muted line-through">S/ {displayPrice.toFixed(2)}</span>
+            </div>
+            <p className="font-syne font-extrabold text-xl text-primary">S/ {(displayPrice * (1 - promoDiscount)).toFixed(2)}</p>
+          </div>
+        ) : (
+          <>
+            <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
+            {affiliateCode && product.public_price && product.price !== product.public_price && (
+              <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.price.toFixed(2)}</p>
+            )}
+          </>
         )}
         <div className="flex items-center justify-between mt-3 gap-2">
           <button

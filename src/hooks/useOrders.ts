@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Order, OrderItem } from "@/lib/database.types";
+import { toN } from "@/lib/utils";
 
 export interface CartItem {
   productId: string;
@@ -128,7 +129,11 @@ export function useMyOrders() {
         .eq("affiliate_id", affiliate!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as (Order & { order_items: OrderItem[] })[]) ?? [];
+      return ((data as (Order & { order_items: OrderItem[] })[]) ?? []).map(o => ({
+        ...o,
+        total:       toN(o.total),
+        order_items: (o.order_items ?? []).map(i => ({ ...i, price: toN(i.price), subtotal: toN((i as any).subtotal) })),
+      }));
     },
     enabled: !!affiliate?.id,
   });

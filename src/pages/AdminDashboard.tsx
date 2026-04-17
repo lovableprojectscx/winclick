@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { toN } from "@/lib/utils";
+
+/** Safety wrapper: converts any numeric string from PostgREST to number before .toFixed() */
+const n = (v: unknown) => toN(v);
 import ProductImageUploader, { type GalleryImage } from "@/components/ProductImageUploader";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -368,9 +372,9 @@ export default function AdminDashboard() {
 
   const openEditProduct = (p: Product) => {
     setProdName(p.name);
-    setProdPrice(p.price.toFixed(2));
-    setProdPartnerPrice(p.partner_price != null ? p.partner_price.toFixed(2) : "");
-    setProdPublicPrice(p.public_price   != null ? p.public_price.toFixed(2)  : "");
+    setProdPrice(n(p.price).toFixed(2));
+    setProdPartnerPrice(p.partner_price != null ? n(p.partner_price).toFixed(2) : "");
+    setProdPublicPrice(p.public_price   != null ? n(p.public_price).toFixed(2)  : "");
     setProdStock(String(p.stock));
     setProdDesc(p.description ?? "");
     setProdImg(p.image_url ?? "");
@@ -915,9 +919,9 @@ export default function AdminDashboard() {
                                   <span className="font-jakarta text-[10px] text-wo-crema/30">—</span>
                                 )}
                               </td>
-                              <td className="px-4 py-3 font-syne font-bold text-sm text-wo-crema-muted">S/ {p.price.toFixed(2)}</td>
-                              <td className="px-4 py-3 font-syne font-bold text-sm text-secondary">{p.partner_price != null ? `S/ ${p.partner_price.toFixed(2)}` : <span className="text-wo-crema/20 font-jakarta font-normal text-xs">—</span>}</td>
-                              <td className="px-4 py-3 font-syne font-bold text-sm text-primary">{p.public_price != null ? `S/ ${p.public_price.toFixed(2)}` : <span className="text-wo-crema/20 font-jakarta font-normal text-xs">—</span>}</td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-wo-crema-muted">S/ {n(p.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-secondary">{p.partner_price != null ? `S/ ${n(p.partner_price).toFixed(2)}` : <span className="text-wo-crema/20 font-jakarta font-normal text-xs">—</span>}</td>
+                              <td className="px-4 py-3 font-syne font-bold text-sm text-primary">{p.public_price != null ? `S/ ${n(p.public_price).toFixed(2)}` : <span className="text-wo-crema/20 font-jakarta font-normal text-xs">—</span>}</td>
                               <td className="px-4 py-3">
                                 <span className={`font-jakarta text-xs font-bold ${p.stock <= 10 ? "text-destructive" : p.stock <= 30 ? "text-primary" : "text-wo-crema-muted"}`}>
                                   {p.stock} {p.stock <= 10 && "⚠️"}

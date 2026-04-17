@@ -1,6 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Product, Category } from "@/lib/database.types";
+import { toN } from "@/lib/utils";
+
+/** Normalize NUMERIC fields that PostgREST returns as strings */
+function normalizeProduct(p: Product): Product {
+  return {
+    ...p,
+    price:         toN(p.price),
+    partner_price: p.partner_price != null ? toN(p.partner_price) : null,
+    public_price:  p.public_price  != null ? toN(p.public_price)  : null,
+    rating:        p.rating        != null ? toN(p.rating)        : null,
+    stock:         p.stock         != null ? toN(p.stock)         : null,
+    reviews_count: toN(p.reviews_count),
+  };
+}
 
 // ─── Productos ────────────────────────────────────────────────────────────────
 
@@ -13,7 +27,7 @@ export function useProducts(categoryId?: string, includeInactive = false) {
       if (!includeInactive) q = q.eq("is_active", true);
       const { data, error } = await q;
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(normalizeProduct);
     },
   });
 }
@@ -28,7 +42,7 @@ export function useProduct(id: string) {
         .eq("id", id)
         .single();
       if (error) throw error;
-      return data;
+      return data ? normalizeProduct(data) : null;
     },
     enabled: !!id,
   });
@@ -79,7 +93,7 @@ export function useStoreProducts(affiliateCode: string) {
         // Si no hay destacados, mostrar todos los productos
         if (store.show_all_products) {
           const { data } = await supabase.from("products").select("*").order("name");
-          return { store, products: data ?? [] };
+          return { store, products: (data ?? []).map(normalizeProduct) };
         }
         return { store, products: [] };
       }
@@ -89,7 +103,7 @@ export function useStoreProducts(affiliateCode: string) {
         .select("*")
         .in("id", ids);
 
-      return { store, products: products ?? [] };
+      return { store, products: (products ?? []).map(normalizeProduct) };
     },
     enabled: !!affiliateCode,
   });

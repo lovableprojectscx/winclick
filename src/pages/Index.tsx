@@ -19,7 +19,7 @@ const COMMISSION_LEVELS = [
 ];
 
 export default function Index() {
-  const { data: products = [], isLoading: loadingProducts } = useProducts();
+  const { data: products = [], isLoading: loadingProducts, isError: errorProducts } = useProducts();
   const featuredProducts = products.slice(0, 4);
 
   const refWhy        = useScrollReveal<HTMLElement>();
@@ -254,11 +254,13 @@ export default function Index() {
               ? Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="min-w-[240px] max-w-[240px] h-[320px] bg-wo-carbon rounded-wo-card animate-pulse" />
                 ))
-              : featuredProducts.map((p) => (
-                  <div key={p.id} className="min-w-[240px] max-w-[240px]">
-                    <ProductCard product={p} />
-                  </div>
-                ))
+              : errorProducts
+                ? <p className="font-jakarta text-sm text-wo-crema-muted py-8">No se pudo cargar productos. <button onClick={() => window.location.reload()} className="text-primary underline">Reintentar</button></p>
+                : featuredProducts.map((p) => (
+                    <div key={p.id} className="min-w-[240px] max-w-[240px]">
+                      <ProductCard product={p} />
+                    </div>
+                  ))
             }
           </div>
 

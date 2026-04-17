@@ -2,6 +2,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Affiliate, Order, OrderItem, AffiliatePayment, Commission, Product, BusinessSettings } from "@/lib/database.types";
+import { toN } from "@/lib/utils";
+
+/** Normalize affiliate numeric fields returned as strings by PostgREST */
+function normalizeAffiliate<T extends Affiliate>(a: T): T {
+  return { ...a, total_sales: toN(a.total_sales), total_commissions: toN(a.total_commissions) };
+}
+
+/** Normalize order numeric fields */
+function normalizeOrder(o: Order): Order {
+  return { ...o, total: toN(o.total) };
+}
+
+/** Normalize commission numeric fields */
+function normalizeCommission(c: Commission): Commission {
+  return { ...c, amount: toN(c.amount), base_amount: toN(c.base_amount), percentage: toN(c.percentage) };
+}
+
+/** Normalize payment numeric fields */
+function normalizePayment(p: AffiliatePayment): AffiliatePayment {
+  return { ...p, amount: toN(p.amount) };
+}
 
 // ─── Todos los afiliados ──────────────────────────────────────────────────────
 
@@ -14,7 +35,7 @@ export function useAllAffiliates() {
         .select("*, sponsor:referred_by(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as any) ?? [];
+      return ((data as any) ?? []).map(normalizeAffiliate);
     },
     staleTime: 30_000,
   });
@@ -33,7 +54,14 @@ export function useAllOrders() {
         .select("*, order_items(*)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as OrderWithItems[]) ?? [];
+      return ((data as OrderWithItems[]) ?? []).map(o => ({
+        ...normalizeOrder(o),
+        order_items: (o.order_items ?? []).map((i: OrderItem) => ({
+          ...i,
+          price:    toN(i.price),
+          subtotal: toN((i as any).subtotal),
+        })),
+      }));
     },
     staleTime: 30_000,
   });
@@ -54,7 +82,10 @@ export function useAllPayments() {
         .select("*, affiliate:affiliates(name, affiliate_code)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as PaymentWithAffiliate[]) ?? [];
+      return ((data as PaymentWithAffiliate[]) ?? []).map(p => ({
+        ...normalizePayment(p),
+        affiliate: p.affiliate,
+      }));
     },
     staleTime: 20_000,
   });
@@ -116,7 +147,7 @@ export function useBreakageCommissions() {
         .eq("is_breakage", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as BreakageCommission[]) ?? [];
+      return ((data as BreakageCommission[]) ?? []).map(c => ({ ...normalizeCommission(c), affiliate: c.affiliate }));
     },
     staleTime: 60_000,
   });
@@ -362,7 +393,7 @@ export function useAffiliatePayments(affiliateId: string | null) {
         .eq("affiliate_id", affiliateId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(normalizePayment);
     },
     staleTime: 15_000,
   });
@@ -382,7 +413,7 @@ export function usePendingCommissions() {
       if (error) throw error;
       const rows = data ?? [];
       return {
-        total: rows.reduce((s: number, r: any) => s + (r.amount ?? 0), 0),
+        total: rows.reduce((s: number, r: any) => s + toN(r.amount), 0),
         count: rows.length,
       };
     },
@@ -402,7 +433,7 @@ export function useTotalWallets() {
       if (error) throw error;
       const rows = data ?? [];
       return {
-        total: rows.reduce((s: number, r: any) => s + (r.balance ?? 0), 0),
+        total: rows.reduce((s: number, r: any) => s + toN(r.balance), 0),
         count: rows.length,
       };
     },
@@ -430,7 +461,7 @@ export function useAllWallets() {
         .select("id, user_id, balance, email, updated_at")
         .order("balance", { ascending: false });
       if (error) throw error;
-      return (data as WalletRow[]) ?? [];
+      return ((data as WalletRow[]) ?? []).map(w => ({ ...w, balance: toN(w.balance) }));
     },
     staleTime: 30_000,
   });
@@ -455,7 +486,7 @@ export function useAllPendingCommissions() {
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as PendingCommissionRow[]) ?? [];
+      return ((data as PendingCommissionRow[]) ?? []).map(c => ({ ...normalizeCommission(c), affiliate: c.affiliate }));
     },
     staleTime: 30_000,
   });

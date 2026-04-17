@@ -4,7 +4,7 @@ import { ShoppingCart, Menu, X, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 
-export default function Navbar() {
+export default function Navbar({ topOffset = 0 }: { topOffset?: number }) {
   const { session, affiliate, role, logout } = useAuth();
   const { itemCount, setIsOpen, lastAddedId } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,8 +31,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 bg-wo-obsidiana/95 backdrop-blur-md transition-shadow duration-300 ${scrolled ? "navbar-scrolled" : ""}`}
-      style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}
+      className={`fixed left-0 right-0 z-50 bg-wo-obsidiana/95 backdrop-blur-md transition-all duration-300 ${scrolled ? "navbar-scrolled" : ""}`}
+      style={{ top: topOffset, borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">

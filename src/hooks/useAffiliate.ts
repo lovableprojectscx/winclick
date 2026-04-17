@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Commission, CreditTransaction, AffiliatePayment, PackageType, StoreConfig, BusinessSettings } from "@/lib/database.types";
+import { toN } from "@/lib/utils";
 export type { StoreConfig };
 
 // ─── Obtener y Actualizar perfil de afiliado ───────────────────────────────────
@@ -67,7 +68,11 @@ export function useAffiliateStats() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data ? {
+        ...data,
+        total_sales:       toN(data.total_sales),
+        total_commissions: toN(data.total_commissions),
+      } : data;
     },
     enabled: !!affiliate?.id,
     staleTime: 60_000,
@@ -88,7 +93,7 @@ export function useMyCommissions() {
         .eq("is_breakage", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(c => ({ ...c, amount: toN(c.amount), base_amount: toN((c as any).base_amount), percentage: toN((c as any).percentage) }));
     },
     enabled: !!affiliate?.id,
   });
@@ -108,8 +113,11 @@ export function useWallet() {
         .maybeSingle();
 
       return {
-        balance:      credit?.balance ?? 0,
-        transactions: (credit?.credit_transactions as CreditTransaction[]) ?? [],
+        balance:      toN(credit?.balance ?? 0),
+        transactions: ((credit?.credit_transactions as CreditTransaction[]) ?? []).map(t => ({
+          ...t,
+          amount: toN((t as any).amount),
+        })),
       };
     },
     enabled: !!session && !!affiliate,
@@ -129,7 +137,7 @@ export function useMyPayments() {
         .eq("affiliate_id", affiliate!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(p => ({ ...p, amount: toN(p.amount) }));
     },
     enabled: !!affiliate?.id,
   });
