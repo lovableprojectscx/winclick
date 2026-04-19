@@ -7,7 +7,7 @@ import { useAffiliateStats, useMyCommissions, useMyNetwork, useMyPayments, useSu
 import { useMyOrders } from "@/hooks/useOrders";
 
 const PACKAGES: { name: PackageType; depthUnlocked: number; investment: number }[] = [
-  { name: "Básico",      depthUnlocked: 3,  investment: 100 },
+  { name: "Básico",      depthUnlocked: 3,  investment: 120 },
   { name: "Intermedio",  depthUnlocked: 7,  investment: 2000 },
   { name: "VIP",         depthUnlocked: 10, investment: 10000 },
 ];
@@ -219,39 +219,112 @@ export default function AreaAfiliado() {
           ))}
         </div>
 
-        {/* Pending: instrucciones de activación */}
-        {isPending && (
-          <div className="rounded-wo-card p-6" style={{ background: "rgba(232,116,26,0.04)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h3 className="font-jakarta font-bold text-sm text-wo-crema">3 pasos para activar tu cuenta</h3>
-                <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5">Tu perfil ya está creado. Solo falta completar tu primera compra.</p>
-              </div>
-              <span className="font-jakarta font-bold text-[10px] px-2 py-1 rounded-wo-pill shrink-0" style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.3)" }}>
-                PASO 3/5
-              </span>
-            </div>
-            <div className="space-y-3 mb-5">
-              {[
-                { n: 1, done: true,  text: "✓ Registro como socio completado" },
-                { n: 2, done: true,  text: `✓ Paquete elegido: ${affiliate.package} — meta S/ ${currentPackage.investment.toLocaleString()}` },
-                { n: 3, done: false, text: "Ir al catálogo y realizar compras hasta alcanzar la meta de tu paquete" },
-                { n: 4, done: false, text: "Administración revisa y aprueba tus compras (menos de 24h)" },
-                { n: 5, done: false, text: "¡Cuenta activa! Comisiones, tienda y red desbloqueados" },
-              ].map((s) => (
-                <div key={s.n} className="flex items-start gap-3">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center font-jakarta font-bold text-[10px] shrink-0 mt-0.5 ${s.done ? "bg-secondary text-background" : s.n === 3 ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted"}`} style={!s.done && s.n !== 3 ? { border: "0.5px solid rgba(255,255,255,0.12)" } : {}}>
-                    {s.done ? <Check size={9} /> : s.n}
-                  </div>
-                  <p className={`font-jakarta text-xs leading-relaxed ${s.done ? "text-secondary line-through opacity-60" : s.n === 3 ? "text-wo-crema font-semibold" : "text-wo-crema-muted"}`}>{s.text}</p>
+        {/* Pending: progreso de activación en tiempo real */}
+        {isPending && (() => {
+          const target      = currentPackage.investment;
+          const spent       = totalSales;                        // acumulado en compras ya registradas
+          const pct         = Math.min(100, (spent / target) * 100);
+          const remaining   = Math.max(0, target - spent);
+          const goalReached = spent >= target;
+
+          return (
+            <div className="rounded-wo-card overflow-hidden" style={{ border: "0.5px solid rgba(232,116,26,0.25)" }}>
+              {/* Header */}
+              <div className="px-5 pt-5 pb-4 flex items-start justify-between gap-4"
+                style={{ background: "rgba(232,116,26,0.04)", borderBottom: "0.5px solid rgba(232,116,26,0.12)" }}>
+                <div>
+                  <p className="font-jakarta font-bold text-sm text-wo-crema">
+                    {goalReached ? "¡Meta alcanzada! Esperando aprobación" : `Activa tu paquete ${affiliate.package}`}
+                  </p>
+                  <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5">
+                    {goalReached
+                      ? "La administración revisará tus compras en menos de 24 h."
+                      : `Realiza compras en el catálogo hasta acumular S/ ${target.toLocaleString()} para desbloquear tu red y comisiones.`}
+                  </p>
                 </div>
-              ))}
+                <span className="font-syne font-extrabold text-[22px] shrink-0 leading-none"
+                  style={{ color: goalReached ? "hsl(var(--secondary))" : "hsl(var(--primary))" }}>
+                  {pct.toFixed(0)}%
+                </span>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="px-5 py-4" style={{ background: "rgba(232,116,26,0.03)" }}>
+                <div className="flex justify-between items-baseline mb-2">
+                  <span className="font-jakarta text-[11px] text-wo-crema-muted">Compras acumuladas</span>
+                  <span className="font-jakarta text-[11px] font-bold" style={{ color: goalReached ? "hsl(var(--secondary))" : "hsl(var(--primary))" }}>
+                    S/ {spent.toLocaleString("es-PE", { minimumFractionDigits: 2 })} / S/ {target.toLocaleString()}
+                  </span>
+                </div>
+                {/* Track */}
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${pct}%`,
+                      background: goalReached
+                        ? "hsl(var(--secondary))"
+                        : `linear-gradient(to right, hsl(var(--primary)), hsl(var(--wo-oro)))`,
+                    }} />
+                </div>
+                {/* Milestones */}
+                <div className="flex justify-between mt-1.5">
+                  <span className="font-jakarta text-[10px] text-wo-crema-muted/40">S/ 0</span>
+                  <span className="font-jakarta text-[10px] text-wo-crema-muted/40">S/ {target.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Estado / CTA */}
+              <div className="px-5 pb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                style={{ background: "rgba(232,116,26,0.03)" }}>
+                {goalReached ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: "rgba(30,192,213,0.15)" }}>
+                      <Check size={10} style={{ color: "hsl(var(--secondary))" }} />
+                    </div>
+                    <p className="font-jakarta text-xs text-secondary font-semibold">
+                      Meta alcanzada · Revisión en curso
+                    </p>
+                  </div>
+                ) : (
+                  <p className="font-jakarta text-xs text-wo-crema-muted">
+                    Te faltan{" "}
+                    <span className="font-bold text-wo-crema">S/ {remaining.toLocaleString("es-PE", { minimumFractionDigits: 2 })}</span>
+                    {" "}para activar — cada compra se acumula automáticamente.
+                  </p>
+                )}
+                {!goalReached && (
+                  <Link to="/catalogo"
+                    className="inline-flex items-center justify-center gap-2 font-jakarta font-bold text-xs px-5 py-2.5 rounded-wo-btn transition-colors hover:opacity-90 shrink-0"
+                    style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}>
+                    <ShoppingBag size={13} /> Comprar ahora
+                  </Link>
+                )}
+              </div>
+
+              {/* Pasos rápidos (colapsados) */}
+              <div className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { done: true,  text: "Cuenta creada",          sub: "Registro completado ✓" },
+                  { done: false, text: "Compra de activación",   sub: goalReached ? "En revisión" : `Faltan S/ ${remaining.toFixed(2)}` },
+                  { done: false, text: "Cuenta activa",          sub: "Red y comisiones ON" },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+                    style={{ background: s.done || (i === 1 && goalReached) ? "rgba(30,192,213,0.06)" : "rgba(255,255,255,0.02)", border: `0.5px solid ${s.done || (i === 1 && goalReached) ? "rgba(30,192,213,0.2)" : "rgba(255,255,255,0.06)"}` }}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center font-jakarta font-bold text-[9px] shrink-0 ${s.done || (i === 1 && goalReached) ? "bg-secondary text-background" : i === 1 ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted"}`}
+                      style={!s.done && i !== 1 ? { border: "0.5px solid rgba(255,255,255,0.12)" } : {}}>
+                      {s.done || (i === 1 && goalReached) ? <Check size={8} /> : i + 1}
+                    </div>
+                    <div>
+                      <p className="font-jakarta text-[11px] font-semibold text-wo-crema leading-none">{s.text}</p>
+                      <p className="font-jakarta text-[10px] text-wo-crema-muted mt-0.5">{s.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Link to="/catalogo" className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-xs px-6 py-3 rounded-wo-btn transition-colors hover:bg-wo-oro-dark">
-              Ir al catálogo ahora <ShoppingBag size={14} />
-            </Link>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Mi Tienda */}
         {!isPending && (

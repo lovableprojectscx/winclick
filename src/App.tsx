@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,13 +9,13 @@ import { CartProvider } from "@/contexts/CartContext";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
-import AnnouncementBar from "@/components/AnnouncementBar";
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
 import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import ProgramaAfiliados from "./pages/ProgramaAfiliados";
+import Planes from "./pages/Planes";
 import RegistroAfiliado from "./pages/RegistroAfiliado";
 import LoginAfiliado from "./pages/LoginAfiliado";
 import AreaAfiliado from "./pages/AreaAfiliado";
@@ -28,7 +28,6 @@ import ResetPassword from "./pages/ResetPassword";
 import Terminos from "./pages/Terminos";
 import Privacidad from "./pages/Privacidad";
 import AdminLogin from "./pages/AdminLogin";
-import PromoAbril from "./pages/PromoAbril";
 import NotFound from "./pages/NotFound";
 
 const DevTools = import.meta.env.DEV
@@ -69,8 +68,10 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <FullPageLoader />;
-  if (!session) return <Navigate to="/login-afiliado" replace />;
+  // Guarda la URL actual para redirigir de vuelta después del login
+  if (!session) return <Navigate to="/login-afiliado" state={{ from: location.pathname }} replace />;
   return <>{children}</>;
 }
 
@@ -90,40 +91,15 @@ const queryClient = new QueryClient({
   },
 });
 
-const PROMO_END = new Date("2026-04-30T23:59:59");
-function barInitiallyVisible() {
-  try { if (localStorage.getItem("promo_abril_bar_dismissed") === "1") return false; } catch {}
-  return new Date() < PROMO_END;
-}
-
 // Oculta Navbar y Footer en las páginas de tienda de afiliado
 function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const isTienda    = pathname.startsWith("/tienda/");
-  const isPromoPage = pathname === "/promo-abril";
-  const hideBarRoutes = ["/admin-dashboard", "/area-afiliado", "/mi-billetera", "/editar-tienda", "/admin-login"];
-  const showBar = !isTienda && !isPromoPage && !hideBarRoutes.some((r) => pathname.startsWith(r));
-
-  const [barVisible, setBarVisible] = useState(showBar && barInitiallyVisible());
-
-  const BAR_H = barVisible && showBar ? 36 : 0; // px — altura de la barra
-
+  const isTienda = pathname.startsWith("/tienda/");
   return (
     <>
-      {showBar && (
-        <AnnouncementBar
-          visible={barVisible}
-          onDismiss={() => setBarVisible(false)}
-        />
-      )}
-      {!isTienda && <Navbar topOffset={BAR_H} />}
+      {!isTienda && <Navbar />}
       <CartDrawer />
-      {/* Desplaza el bloque de contenido hacia abajo cuando la barra está activa.
-          Las páginas ya tienen pt-16 (64px) para limpiar la navbar; sólo
-          necesitamos empujarlas por la altura adicional de la barra. */}
-      <div style={{ marginTop: BAR_H }}>
-        {children}
-      </div>
+      {children}
       {!isTienda && <Footer />}
     </>
   );
@@ -143,8 +119,9 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/catalogo/:id" element={<ProductDetail />} />
-              <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/programa-afiliados" element={<ProgramaAfiliados />} />
+              <Route path="/planes" element={<Planes />} />
               <Route path="/registro-afiliado" element={<RegistroAfiliado />} />
               <Route path="/login-afiliado" element={<LoginAfiliado />} />
               <Route path="/area-afiliado" element={<RequireAuth><AreaAfiliado /></RequireAuth>} />
@@ -157,7 +134,6 @@ const App = () => (
               <Route path="/terminos" element={<Terminos />} />
               <Route path="/privacidad" element={<Privacidad />} />
               <Route path="/admin-login" element={<AdminLogin />} />
-              <Route path="/promo-abril" element={<PromoAbril />} />
               {import.meta.env.DEV && DevTools && (
                 <Route path="/dev-tools" element={<Suspense fallback={null}><DevTools /></Suspense>} />
               )}

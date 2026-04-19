@@ -10,13 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 interface Props {
   product:        Product;
   affiliateCode?: string;
-  /** Descuento fraccional (0–1). Ej: 0.40 = 40% OFF. Se muestra el precio rebajado + tachado. */
-  promoDiscount?: number;
 }
 
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
 
-export default function ProductCard({ product, affiliateCode, promoDiscount }: Props) {
+export default function ProductCard({ product, affiliateCode }: Props) {
   const { addItem } = useCart();
   const { session, affiliate } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -26,14 +24,11 @@ export default function ProductCard({ product, affiliateCode, promoDiscount }: P
   const isFav = favoriteIds.includes(product.id);
 
   // Precio según contexto:
-  // - Con affiliateCode (tienda del afiliado) → public_price (precio cliente final)
-  // - Afiliado logueado comprando del catálogo principal → partner_price
-  // - Público sin contexto → price (precio estándar)
-  const displayPrice = affiliateCode
-    ? (product.public_price ?? product.price)
-    : affiliate
-      ? (product.partner_price ?? product.price)
-      : product.price;
+  // - Afiliado logueado (cualquier nivel) → partner_price (precio socio)
+  // - Público / tienda afiliado           → public_price (precio cliente)
+  const displayPrice = affiliate
+    ? (product.partner_price ?? product.public_price ?? product.price)
+    : (product.public_price ?? product.price);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -85,24 +80,20 @@ export default function ProductCard({ product, affiliateCode, promoDiscount }: P
           ))}
           <span className="text-[11px] text-wo-crema-muted font-jakarta ml-1">{product.rating ?? "—"}</span>
         </div>
-        {promoDiscount ? (
-          <div className="mt-2">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded text-secondary"
-                style={{ background: "rgba(30,192,213,0.12)", border: "0.5px solid rgba(30,192,213,0.3)" }}>
-                -{Math.round(promoDiscount * 100)}%
-              </span>
-              <span className="font-jakarta text-[12px] text-wo-crema-muted line-through">S/ {displayPrice.toFixed(2)}</span>
-            </div>
-            <p className="font-syne font-extrabold text-xl text-primary">S/ {(displayPrice * (1 - promoDiscount)).toFixed(2)}</p>
+        <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
+        {/* Mostrar precio cliente tachado cuando el afiliado ve su precio socio */}
+        {affiliate && product.partner_price && product.public_price && product.partner_price < product.public_price && (
+          <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.public_price.toFixed(2)}</p>
+        )}
+        {/* Badge promo afiliados — visible sólo para visitantes no afiliados */}
+        {!affiliate && (
+          <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(232,116,26,0.10)", border: "0.5px solid rgba(232,116,26,0.30)" }}>
+            <span style={{ color: "hsl(var(--primary))", fontSize: "9px" }}>✦</span>
+            <span className="font-jakarta font-bold text-[10px]" style={{ color: "hsl(var(--primary))" }}>
+              Promo especial para afiliados
+            </span>
           </div>
-        ) : (
-          <>
-            <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
-            {affiliateCode && product.public_price && product.price !== product.public_price && (
-              <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.price.toFixed(2)}</p>
-            )}
-          </>
         )}
         <div className="flex items-center justify-between mt-3 gap-2">
           <button

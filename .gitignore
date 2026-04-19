@@ -32,3 +32,6 @@ dist-ssr
 *.sw?
 tsc_err.txt
 tsc_out.txt
+
+# Manuals
+Manual-Usuario-Winclick.docx

@@ -1,18 +1,12 @@
 import { useState, useMemo } from "react";
 import { useSEO } from "@/hooks/useSEO";
-import { Search, X, Zap, ArrowRight } from "lucide-react";
-import { useSearchParams, Link } from "react-router-dom";
+import { Search, X } from "lucide-react";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
-
-const PROMO_DISCOUNT = 0.40;
-const PROMO_END = new Date("2026-04-30T23:59:59");
 
 export default function Catalogo() {
   const [search,            setSearch]            = useState("");
   const [activeCategoryId,  setActiveCategoryId]  = useState<string | "all">("all");
-  const [searchParams] = useSearchParams();
-  const isPromoAbril = searchParams.get("promo") === "abril" && new Date() < PROMO_END;
 
   const { data: products = [],   isLoading: loadingProducts,   isError: errorProducts }   = useProducts();
   const { data: categories = [], isLoading: loadingCategories, isError: errorCategories } = useCategories();
@@ -57,30 +51,6 @@ export default function Catalogo() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-
-        {/* Banner Promo Abril */}
-        {isPromoAbril && (
-          <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-6"
-            style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.35)" }}>
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 text-primary">
-              <Zap size={18} className="fill-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-jakarta font-bold text-[13px] text-primary leading-tight">
-                Promo Abril · 40% OFF en tu kit de activación
-              </p>
-              <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">
-                Compra desde <strong className="text-wo-crema">S/ 72</strong> en productos (valor S/ 120) y activa tu cuenta de afiliado hoy.
-              </p>
-            </div>
-            <Link
-              to="/promo-abril"
-              className="flex items-center gap-1 font-jakarta text-[11px] font-bold text-primary hover:underline shrink-0"
-            >
-              Ver detalles <ArrowRight size={11} />
-            </Link>
-          </div>
-        )}
 
         {/* Search */}
         <div className="relative mb-5">
@@ -150,11 +120,7 @@ export default function Catalogo() {
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {filtered.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                promoDiscount={isPromoAbril ? PROMO_DISCOUNT : undefined}
-              />
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         ) : (
@@ -174,4 +140,3 @@ export default function Catalogo() {
     </div>
   );
 }
-

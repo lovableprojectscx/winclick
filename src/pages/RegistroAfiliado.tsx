@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone, Zap } from "lucide-react";
+import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useAffiliate";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/lib/supabase";
 import type { PackageType } from "@/lib/database.types";
 import { useToast } from "@/hooks/use-toast";
 
 const packages = [
-  { name: "Básico"     as const, investment: 100,   depthUnlocked: 3  },
+  { name: "Básico"     as const, investment: 120,   depthUnlocked: 3  },
   { name: "Intermedio" as const, investment: 2000,  depthUnlocked: 7  },
   { name: "VIP"        as const, investment: 10000, depthUnlocked: 10 },
 ];
@@ -87,9 +88,9 @@ export default function RegistroAfiliado() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { items } = useCart();            // para saber si hay carrito pendiente
   const { data: bizSettings } = useBusinessSettings();
   const [searchParams] = useSearchParams();
-  const isPromoAbril = searchParams.get("promo") === "abril";
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
@@ -171,12 +172,20 @@ export default function RegistroAfiliado() {
       return;
     }
 
-    if (isPromoAbril) {
-      toast({ title: "¡Bienvenido a Winclick! 🎉", description: "Cuenta creada. Elige tu kit de activación con 40% OFF — el descuento ya está aplicado." });
-      navigate("/catalogo?promo=abril");
+    if (items.length > 0) {
+      // Tiene carrito pendiente → directo al checkout con descuento ya aplicado
+      toast({
+        title: "¡Bienvenido a Winclick!",
+        description: `Cuenta ${selectedPackage} creada. Completa tu pedido con tu descuento de activación.`,
+      });
+      navigate("/checkout");
     } else {
-      toast({ title: "¡Bienvenido a Winclick!", description: "Cuenta creada. Ya puedes acceder a tu panel — activa tu cuenta haciendo tu primera compra en el catálogo." });
-      navigate("/area-afiliado");
+      // Sin carrito → al catálogo para elegir su kit de activación
+      toast({
+        title: "¡Bienvenido a Winclick!",
+        description: `Cuenta ${selectedPackage} creada. Ahora elige tu kit de activación en el catálogo con tu ${selectedPackage === "Básico" ? "40%" : selectedPackage === "Intermedio" ? "50%" : "55%"} de descuento.`,
+      });
+      navigate("/catalogo");
     }
     setSubmitting(false);
   };
@@ -243,22 +252,6 @@ export default function RegistroAfiliado() {
         <div className="p-8 lg:p-12 flex items-start lg:items-center overflow-y-auto">
           <div className="w-full max-w-md mx-auto">
             {/* Banner Promo Abril */}
-            {isPromoAbril && (
-              <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-6"
-                style={{ background: "rgba(232,116,26,0.10)", border: "0.5px solid rgba(232,116,26,0.40)" }}>
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary">
-                  <Zap size={16} className="fill-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-jakarta font-bold text-[13px] text-primary leading-tight">Oferta de abril activa</p>
-                  <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">
-                    Al registrarte, elige tu kit con <strong className="text-wo-crema">40% OFF</strong> desde S/ 72 (valor S/ 120)
-                  </p>
-                </div>
-                <Link to="/promo-abril" className="font-jakarta text-[10px] text-primary hover:underline shrink-0">Ver promo</Link>
-              </div>
-            )}
-
             <StepBar step={step} />
 
             {/* ── STEP 1: Datos personales ── */}
@@ -393,7 +386,7 @@ export default function RegistroAfiliado() {
                 </div>
 
                 <button onClick={handleStep2Continue} className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors">
-                  Continuar con {selectedPackage} → Pagar S/ {selectedPkg.investment.toLocaleString()}
+                  Confirmar paquete {selectedPackage} →
                 </button>
                 <button type="button" onClick={() => setStep(1)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
                   ← Volver a mis datos

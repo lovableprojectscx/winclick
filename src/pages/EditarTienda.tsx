@@ -431,7 +431,7 @@ export default function EditarTienda() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-jakarta text-sm text-wo-crema font-medium truncate">{p.name}</p>
-                      <span className="font-syne font-bold text-xs text-primary">S/ {p.price.toFixed(2)}</span>
+                      <span className="font-syne font-bold text-xs text-primary">S/ {(p.public_price ?? p.price).toFixed(2)}</span>
                     </div>
                   </button>
                 );
@@ -468,7 +468,7 @@ export default function EditarTienda() {
           {!loadingProducts && selectedProducts.length > 0 && (
             <div className="space-y-3">
               {activeProducts.filter((p) => selectedProducts.includes(p.id)).map((product) => {
-                const partnerPrice = product.partner_price ?? product.price;
+                const partnerPrice = product.partner_price ?? product.public_price ?? product.price;
                 const suggestedPrice = product.public_price ?? product.price;
                 const myPriceStr = customPrices[product.id] ?? String(suggestedPrice.toFixed(2));
                 const myPrice = parseFloat(myPriceStr) || 0;

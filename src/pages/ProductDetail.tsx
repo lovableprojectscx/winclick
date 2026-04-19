@@ -35,12 +35,12 @@ export default function ProductDetail() {
     );
   }
 
-  // Precio según contexto (igual que ProductCard)
-  const displayPrice = refCode
-    ? (product.public_price ?? product.price)
-    : affiliate
-      ? (product.partner_price ?? product.price)
-      : product.price;
+  // Precio según contexto:
+  // - Afiliado logueado → partner_price (precio socio)
+  // - Público / tienda afiliado → public_price (precio cliente)
+  const displayPrice = affiliate
+    ? (product.partner_price ?? product.public_price ?? product.price)
+    : (product.public_price ?? product.price);
 
   const handleAdd = () => {
     addItem(product, displayPrice);
@@ -128,10 +128,147 @@ export default function ProductDetail() {
               <span className="font-jakarta text-xs text-wo-crema-muted">({product.reviews_count} reseñas)</span>
             </div>
 
-            {/* Price */}
-            <div className="rounded-wo-btn p-4 mb-5" style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
-              <span className="font-syne font-extrabold text-[34px] text-primary">S/ {displayPrice.toFixed(2)}</span>
+            {/* Price — precio activo según contexto */}
+            <div className="rounded-wo-btn p-4 mb-4" style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
+              <div className="flex items-end gap-3">
+                <span className="font-syne font-extrabold text-[34px] text-primary leading-none">S/ {displayPrice.toFixed(2)}</span>
+                {affiliate && product.partner_price && product.public_price && product.partner_price < product.public_price && (
+                  <div className="flex flex-col pb-1">
+                    <span className="font-jakarta text-xs text-wo-crema-muted line-through">S/ {product.public_price.toFixed(2)}</span>
+                    <span className="font-jakarta text-[11px] font-bold" style={{ color: "hsl(var(--secondary))" }}>Precio socio ✓</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* ── Estructura de precios por membresía ── */}
+            {(() => {
+              const base = product.public_price ?? product.price;
+              const tiers = [
+                {
+                  key: "publico",
+                  icon: "🛒",
+                  label: "Precio Público",
+                  sublabel: "Clientes finales",
+                  price: base,
+                  discount: null,
+                  bg: "rgba(248,244,236,0.05)",
+                  border: "rgba(248,244,236,0.12)",
+                  badgeBg: "rgba(248,244,236,0.1)",
+                  badgeColor: "rgba(248,244,236,0.5)",
+                  priceColor: "hsl(var(--wo-crema))",
+                },
+                {
+                  key: "basica",
+                  icon: "⭐",
+                  label: "Membresía Básica",
+                  sublabel: "1 Esplendor · 3 niveles residual",
+                  price: base * 0.60,
+                  discount: 40,
+                  bg: "rgba(232,116,26,0.07)",
+                  border: "rgba(232,116,26,0.22)",
+                  badgeBg: "rgba(232,116,26,0.15)",
+                  badgeColor: "hsl(var(--primary))",
+                  priceColor: "hsl(var(--primary))",
+                },
+                {
+                  key: "pack",
+                  icon: "🔵",
+                  label: "Pack 2,000",
+                  sublabel: "Activación · 7 niveles residual",
+                  price: base * 0.50,
+                  discount: 50,
+                  bg: "rgba(30,192,213,0.07)",
+                  border: "rgba(30,192,213,0.22)",
+                  badgeBg: "rgba(30,192,213,0.15)",
+                  badgeColor: "hsl(var(--secondary))",
+                  priceColor: "hsl(var(--secondary))",
+                },
+                {
+                  key: "vip",
+                  icon: "👑",
+                  label: "Membresía VIP",
+                  sublabel: "10,000 pts · 10 niveles · máximo ahorro",
+                  price: base * 0.45,
+                  discount: 55,
+                  bg: "rgba(245,200,66,0.07)",
+                  border: "rgba(245,200,66,0.22)",
+                  badgeBg: "rgba(245,200,66,0.18)",
+                  badgeColor: "#D4A017",
+                  priceColor: "#D4A017",
+                },
+              ];
+              return (
+                <div className="mb-5">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+                    <span className="font-jakarta text-[11px] font-bold uppercase tracking-widest text-wo-crema-muted">Precios por membresía</span>
+                    <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+                  </div>
+
+                  {/* Tier grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {tiers.map((t) => (
+                      <div key={t.key} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: t.bg, border: `0.5px solid ${t.border}` }}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-base leading-none">{t.icon}</span>
+                          {t.discount !== null && (
+                            <span className="font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                              style={{ background: t.badgeBg, color: t.badgeColor }}>
+                              -{t.discount}%
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-jakarta text-[11px] font-semibold text-wo-crema leading-tight">{t.label}</p>
+                        <p className="font-syne font-extrabold text-[20px] leading-none" style={{ color: t.priceColor }}>
+                          S/ {t.price.toFixed(2)}
+                        </p>
+                        <p className="font-jakarta text-[10px] text-wo-crema-muted leading-tight">{t.sublabel}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Recompra row — para todos los activos */}
+                  <div className="rounded-xl px-3 py-2.5 flex items-center justify-between"
+                    style={{ background: "rgba(30,192,213,0.05)", border: "0.5px solid rgba(30,192,213,0.18)" }}>
+                    <div>
+                      <p className="font-jakarta text-[11px] font-semibold text-wo-crema">🔄 Recompra mensual</p>
+                      <p className="font-jakarta text-[10px] text-wo-crema-muted">Todos los afiliados activos · genera comisiones</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-syne font-extrabold text-[18px] leading-none" style={{ color: "hsl(var(--secondary))" }}>S/ {(base * 0.50).toFixed(2)}</p>
+                      <p className="font-jakarta text-[10px] font-bold" style={{ color: "hsl(var(--secondary))" }}>50% off</p>
+                    </div>
+                  </div>
+
+                  {/* Nota aclaratoria */}
+                  <p className="font-jakarta text-[10px] text-wo-crema-muted/50 text-center px-2">
+                    Los precios de activación aplican solo en tu primera compra como nuevo afiliado y no generan comisiones.
+                  </p>
+
+                  {/* CTA para no afiliados */}
+                  {!affiliate && (
+                    <div className="mt-3 rounded-xl p-3.5 flex items-center gap-3"
+                      style={{ background: "linear-gradient(135deg, rgba(232,116,26,0.08) 0%, rgba(30,192,213,0.06) 100%)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(232,116,26,0.15)", border: "0.5px solid rgba(232,116,26,0.3)" }}>
+                        <span className="text-sm">🌟</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-jakarta text-xs font-bold text-primary leading-tight">¡Ahorra hasta 55% como afiliado!</p>
+                        <p className="font-jakarta text-[10px] text-wo-crema-muted mt-0.5">Accede a precios exclusivos en toda la tienda</p>
+                      </div>
+                      <Link to="/planes"
+                        className="font-jakarta text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0"
+                        style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}>
+                        Ver planes
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Description */}
             <p className="font-jakarta text-sm text-wo-crema-muted leading-[1.75] mb-5 whitespace-pre-line">{product.description}</p>

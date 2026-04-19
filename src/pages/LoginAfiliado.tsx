@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -8,6 +8,10 @@ import { supabase } from "@/lib/supabase";
 export default function LoginAfiliado() {
   const { login, isAdmin, role, loading: authLoading, session: existingSession } = useAuth();
   const navigate  = useNavigate();
+  const location  = useLocation();
+  // URL a la que volver si el usuario fue redirigido aquí desde otra página (ej. /checkout)
+  const returnTo  = (location.state as { from?: string } | null)?.from ?? null;
+
   const [email,          setEmail]          = useState("");
   const [password,       setPassword]       = useState("");
   const [showPw,         setShowPw]         = useState(false);
@@ -22,7 +26,7 @@ export default function LoginAfiliado() {
   useEffect(() => {
     if (!authLoading && existingSession && !pendingNav) {
       if (isAdmin) navigate("/admin-dashboard", { replace: true });
-      else navigate("/area-afiliado", { replace: true });
+      else navigate(returnTo ?? "/area-afiliado", { replace: true });
     }
   }, [authLoading, existingSession, isAdmin, navigate, pendingNav]);
 
@@ -30,7 +34,8 @@ export default function LoginAfiliado() {
     if (pendingNav && !authLoading && role !== null) {
       setPendingNav(false);
       if (isAdmin) navigate("/admin-dashboard");
-      else navigate("/area-afiliado");
+      // Si venía del checkout u otra página, volver allí; si no, al área de afiliado
+      else navigate(returnTo ?? "/area-afiliado");
     }
   }, [pendingNav, authLoading, role, isAdmin, navigate]);
 
@@ -87,6 +92,18 @@ export default function LoginAfiliado() {
 
             <h2 className="font-syne font-bold text-[24px] text-wo-crema mb-1">Iniciar sesión</h2>
             <p className="font-jakarta text-sm text-wo-crema-muted mb-2">Accede a tu área de socio</p>
+
+            {/* Contexto: viene del checkout → mensaje especial */}
+            {returnTo === "/checkout" && (
+              <div className="rounded-xl px-4 py-3 flex items-start gap-2.5 mb-2"
+                style={{ background: "rgba(30,192,213,0.07)", border: "0.5px solid rgba(30,192,213,0.25)" }}>
+                <span className="text-secondary mt-0.5 flex-shrink-0">🛒</span>
+                <p className="font-jakarta text-[12px] text-wo-crema-muted leading-relaxed">
+                  Inicia sesión para completar tu pedido con tu precio de afiliado.
+                  <Link to="/registro-afiliado" className="text-secondary font-semibold hover:underline ml-1">¿Aún no eres socio?</Link>
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block font-jakarta text-xs text-wo-crema-muted font-medium mb-1.5">Email</label>

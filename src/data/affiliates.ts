@@ -26,7 +26,7 @@ export interface Affiliate {
 export const packages = [
   {
     name: "Básico" as const,
-    investment: 100,
+    investment: 120,
     depthUnlocked: 3,
     reactivation: 300,
     reactivationProducts: 3,

@@ -49,7 +49,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [affiliateCode]);
 
   const addItem = useCallback((product: Product, unitPrice?: number) => {
-    const resolvedPrice = toN(unitPrice ?? product.price);
+    const resolvedPrice = toN(unitPrice ?? product.public_price ?? product.price);
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);

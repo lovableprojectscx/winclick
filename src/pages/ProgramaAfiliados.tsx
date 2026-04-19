@@ -5,7 +5,7 @@ import { useState } from "react";
 import { commissionLevels, packages } from "@/data/affiliates";
 
 const faqs = [
-  { q: "¿Cuánto cuesta registrarse?", a: "Puedes empezar con el paquete Básico logrando compras acumuladas desde S/ 100. Recibes productos desde el primer día." },
+  { q: "¿Cuánto cuesta registrarse?", a: "Puedes empezar con el paquete Básico logrando compras acumuladas desde S/ 120. Recibes productos desde el primer día." },
   { q: "¿Cómo recibo mis comisiones?", a: "Las comisiones se acreditan en tu Billetera Winclick y puedes retirarlas vía Yape, Plin o transferencia bancaria." },
   { q: "¿Qué pasa después del primer mes?", a: "A partir del mes 2 necesitas reactivar tu cuenta realizando compras mensuales en el catálogo por una meta estipulada (ej. S/ 300) para mantener tus niveles activos." },
   { q: "¿Cuántos niveles de comisión hay?", a: "Hay 10 niveles de comisión. La profundidad que desbloqueas depende de tu paquete de activación elegido." },
@@ -196,7 +196,7 @@ export default function ProgramaAfiliados() {
               {
                 num: "1",
                 title: "Elige tu paquete",
-                desc: "Básico (S/100), Intermedio (S/2,000) o VIP (S/10,000).",
+                desc: "Básico (S/120), Intermedio (S/2,000) o VIP (S/10,000).",
                 img: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&h=280&fit=crop&crop=center&auto=format&q=80",
                 alt: "Productos orgánicos",
               },
