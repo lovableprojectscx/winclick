@@ -630,6 +630,7 @@ export type Database = {
           customer_name: string
           customer_phone: string | null
           id: string
+          is_activation_order: boolean
           is_dropshipping: boolean | null
           order_number: string
           payment_method: string
@@ -651,6 +652,7 @@ export type Database = {
           customer_name: string
           customer_phone?: string | null
           id?: string
+          is_activation_order?: boolean
           is_dropshipping?: boolean | null
           order_number: string
           payment_method?: string
@@ -672,6 +674,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string | null
           id?: string
+          is_activation_order?: boolean
           is_dropshipping?: boolean | null
           order_number?: string
           payment_method?: string

@@ -7,6 +7,7 @@ import { useWallet } from "@/hooks/useAffiliate";
 import { usePlaceOrder } from "@/hooks/useOrders";
 import { useBusinessSettings, useUpdateProfile } from "@/hooks/useAffiliate";
 import { supabase } from "@/lib/supabase";
+import { ACTIVATION_TARGET, ACTIVATION_DISCOUNT_PCT, getNextPlan, PLAN_DEPTH } from "@/lib/activationPrice";
 
 /* ── Datos de paquetes (espejo del RegistroAfiliado/AreaAfiliado) ──────── */
 const PKG_DATA: Record<string, number> = { Básico: 120, Intermedio: 2000, VIP: 10000 };
@@ -202,6 +203,22 @@ export default function Checkout() {
 
   const handleSubmit = async () => {
     setCheckoutError(null);
+
+    // Validación: mínimo acumulado de activación (total_sales ENTREGADO + carrito actual)
+    if (affiliate?.account_status === "pending" && affiliate.package) {
+      const target      = ACTIVATION_TARGET[affiliate.package] ?? 120;
+      const alreadySpent = affiliate.total_sales ?? 0;
+      const cumulative  = alreadySpent + total;
+      if (cumulative < target) {
+        const remaining = (target - cumulative).toFixed(2);
+        setCheckoutError(
+          `Tu plan ${affiliate.package} requiere una compra de activación de S/ ${target.toLocaleString()} en total. ` +
+          `Llevas acumulado S/ ${alreadySpent.toFixed(2)} — te faltan S/ ${remaining} más. ` +
+          `Agrega más productos al carrito.`
+        );
+        return;
+      }
+    }
 
     // Validación de campos requeridos
     if (!session && !formData.name.trim()) {
@@ -401,14 +418,29 @@ export default function Checkout() {
               </Link>
             </div>
           </div>
-        ) : affiliate && !affiliate.activated_at ? (
-          /* Afiliado recién registrado sin activación aún */
+        ) : affiliate?.account_status === "pending" ? (
+          /* Afiliado pendiente — compra de activación en precios especiales */
           <div className="rounded-xl px-4 py-3 mb-6 flex items-center gap-3"
-            style={{ background: "rgba(30,192,213,0.07)", border: "0.5px solid rgba(30,192,213,0.25)" }}>
-            <Check size={16} style={{ color: "hsl(var(--secondary))", flexShrink: 0 }} />
+            style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.30)" }}>
+            <span className="text-primary shrink-0" style={{ fontSize: "16px" }}>🔥</span>
             <p className="font-jakarta text-[13px] text-wo-crema leading-snug">
-              <span className="font-bold" style={{ color: "hsl(var(--secondary))" }}>Compra de activación</span>
-              <span className="text-wo-crema-muted ml-1.5">— Esta compra activará tu membresía. Las comisiones arrancan desde tu primera recompra mensual.</span>
+              <span className="font-bold" style={{ color: "hsl(var(--primary))" }}>
+                Compra de activación — {affiliate.package}
+              </span>
+              <span className="text-wo-crema-muted ml-1.5">
+                — Precios con {ACTIVATION_DISCOUNT_PCT[affiliate.package ?? ""] ?? 0}% OFF exclusivos para activar tu membresía.
+                Las comisiones arrancan desde tu primera recompra mensual.
+              </span>
+            </p>
+          </div>
+        ) : affiliate?.account_status === "suspended" ? (
+          /* Afiliado suspendido */
+          <div className="rounded-xl px-4 py-3 mb-6 flex items-center gap-3"
+            style={{ background: "rgba(231,76,60,0.07)", border: "0.5px solid rgba(231,76,60,0.30)" }}>
+            <AlertTriangle size={16} className="text-destructive shrink-0" />
+            <p className="font-jakarta text-[13px] text-wo-crema leading-snug">
+              <span className="font-bold text-destructive">Membresía suspendida</span>
+              <span className="text-wo-crema-muted ml-1.5">— Reactiva tu cuenta para seguir ganando comisiones en tu red.</span>
             </p>
           </div>
         ) : affiliate ? (
@@ -425,6 +457,41 @@ export default function Checkout() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Form */}
           <div className="lg:col-span-3 space-y-5">
+
+            {/* ── Señal de upgrade: el acumulado (total_sales + carrito) ya alcanza el siguiente plan ── */}
+            {(() => {
+              if (!affiliate || affiliate.account_status !== "pending" || !affiliate.package) return null;
+              const nextPlan = getNextPlan(affiliate.package);
+              if (!nextPlan) return null;
+              const nextTarget   = ACTIVATION_TARGET[nextPlan];
+              const alreadySpent = affiliate.total_sales ?? 0;
+              const cumulative   = alreadySpent + total;
+              if (cumulative < nextTarget) return null;
+              const nextDiscount = ACTIVATION_DISCOUNT_PCT[nextPlan];
+              const nextDepth    = PLAN_DEPTH[nextPlan];
+              return (
+                <div className="rounded-xl px-4 py-3.5 mb-4 flex items-start gap-3"
+                  style={{ background: "rgba(245,200,66,0.07)", border: "0.5px solid rgba(245,200,66,0.35)" }}>
+                  <span className="text-lg shrink-0 mt-0.5">👑</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-jakarta font-bold text-[13px]" style={{ color: "#D4A017" }}>
+                      ¡Tu carrito ya alcanza la meta del plan {nextPlan}!
+                    </p>
+                    <p className="font-jakarta text-[12px] text-wo-crema-muted mt-0.5 leading-snug">
+                      Activa como <strong style={{ color: "#D4A017" }}>{nextPlan}</strong> y obtén{" "}
+                      <strong>{nextDiscount}% OFF</strong> durante la activación más{" "}
+                      <strong>{nextDepth} niveles</strong> de red residual. Esta promoción es exclusiva al momento de activar.
+                    </p>
+                    <Link
+                      to="/area-afiliado"
+                      className="inline-block mt-2.5 font-jakarta text-[11px] font-bold px-3 py-1.5 rounded-full"
+                      style={{ background: "rgba(245,200,66,0.15)", color: "#D4A017", border: "0.5px solid rgba(245,200,66,0.35)" }}>
+                      Cambiar mi plan antes de activar →
+                    </Link>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Barra de activación para afiliados pendientes */}
             {affiliate && affiliate.account_status === "pending" && affiliate.package && (
@@ -653,9 +720,46 @@ export default function Checkout() {
               </div>
             )}
 
+            {/* Aviso mínimo de activación — muestra el avance acumulado real */}
+            {affiliate?.account_status === "pending" && affiliate.package && (() => {
+              const target       = ACTIVATION_TARGET[affiliate.package] ?? 120;
+              const alreadySpent = affiliate.total_sales ?? 0;
+              const cumulative   = alreadySpent + total;
+              if (cumulative >= target) return null;
+              const remaining    = (target - cumulative).toFixed(2);
+              return (
+                <div className="rounded-wo-btn px-4 py-3 flex items-start gap-2.5"
+                  style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.30)" }}>
+                  <AlertTriangle size={14} className="text-primary shrink-0 mt-0.5" />
+                  <p className="font-jakarta text-[12px] text-wo-crema-muted leading-snug">
+                    Para activar tu membresía <strong className="text-wo-crema">{affiliate.package}</strong> necesitas
+                    alcanzar{" "}
+                    <strong style={{ color: "hsl(var(--primary))" }}>S/ {target.toLocaleString()}</strong> en compras acumuladas.
+                    {alreadySpent > 0 && (
+                      <> Llevas <strong className="text-wo-crema">S/ {alreadySpent.toFixed(2)}</strong> ya entregado.</>
+                    )}
+                    {" "}Con este carrito llegarías a{" "}
+                    <strong className="text-wo-crema">S/ {cumulative.toFixed(2)}</strong>.
+                    {" "}Te faltan{" "}
+                    <strong style={{ color: "hsl(var(--primary))" }}>S/ {remaining}</strong>.{" "}
+                    <Link to="/catalogo" className="font-bold underline" style={{ color: "hsl(var(--primary))" }}>
+                      Agregar más productos →
+                    </Link>
+                  </p>
+                </div>
+              );
+            })()}
+
             <button
               onClick={handleSubmit}
-              disabled={processing || (paymentMethod === "cash" && !receipt) || (paymentMethod === "wallet" && walletBalance < total)}
+              disabled={
+                processing ||
+                (paymentMethod === "cash" && !receipt) ||
+                (paymentMethod === "wallet" && walletBalance < total) ||
+                // Bloquear si el acumulado (entregado + carrito) no alcanza la meta de activación
+                (affiliate?.account_status === "pending" && !!affiliate.package &&
+                  (affiliate.total_sales ?? 0) + total < (ACTIVATION_TARGET[affiliate.package] ?? 120))
+              }
               className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors disabled:opacity-35 disabled:cursor-not-allowed min-h-[52px]"
             >
               {processing ? "Procesando..." : paymentMethod === "wallet" ? `Pagar S/ ${total.toFixed(2)} con Billetera` : `Confirmar Pedido (S/ ${total.toFixed(2)})`}

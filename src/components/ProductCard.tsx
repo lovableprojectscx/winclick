@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getActivationPrice, ACTIVATION_DISCOUNT_PCT } from "@/lib/activationPrice";
 
 interface Props {
   product:        Product;
@@ -23,12 +24,20 @@ export default function ProductCard({ product, affiliateCode }: Props) {
   const [added, setAdded] = useState(false);
   const isFav = favoriteIds.includes(product.id);
 
-  // Precio según contexto:
-  // - Afiliado logueado (cualquier nivel) → partner_price (precio socio)
-  // - Público / tienda afiliado           → public_price (precio cliente)
-  const displayPrice = affiliate
-    ? (product.partner_price ?? product.public_price ?? product.price)
-    : (product.public_price ?? product.price);
+  // ── Precio según contexto ─────────────────────────────────────────────
+  // - Afiliado PENDIENTE (activando membresía) → precio especial de activación
+  //   según su plan (40% / 50% / 55% OFF sobre public_price). Solo durante activación.
+  // - Afiliado ACTIVO   → partner_price estándar (50% de descuento fijo)
+  // - Público / tienda  → public_price (precio al cliente final)
+  const isPending     = affiliate?.account_status === "pending";
+  const activationPlan = affiliate?.package ?? null;
+  const discountPct   = isPending && activationPlan ? (ACTIVATION_DISCOUNT_PCT[activationPlan] ?? null) : null;
+
+  const displayPrice = isPending && activationPlan
+    ? getActivationPrice(product, activationPlan)
+    : affiliate
+      ? (product.partner_price ?? product.public_price ?? product.price)
+      : (product.public_price ?? product.price);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,10 +90,34 @@ export default function ProductCard({ product, affiliateCode }: Props) {
           <span className="text-[11px] text-wo-crema-muted font-jakarta ml-1">{product.rating ?? "—"}</span>
         </div>
         <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
-        {/* Mostrar precio cliente tachado cuando el afiliado ve su precio socio */}
-        {affiliate && product.partner_price && product.public_price && product.partner_price < product.public_price && (
+
+        {/* Precio público tachado — se muestra cuando hay descuento sobre public_price */}
+        {affiliate && product.public_price && displayPrice < product.public_price && (
           <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.public_price.toFixed(2)}</p>
         )}
+
+        {/* Badge activación — solo para afiliados pendientes */}
+        {isPending && activationPlan && discountPct && (
+          <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(232,116,26,0.13)", border: "0.5px solid rgba(232,116,26,0.40)" }}>
+            <span style={{ color: "hsl(var(--primary))", fontSize: "9px" }}>🔥</span>
+            <span className="font-jakarta font-bold text-[10px]" style={{ color: "hsl(var(--primary))" }}>
+              {discountPct}% OFF · Solo activación
+            </span>
+          </div>
+        )}
+
+        {/* Badge partner — afiliado activo */}
+        {affiliate && !isPending && product.partner_price && product.public_price && product.partner_price < product.public_price && (
+          <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(30,192,213,0.10)", border: "0.5px solid rgba(30,192,213,0.28)" }}>
+            <span style={{ color: "hsl(var(--secondary))", fontSize: "9px" }}>✓</span>
+            <span className="font-jakarta font-bold text-[10px]" style={{ color: "hsl(var(--secondary))" }}>
+              Precio socio
+            </span>
+          </div>
+        )}
+
         {/* Badge promo afiliados — visible sólo para visitantes no afiliados */}
         {!affiliate && (
           <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"

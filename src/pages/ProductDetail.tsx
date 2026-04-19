@@ -4,6 +4,7 @@ import { Star, Check, Shield, Leaf, Truck, ArrowLeft } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getActivationPrice, ACTIVATION_DISCOUNT_PCT } from "@/lib/activationPrice";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -35,12 +36,19 @@ export default function ProductDetail() {
     );
   }
 
-  // Precio según contexto:
-  // - Afiliado logueado → partner_price (precio socio)
-  // - Público / tienda afiliado → public_price (precio cliente)
-  const displayPrice = affiliate
-    ? (product.partner_price ?? product.public_price ?? product.price)
-    : (product.public_price ?? product.price);
+  // ── Precio según contexto ─────────────────────────────────────────────
+  // - Afiliado PENDIENTE → precio especial de activación según su plan (promoción única)
+  // - Afiliado ACTIVO    → partner_price estándar (50% OFF fijo)
+  // - Público            → public_price (precio cliente final)
+  const isPending      = affiliate?.account_status === "pending";
+  const activationPlan = affiliate?.package ?? null;
+  const discountPct    = isPending && activationPlan ? (ACTIVATION_DISCOUNT_PCT[activationPlan] ?? null) : null;
+
+  const displayPrice = isPending && activationPlan
+    ? getActivationPrice(product, activationPlan)
+    : affiliate
+      ? (product.partner_price ?? product.public_price ?? product.price)
+      : (product.public_price ?? product.price);
 
   const handleAdd = () => {
     addItem(product, displayPrice);
@@ -129,16 +137,33 @@ export default function ProductDetail() {
             </div>
 
             {/* Price — precio activo según contexto */}
-            <div className="rounded-wo-btn p-4 mb-4" style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
+            <div className="rounded-wo-btn p-4 mb-4"
+              style={{
+                background: isPending ? "rgba(232,116,26,0.10)" : "rgba(232,116,26,0.08)",
+                border: isPending ? "0.5px solid rgba(232,116,26,0.35)" : "0.5px solid rgba(232,116,26,0.2)",
+              }}>
               <div className="flex items-end gap-3">
                 <span className="font-syne font-extrabold text-[34px] text-primary leading-none">S/ {displayPrice.toFixed(2)}</span>
-                {affiliate && product.partner_price && product.public_price && product.partner_price < product.public_price && (
-                  <div className="flex flex-col pb-1">
+                <div className="flex flex-col pb-1 gap-0.5">
+                  {/* Precio público tachado */}
+                  {affiliate && product.public_price && displayPrice < product.public_price && (
                     <span className="font-jakarta text-xs text-wo-crema-muted line-through">S/ {product.public_price.toFixed(2)}</span>
+                  )}
+                  {/* Etiqueta contextual */}
+                  {isPending && discountPct ? (
+                    <span className="font-jakarta text-[11px] font-bold" style={{ color: "hsl(var(--primary))" }}>
+                      🔥 {discountPct}% OFF · Solo activación
+                    </span>
+                  ) : affiliate && !isPending && product.partner_price && product.public_price && product.partner_price < product.public_price ? (
                     <span className="font-jakarta text-[11px] font-bold" style={{ color: "hsl(var(--secondary))" }}>Precio socio ✓</span>
-                  </div>
-                )}
+                  ) : null}
+                </div>
               </div>
+              {isPending && (
+                <p className="font-jakarta text-[10px] text-wo-crema-muted/60 mt-1.5">
+                  Precio promocional exclusivo para tu activación. Luego de activar se aplica el precio socio estándar.
+                </p>
+              )}
             </div>
 
             {/* ── Estructura de precios por membresía ── */}
