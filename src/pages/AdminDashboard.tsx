@@ -2140,8 +2140,8 @@ export default function AdminDashboard() {
                         {[
                           { label: "Público", pct: 1.00, color: "rgba(248,244,236,0.6)" },
                           { label: "Básica", pct: 0.60, color: "hsl(var(--primary))" },
-                          { label: "Pack 2K", pct: 0.50, color: "hsl(var(--secondary))" },
-                          { label: "VIP", pct: 0.45, color: "#D4A017" },
+                          { label: "Pack 2K", pct: 0.55, color: "hsl(var(--secondary))" },
+                          { label: "VIP", pct: 0.50, color: "#D4A017" },
                         ].map((t) => (
                           <div key={t.label}>
                             <p className="font-jakarta text-[10px] text-wo-crema-muted mb-0.5">{t.label}</p>

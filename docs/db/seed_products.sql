@@ -1,4 +1,4 @@
--- Seed productos orgánicos Winner Organa
+-- Seed productos orgánicos WinClick
 INSERT INTO products (name, description, price, partner_price, public_price, stock, image_url, organic, is_active, tags, rating, reviews_count)
 VALUES
 (

@@ -1,4 +1,4 @@
-# Informe de Cambios — Winner Organa
+# Informe de Cambios — WinClick
 **Fecha:** 29 de marzo de 2026
 **Base:** Gap Analysis v1.0
 **Total de gaps resueltos:** 17 de 17
@@ -234,7 +234,7 @@ Nueva pantalla de éxito muestra:
 2. Número de pedido en display grande (WO-XXXX)
 3. Lista de productos con cantidades y precios
 4. Total del pedido
-5. Método de pago usado (Billetera Winner / Dinero Real)
+5. Método de pago usado (Billetera WinClick / Dinero Real)
 6. Dirección de envío ingresada
 7. Mensaje "📦 Te contactaremos cuando tu pedido sea enviado"
 8. Botones: "Seguir comprando" + "Ir a mi dashboard"
@@ -350,4 +350,4 @@ Nueva página `/admin-login`:
 
 ---
 
-*Documento generado automáticamente — Winner Organa · Desarrollo UI/UX · Marzo 2026*
+*Documento generado automáticamente — WinClick · Desarrollo UI/UX · Marzo 2026*

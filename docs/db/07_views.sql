@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Vistas y queries útiles
+-- WinClick — Vistas y queries útiles
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 07_views.sql
 -- Ejecutar después de 04_seed.sql

@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — RLS Correcto y Completo
+-- WinClick — RLS Correcto y Completo
 -- Archivo: 09_rls_correct.sql
 -- Ejecutar en Supabase SQL Editor.
 -- Este archivo reemplaza al 03_rls.sql (que usaba tablas que no existen).

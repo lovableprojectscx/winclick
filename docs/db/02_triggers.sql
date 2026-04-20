@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Triggers y funciones automáticas
+-- WinClick — Triggers y funciones automáticas
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 02_triggers.sql
 -- Ejecutar después de 01_schema.sql

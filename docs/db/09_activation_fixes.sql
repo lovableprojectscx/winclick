@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Migración 09: Correcciones del sistema de activación
+-- WinClick — Migración 09: Correcciones del sistema de activación
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 09_activation_fixes.sql
 -- =============================================================================

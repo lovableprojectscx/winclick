@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Datos de prueba para desarrollo local
+-- WinClick — Datos de prueba para desarrollo local
 -- Motor: PostgreSQL (Supabase local / psql directo)
 -- Archivo: 05_dev_seed.sql
 -- ⚠️  NO ejecutar en producción. Solo para entorno local.

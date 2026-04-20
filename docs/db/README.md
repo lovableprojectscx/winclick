@@ -1,4 +1,4 @@
-# Winner Organa — Base de datos
+# WinClick — Base de datos
 
 Motor: **PostgreSQL** vía **Supabase**
 

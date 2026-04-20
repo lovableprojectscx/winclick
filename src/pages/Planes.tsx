@@ -12,7 +12,7 @@ import { useProducts } from "@/hooks/useProducts";
 type PlanKey = "Básico" | "Intermedio" | "VIP";
 interface Plan {
   key: PlanKey; icon: React.ReactNode; label: string; tag: string;
-  discount: number; multiplier: number; levels: number;
+  price: number; discount: number; multiplier: number; levels: number;
   color: string; border: string; bg: string; glow: string; popular: boolean;
   details: { icon: React.ReactNode; text: string }[];
 }
@@ -20,7 +20,7 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     key: "Básico", icon: <Star size={20} />, label: "Membresía Básica", tag: "Entrada ideal",
-    discount: 40, multiplier: 0.60, levels: 3,
+    price: 120, discount: 40, multiplier: 0.60, levels: 3,
     color: "hsl(var(--primary))", border: "rgba(232,116,26,0.30)", bg: "rgba(232,116,26,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
@@ -32,7 +32,7 @@ const PLANS: Plan[] = [
   },
   {
     key: "Intermedio", icon: <Zap size={20} />, label: "Pack 2,000", tag: "El más elegido",
-    discount: 50, multiplier: 0.50, levels: 7,
+    price: 2000, discount: 45, multiplier: 0.55, levels: 7,
     color: "hsl(var(--secondary))", border: "rgba(30,192,213,0.45)", bg: "rgba(30,192,213,0.07)",
     glow: "0 0 48px rgba(30,192,213,0.18), 0 0 0 1px rgba(30,192,213,0.30)",
     popular: true,
@@ -45,7 +45,7 @@ const PLANS: Plan[] = [
   },
   {
     key: "VIP", icon: <Crown size={20} />, label: "Membresía VIP", tag: "Máximo potencial",
-    discount: 55, multiplier: 0.45, levels: 10,
+    price: 10000, discount: 50, multiplier: 0.50, levels: 10,
     color: "#C9920A", border: "rgba(201,146,10,0.35)", bg: "rgba(201,146,10,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
@@ -58,10 +58,10 @@ const PLANS: Plan[] = [
 ];
 
 const FAQS = [
-  { q: "¿La compra de activación genera comisiones?",   a: "No. El kit de inicio activa tu membresía, pero no genera comisiones. Las comisiones arrancan desde tu primera recompra mensual." },
-  { q: "¿El descuento aplica a cualquier producto?",    a: "Sí. El descuento (40%, 50% o 55% según tu plan) aplica al producto que elijas como kit de inicio del catálogo." },
-  { q: "¿Qué precio pago en mis recompras?",            a: "Todos los activos compran sus reposiciones con 50% de descuento. Estas compras sí generan comisiones en tu red." },
-  { q: "¿Puedo subir de plan después?",                 a: "Sí. Puedes hacer upgrade cuando quieras y desbloquear más niveles de comisión desde ese momento." },
+  { q: "¿La primera membresía genera comisiones para mi red?",  a: "No. La activación inicial activa tu membresía con bonos especiales, pero no genera comisiones en la pirámide. Las comisiones arrancan desde tu primera recompra mensual." },
+  { q: "¿Qué es la recompra mensual?",                          a: "Es la compra mensual que realiza cada afiliado activo. Tendrás entre 40% y 50% de descuento según tu plan, y estas compras sí generan comisiones para toda la red." },
+  { q: "¿El descuento aplica a cualquier producto?",            a: "Sí. En recompras mensuales, el descuento de tu plan aplica a cualquier producto del catálogo, sin mínimo de compra." },
+  { q: "¿Puedo subir de plan después?",                         a: "Sí. Puedes hacer upgrade cuando quieras y desbloquear más niveles de comisión desde ese momento." },
 ];
 
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
@@ -179,9 +179,14 @@ function PlanCard({ plan, index }: { plan: Plan; index: number }) {
             </button>
           </div>
           <div className="rounded-xl py-5 text-center" style={{ background: `${plan.color}10`, border: `0.5px solid ${plan.border}` }}>
-            <p className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/50 mb-1">Descuento de activación</p>
-            <p className="font-syne font-extrabold leading-none" style={{ fontSize: 52, color: plan.color }}>-{plan.discount}%</p>
-            <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1">en cualquier producto del catálogo</p>
+            <p className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/50 mb-1">Activación de membresía</p>
+            <div className="flex items-start justify-center">
+              <span className="font-syne font-bold text-[18px] mr-1 mt-1.5" style={{ color: plan.color }}>S/</span>
+              <span className="font-syne font-extrabold leading-none" style={{ fontSize: 44, color: plan.color }}>{plan.price.toLocaleString()}</span>
+            </div>
+            <p className="font-jakarta text-[11px] font-bold mt-2.5 px-3 py-1 rounded-full inline-block" style={{ background: `rgba(255,255,255,0.05)`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
+              + Bonos especiales
+            </p>
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -211,13 +216,14 @@ function CatalogPrices() {
   const [activePlan, setActivePlan] = useState<PlanKey>("Intermedio");
   const plan = PLANS.find(p => p.key === activePlan)!;
   const items = (products ?? []).filter(p => (p.public_price ?? p.price) > 0).slice(0, 8);
+
   return (
     <section ref={ref} className="max-w-4xl mx-auto px-4 sm:px-6 mb-16"
       style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(28px)", transition: "opacity 0.6s ease, transform 0.6s ease" }}>
       <div className="text-center mb-6">
-        <p className="font-jakarta text-[11px] font-bold uppercase tracking-[0.12em] text-wo-crema-muted/35 mb-2">Precios reales de activación</p>
-        <h2 className="font-syne font-extrabold text-[22px] sm:text-[28px] text-wo-crema mb-1">¿Cuánto pagarías hoy?</h2>
-        <p className="font-jakarta text-[13px] text-wo-crema-muted">El descuento aplica a cualquier producto del catálogo como kit de inicio</p>
+        <p className="font-jakarta text-[11px] font-bold uppercase tracking-[0.12em] text-wo-crema-muted/35 mb-2">Precios reales en recompra</p>
+        <h2 className="font-syne font-extrabold text-[22px] sm:text-[28px] text-wo-crema mb-1">¿Cuánto pagas en recompra?</h2>
+        <p className="font-jakarta text-[13px] text-wo-crema-muted max-w-lg mx-auto">Selecciona un plan para ver tus precios y descuentos exclusivos en las compras mensuales de toda la tienda.</p>
       </div>
       <div className="flex justify-center gap-2 mb-6 flex-wrap">
         {PLANS.map(p => (
@@ -346,9 +352,9 @@ export default function Planes() {
             {/* Mini stats bajo los botones */}
             <div className="flex gap-6 mt-8">
               {[
-                { v: "55%", l: "desc. máximo",   c: "hsl(var(--primary))" },
+                { v: "Hasta 50%", l: "desc. recompra",  c: "hsl(var(--primary))" },
                 { v: "10",  l: "niveles de red",  c: "hsl(var(--secondary))" },
-                { v: "50%", l: "recompra mensual",c: "#C9920A" },
+                { v: "+ Bonos", l: "en activación", c: "#C9920A" },
               ].map(s => (
                 <div key={s.l}>
                   <p className="font-syne font-extrabold text-[22px] leading-none" style={{ color: s.c }}>{s.v}</p>
@@ -424,9 +430,8 @@ export default function Planes() {
             ))}
           </div>
           {[
-            { label: "Descuento kit", vals: ["-40%",    "-50%",    "-55%"   ], colors: PLANS.map(p => p.color) },
+            { label: "Desc. recompra", vals: ["40% OFF",  "45% OFF", "50% OFF"], colors: PLANS.map(p => p.color) },
             { label: "Niveles red",   vals: ["3",        "7",       "10"    ], colors: PLANS.map(p => p.color) },
-            { label: "Recompra",      vals: ["50% OFF",  "50% OFF", "50% OFF"], colors: Array(3).fill("hsl(var(--secondary))") },
             { label: "Comisiones",    vals: ["1–3",      "1–7",     "1–10"  ], colors: PLANS.map(p => p.color) },
           ].map((row, ri, arr) => (
             <div key={row.label} className="grid grid-cols-4" style={{ borderBottom: ri < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none" }}>
@@ -450,7 +455,7 @@ export default function Planes() {
             {
               img:  "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&h=280&fit=crop&q=80",
               icon: <Target size={18} />, iconBg: "rgba(232,116,26,0.15)", iconBorder: "rgba(232,116,26,0.3)", iconColor: "hsl(var(--primary))",
-              n: "01", title: "Activa", desc: "Elige tu plan y adquiere el producto de inicio con el descuento de tu membresía.",
+              n: "01", title: "Activa", desc: "Elige tu membresía. Obtendrás bonos especiales de bienvenida con tu paquete de inicio.",
               note: "Sin comisiones en este paso", noteColor: "rgba(232,116,26,0.8)",
             },
             {
@@ -514,7 +519,7 @@ export default function Planes() {
                 <p className="font-syne font-extrabold text-[15px] text-wo-crema">Primera compra</p>
               </div>
               <p className="font-jakarta text-[12px] text-wo-crema-muted leading-relaxed">
-                Activa tu membresía con el producto que elijas, al precio de tu plan.
+                Activa tu red adquiriendo el plan de tu preferencia y recibe bonos especiales de bienvenida.
               </p>
               <span className="self-start font-jakarta text-[11px] font-bold px-3 py-1 rounded-full mt-1"
                 style={{ background: "rgba(232,116,26,0.12)", color: "hsl(var(--primary))", border: "0.5px solid rgba(232,116,26,0.25)" }}>
@@ -562,9 +567,9 @@ export default function Planes() {
             <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(10,16,32,0.3) 0%, rgba(10,16,32,0.85) 100%)" }} />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-wo-crema/50 mb-1">Para todos los afiliados activos</p>
-                <span className="font-syne font-extrabold leading-none" style={{ fontSize: "clamp(40px,8vw,56px)", color: "hsl(var(--secondary))" }}>50% OFF</span>
-                <p className="font-jakarta text-sm text-wo-crema-muted">en recompras mensuales</p>
+                <p className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-wo-crema/50 mb-1">Beneficios para afiliados activos</p>
+                <span className="font-syne font-extrabold leading-none" style={{ fontSize: "clamp(36px,7vw,48px)", color: "hsl(var(--secondary))" }}>Hasta 50% OFF</span>
+                <p className="font-jakarta text-sm text-wo-crema-muted">en recompras mensuales según membresía</p>
               </div>
             </div>
           </div>

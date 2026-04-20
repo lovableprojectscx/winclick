@@ -46,6 +46,8 @@ export function usePlaceOrder() {
       }
 
       // 2. Crear el pedido (order_number lo genera el trigger)
+      const isActivation = affiliate?.account_status === "pending";
+
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -60,6 +62,7 @@ export function usePlaceOrder() {
           status:               "pendiente",
           affiliate_id:         affiliateId,
           shipping_voucher_url: args.receiptUrl,
+          is_activation_order:  isActivation,
         })
         .select()
         .maybeSingle();

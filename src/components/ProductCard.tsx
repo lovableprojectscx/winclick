@@ -6,7 +6,15 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getActivationPrice, ACTIVATION_DISCOUNT_PCT } from "@/lib/activationPrice";
+import {
+  getActivationPrice,
+  getRecompraPrice,
+  hasActivationDiscount,
+  ACTIVATION_DISCOUNT_PCT,
+  RECOMPRA_DISCOUNT_PCT,
+  canAddActivationItem,
+  getActivationCap,
+} from "@/lib/activationPrice";
 
 interface Props {
   product:        Product;
@@ -16,7 +24,7 @@ interface Props {
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
 
 export default function ProductCard({ product, affiliateCode }: Props) {
-  const { addItem } = useCart();
+  const { addItem, total } = useCart();
   const { session, affiliate } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
 
@@ -25,23 +33,55 @@ export default function ProductCard({ product, affiliateCode }: Props) {
   const isFav = favoriteIds.includes(product.id);
 
   // ── Precio según contexto ─────────────────────────────────────────────
-  // - Afiliado PENDIENTE (activando membresía) → precio especial de activación
-  //   según su plan (40% / 50% / 55% OFF sobre public_price). Solo durante activación.
-  // - Afiliado ACTIVO   → partner_price estándar (50% de descuento fijo)
-  // - Público / tienda  → public_price (precio al cliente final)
-  const isPending     = affiliate?.account_status === "pending";
+  // - Afiliado PENDIENTE (activación):
+  //     • VIP        → 55% OFF sobre public_price (beneficio exclusivo del plan VIP)
+  //     • Básico/Int → precio público sin descuento (el incentivo es la red residual)
+  // - Afiliado ACTIVO (recompra mensual):
+  //     • Básico     → 40% OFF  |  Intermedio → 45% OFF  |  VIP → 55% OFF
+  // - Público / tienda  → public_price
+  const isPending      = affiliate?.account_status === "pending";
   const activationPlan = affiliate?.package ?? null;
-  const discountPct   = isPending && activationPlan ? (ACTIVATION_DISCOUNT_PCT[activationPlan] ?? null) : null;
+
+  // Descuento visible en badge de activación (solo VIP tiene badge)
+  const activationDiscountPct = isPending && activationPlan && hasActivationDiscount(activationPlan)
+    ? ACTIVATION_DISCOUNT_PCT[activationPlan]
+    : null;
+
+  // Descuento visible en badge de recompra (afiliado activo)
+  const recompraDiscountPct = !isPending && affiliate && activationPlan
+    ? (RECOMPRA_DISCOUNT_PCT[activationPlan] ?? null)
+    : null;
 
   const displayPrice = isPending && activationPlan
-    ? getActivationPrice(product, activationPlan)
+    ? getActivationPrice(product, activationPlan)          // VIP: 55% OFF; resto: public_price
     : affiliate
-      ? (product.partner_price ?? product.public_price ?? product.price)
-      : (product.public_price ?? product.price);
+      ? getRecompraPrice(product, affiliate.package)        // plan-tier: 40/45/55% OFF
+      : (product.public_price ?? product.price);            // visitante: precio público
+
+  // ── Tope de activación ────────────────────────────────────────────────
+  // Afiliados pendientes no pueden superar TARGET + S/100 en total acumulado
+  const activationCapBlocked =
+    isPending &&
+    activationPlan != null &&
+    !canAddActivationItem(
+      affiliate?.total_sales ?? 0,
+      total,
+      displayPrice,
+      activationPlan,
+    );
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (activationCapBlocked) {
+      const cap = getActivationCap(activationPlan!);
+      toast({
+        title: "Límite de activación alcanzado",
+        description: `Tu plan ${activationPlan} permite un máximo de S/ ${cap.toLocaleString()} en compras de activación. Retira algún producto del carrito si deseas agregar este.`,
+        variant: "destructive",
+      });
+      return;
+    }
     addItem(product, displayPrice);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -96,24 +136,24 @@ export default function ProductCard({ product, affiliateCode }: Props) {
           <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.public_price.toFixed(2)}</p>
         )}
 
-        {/* Badge activación — solo para afiliados pendientes */}
-        {isPending && activationPlan && discountPct && (
+        {/* Badge activación VIP — solo cuando hay descuento real (VIP pending) */}
+        {isPending && activationDiscountPct != null && (
           <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(232,116,26,0.13)", border: "0.5px solid rgba(232,116,26,0.40)" }}>
-            <span style={{ color: "hsl(var(--primary))", fontSize: "9px" }}>🔥</span>
-            <span className="font-jakarta font-bold text-[10px]" style={{ color: "hsl(var(--primary))" }}>
-              {discountPct}% OFF · Solo activación
+            style={{ background: "rgba(245,200,66,0.14)", border: "0.5px solid rgba(245,200,66,0.45)" }}>
+            <span style={{ fontSize: "9px" }}>👑</span>
+            <span className="font-jakarta font-bold text-[10px]" style={{ color: "#D4A017" }}>
+              {activationDiscountPct}% OFF · Beneficio VIP
             </span>
           </div>
         )}
 
-        {/* Badge partner — afiliado activo */}
-        {affiliate && !isPending && product.partner_price && product.public_price && product.partner_price < product.public_price && (
+        {/* Badge recompra — afiliado activo con descuento por plan */}
+        {!isPending && affiliate && recompraDiscountPct != null && (
           <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
             style={{ background: "rgba(30,192,213,0.10)", border: "0.5px solid rgba(30,192,213,0.28)" }}>
             <span style={{ color: "hsl(var(--secondary))", fontSize: "9px" }}>✓</span>
             <span className="font-jakarta font-bold text-[10px]" style={{ color: "hsl(var(--secondary))" }}>
-              Precio socio
+              {recompraDiscountPct}% OFF · Precio socio
             </span>
           </div>
         )}
@@ -131,13 +171,21 @@ export default function ProductCard({ product, affiliateCode }: Props) {
         <div className="flex items-center justify-between mt-3 gap-2">
           <button
             onClick={handleAdd}
-            className={`btn-bounce flex-1 font-jakarta font-bold text-xs py-2.5 px-3 rounded-wo-btn min-h-[40px] ${
-              added ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground hover:bg-wo-oro-dark"
+            disabled={activationCapBlocked}
+            title={activationCapBlocked ? "Carrito de activación lleno — retira algún producto para agregar este" : undefined}
+            className={`btn-bounce flex-1 font-jakarta font-bold text-xs py-2.5 px-3 rounded-wo-btn min-h-[40px] transition-colors ${
+              activationCapBlocked
+                ? "bg-wo-carbon text-wo-crema-muted cursor-not-allowed opacity-50"
+                : added
+                  ? "bg-secondary text-secondary-foreground"
+                  : "bg-primary text-primary-foreground hover:bg-wo-oro-dark"
             }`}
           >
-            {added
-              ? <span className="flex items-center justify-center gap-1"><Check size={11} /> Agregado</span>
-              : <span>★ {affiliateCode ? "Comprar" : "Agregar"}</span>}
+            {activationCapBlocked
+              ? <span>Límite alcanzado</span>
+              : added
+                ? <span className="flex items-center justify-center gap-1"><Check size={11} /> Agregado</span>
+                : <span>★ {affiliateCode ? "Comprar" : "Agregar"}</span>}
           </button>
           <button
             onClick={(e) => {

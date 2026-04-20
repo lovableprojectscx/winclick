@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Migración correctiva sobre base de datos existente
+-- WinClick — Migración correctiva sobre base de datos existente
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 08_migration.sql
 -- Ejecutar en Supabase SQL Editor (no requiere Docker).

@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Schema principal
+-- WinClick — Schema principal
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 01_schema.sql
 -- Ejecutar primero. Crea todas las tablas del sistema.

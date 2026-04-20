@@ -160,15 +160,60 @@ export function useUpdateOrderStatus() {
 
   return useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const { error } = await supabase
+      // 1. Obtener información de la orden y del afiliado
+      const { data: order } = await supabase
+        .from("orders")
+        .select("affiliate_id, is_activation_order")
+        .eq("id", orderId)
+        .maybeSingle();
+
+      // 2. Actualizar el estado de la orden
+      const { error: updateError } = await supabase
         .from("orders")
         .update({ status })
         .eq("id", orderId);
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // 3. Lógica de activación acumulativa (solo si la orden confirmada es de activación)
+      const confirmedStatuses = ["procesando", "enviado", "entregado"];
+      if (order?.is_activation_order && order?.affiliate_id && confirmedStatuses.includes(status)) {
+        
+        // Obtener el paquete elegido por el afiliado
+        const { data: affiliate } = await supabase
+          .from("affiliates")
+          .select("account_status, package")
+          .eq("id", order.affiliate_id)
+          .maybeSingle();
+
+        if (affiliate?.account_status === "pending") {
+          // Calcular el total ACUMULADO de órdenes de activación ya confirmadas
+          const { data: orders } = await supabase
+            .from("orders")
+            .select("total")
+            .eq("affiliate_id", order.affiliate_id)
+            .eq("is_activation_order", true)
+            .in("status", confirmedStatuses);
+
+          const totalConfirmed = (orders ?? []).reduce((sum, o) => sum + Number(o.total), 0);
+          
+          // Definir metas (sincronizado con activationPrice.ts)
+          const targets: Record<string, number> = { "Básico": 120, "Intermedio": 2000, "VIP": 10000 };
+          const target = targets[affiliate.package || "Básico"] ?? 120;
+
+          // Si el acumulado confirma el cumplimiento de la meta:
+          if (totalConfirmed >= target) {
+            await supabase
+              .from("affiliates")
+              .update({
+                account_status: "active",
+                activated_at: new Date().toISOString()
+              })
+              .eq("id", order.affiliate_id);
+          }
+        }
+      }
     },
     onSuccess: () => {
-      // Invalidar pedidos Y afiliados: el trigger de la DB puede haber cambiado
-      // el account_status del afiliado automáticamente al aprobar/entregar.
       qc.invalidateQueries({ queryKey: ["admin-orders"] });
       qc.invalidateQueries({ queryKey: ["admin-affiliates"] });
       qc.invalidateQueries({ queryKey: ["affiliate"] });
@@ -317,13 +362,20 @@ export function useDeleteAffiliate() {
 
   return useMutation({
     mutationFn: async (affiliateId: string) => {
-      // 1. Borrar referrals relacionados
-      await supabase.from("referrals").delete().or(`referrer_id.eq.${affiliateId},referred_id.eq.${affiliateId}`);
-      // 2. Borrar pagos del afiliado
-      await supabase.from("affiliate_payments").delete().eq("affiliate_id", affiliateId);
-      // 3. Borrar el afiliado
-      const { error } = await supabase.from("affiliates").delete().eq("id", affiliateId);
-      if (error) throw error;
+      // 1. Intentar el borrado total seguro usando la función RPC
+      const { error: rpcError } = await supabase.rpc("admin_delete_user", { p_user_id: affiliateId });
+      
+      // Si la función SQL aún no está desplegada (Method Not Allowed / Not Found), aplicamos fallback
+      if (rpcError) {
+        console.warn("Fallo el borrado RPC seguro, aplicando borrado manual de tablas públicas (no liberará el email en Auth):", rpcError);
+        
+        // Fallback: Borrado manual solo de tablas públicas
+        await supabase.from("referrals").delete().or(`referrer_id.eq.${affiliateId},referred_id.eq.${affiliateId}`);
+        await supabase.from("affiliate_payments").delete().eq("affiliate_id", affiliateId);
+        
+        const { error } = await supabase.from("affiliates").delete().eq("id", affiliateId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-affiliates"] });

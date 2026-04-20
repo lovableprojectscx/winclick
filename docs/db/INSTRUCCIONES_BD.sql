@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Diagnóstico y corrección de BD
+-- WinClick — Diagnóstico y corrección de BD
 -- Motor: PostgreSQL (Supabase SQL Editor)
 -- =============================================================================
 -- INSTRUCCIONES:

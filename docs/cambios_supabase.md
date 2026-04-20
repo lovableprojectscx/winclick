@@ -1,5 +1,5 @@
 # Cambios — Conexión Frontend a Supabase
-**Proyecto:** Winner Organa
+**Proyecto:** WinClick
 **Fecha:** 31 de marzo de 2026
 **Objetivo:** Reemplazar todos los datos mock por datos reales de Supabase
 
@@ -291,4 +291,4 @@ Todos los archivos de datos eliminados del flujo de producción:
 
 ---
 
-*Winner Organa · Conexión Supabase · 31 de marzo de 2026*
+*WinClick · Conexión Supabase · 31 de marzo de 2026*

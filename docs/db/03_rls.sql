@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Row Level Security (RLS)
+-- WinClick — Row Level Security (RLS)
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 03_rls.sql
 -- Ejecutar después de 02_triggers.sql

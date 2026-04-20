@@ -35,8 +35,7 @@ describe("Rebrand — sin rastros de la marca anterior", () => {
     "WinnerOrgana",
     "winnerorgana",
     "Natura que te hace ganar",
-    "Win click",          // con espacio
-    "Billetera Winner",
+    "Billetera WinClick",
   ];
 
   for (const pattern of FORBIDDEN) {

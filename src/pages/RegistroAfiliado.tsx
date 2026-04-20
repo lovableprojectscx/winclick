@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone } from "lucide-react";
+import { Eye, EyeOff, Gift, Check, ShoppingBag, Phone, Flame } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useAffiliate";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -9,9 +9,9 @@ import type { PackageType } from "@/lib/database.types";
 import { useToast } from "@/hooks/use-toast";
 
 const packages = [
-  { name: "Básico"      as const, investment: 120,   depthUnlocked: 3,  discount: 40 },
-  { name: "Intermedio"  as const, investment: 2000,  depthUnlocked: 7,  discount: 50 },
-  { name: "VIP"         as const, investment: 10000, depthUnlocked: 10, discount: 55 },
+  { name: "Básico"      as const, investment: 120,   depthUnlocked: 3,  discount: 40, activationDiscount: 0 },
+  { name: "Intermedio"  as const, investment: 2000,  depthUnlocked: 7,  discount: 45, activationDiscount: 0 },
+  { name: "VIP"         as const, investment: 10000, depthUnlocked: 10, discount: 50, activationDiscount: 55 },
 ];
 
 const packageFeatures: Record<PackageType, string[]> = {
@@ -23,7 +23,7 @@ const packageFeatures: Record<PackageType, string[]> = {
 // ── Componentes auxiliares fuera del componente principal ─────────────────────
 const StepBar = ({ step }: { step: number }) => (
   <div className="flex items-center mb-8">
-    {[{ n: 1, label: "Tus datos" }, { n: 2, label: "Paquete" }, { n: 3, label: "Activación" }].map((s, i) => (
+    {[{ n: 1, label: "Tus datos" }, { n: 2, label: "Confirmación" }].map((s, i, arr) => (
       <div key={s.n} className="flex items-center">
         <div className="flex items-center gap-1.5">
           <div className={`w-6 h-6 rounded-full flex items-center justify-center font-jakarta font-bold text-[11px] shrink-0 ${step > s.n ? "bg-secondary text-background" : step === s.n ? "bg-primary text-primary-foreground" : "bg-wo-carbon text-wo-crema-muted"}`} style={step < s.n ? { border: "0.5px solid rgba(255,255,255,0.12)" } : {}}>
@@ -31,7 +31,7 @@ const StepBar = ({ step }: { step: number }) => (
           </div>
           <span className={`font-jakarta text-[11px] ${step === s.n ? "text-wo-crema font-semibold" : step > s.n ? "text-secondary" : "text-wo-crema/30"}`}>{s.label}</span>
         </div>
-        {i < 2 && <div className="w-8 h-px mx-2 bg-wo-crema/10" />}
+        {i < arr.length - 1 && <div className="w-8 h-px mx-2 bg-wo-crema/10" />}
       </div>
     ))}
   </div>
@@ -122,18 +122,23 @@ export default function RegistroAfiliado() {
 
   const handleStep1 = (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password !== form.password2) return;
-    setStep1Complete(true);
-    setStep(2);
-  };
-
-  const handleStep2Continue = () => {
-    if (!step1Complete) {
-      toast({ title: "Completa tus datos primero", description: "Debes llenar todos los campos antes de continuar.", variant: "destructive" });
-      setStep(1);
+    
+    // Validaciones estrictas
+    if (!form.name.trim() || !form.dni.trim() || !form.email.trim() || !form.password || !form.yape.trim()) {
+      toast({ title: "Faltan datos", description: "Debes completar todos los campos principales para continuar.", variant: "destructive" });
       return;
     }
-    setStep(3);
+    if (form.password.length < 6) {
+      toast({ title: "Contraseña inválida", description: "La contraseña debe tener un mínimo de 6 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (form.password !== form.password2) {
+      toast({ title: "Las contraseñas no coinciden", description: "Asegúrate de repetir la misma contraseña correctamente.", variant: "destructive" });
+      return;
+    }
+
+    setStep1Complete(true);
+    setStep(2);
   };
 
   const handleFinalSubmit = async () => {
@@ -154,7 +159,7 @@ export default function RegistroAfiliado() {
       toast({ title: "¡Bienvenido a Winclick!", description: `Cuenta ${selectedPackage} creada. Completa tu pedido con tu descuento.` });
       navigate("/checkout");
     } else {
-      toast({ title: "¡Bienvenido a Winclick!", description: `Cuenta ${selectedPackage} creada. Elige tu kit de activación con ${selectedPackage === "Básico" ? "40%" : selectedPackage === "Intermedio" ? "50%" : "55%"} OFF.` });
+      toast({ title: "¡Bienvenido a Winclick!", description: `Cuenta ${selectedPackage} creada. Elige tu primer producto del catálogo con tus bonos de activación.` });
       navigate("/catalogo");
     }
     setSubmitting(false);
@@ -196,12 +201,25 @@ export default function RegistroAfiliado() {
               ))}
             </div>
 
-            {/* Summary step 3 */}
-            {step === 3 && (
+            {/* Summary indicator */}
+            {step === 2 && (
               <div className="rounded-wo-card p-5 mb-6" style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.3)" }}>
                 <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-1">Plan elegido</p>
-                <p className="font-syne font-extrabold text-2xl text-primary">{selectedPkg.name}</p>
-                <p className="font-jakarta text-xs text-secondary mt-1">Meta S/ {selectedPkg.investment.toLocaleString()} · {selectedPkg.discount}% OFF activación</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-syne font-extrabold text-2xl text-primary">{selectedPkg.name}</p>
+                  {selectedPkg.activationDiscount > 0 && (
+                    <span className="bg-primary/20 text-primary font-jakarta text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/30">
+                      {selectedPkg.activationDiscount}% OFF Activación
+                    </span>
+                  )}
+                </div>
+                <p className="font-jakarta text-xs text-secondary mt-1">{selectedPkg.investment.toLocaleString()} soles · {selectedPkg.depthUnlocked} niveles de red</p>
+                {selectedPkg.name === "VIP" && (
+                  <div className="mt-3 p-3 rounded-lg bg-wo-carbon/50 border border-secondary/20">
+                    <p className="font-jakarta text-[10px] text-secondary font-bold uppercase mb-1">Beneficio Exclusivo VIP:</p>
+                    <p className="font-jakarta text-xs text-wo-crema-muted">Recibirás un valor de <strong className="text-wo-crema">S/ 22,222</strong> en productos por tu inversión inicial.</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -235,7 +253,7 @@ export default function RegistroAfiliado() {
                     {selectedPackage}
                   </span>
                   <p className="font-jakarta text-xs text-wo-crema-muted flex-1">
-                    <strong className="text-wo-crema">{selectedPkg.discount}% OFF</strong> activación · S/ {selectedPkg.investment.toLocaleString()}
+                    <strong className="text-wo-crema">{selectedPkg.depthUnlocked} niveles</strong> de red · S/ {selectedPkg.investment.toLocaleString()}
                   </p>
                   <button type="button" onClick={() => setShowInlinePicker((v) => !v)} className="font-jakarta text-[11px] text-primary hover:underline shrink-0">
                     {showInlinePicker ? "Cerrar" : "Cambiar →"}
@@ -246,17 +264,36 @@ export default function RegistroAfiliado() {
                   <div className="space-y-2 p-3 rounded-wo-card" style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
                     {packages.map((pkg) => {
                       const isSel = selectedPackage === pkg.name;
+                      const hasActDisc = (pkg.activationDiscount ?? 0) > 0;
+                      
                       return (
                         <button
                           key={pkg.name}
                           type="button"
                           onClick={() => { setSelectedPackage(pkg.name); setShowInlinePicker(false); }}
-                          className="w-full text-left rounded-wo-btn px-4 py-3 flex items-center justify-between transition-all"
-                          style={{ background: isSel ? "rgba(232,116,26,0.08)" : "transparent", border: isSel ? "1.5px solid hsl(var(--wo-oro))" : "0.5px solid rgba(255,255,255,0.1)" }}
+                          className="w-full text-left rounded-wo-btn px-4 py-3 flex items-center justify-between transition-all group"
+                          style={{ 
+                            background: isSel ? "rgba(232,116,26,0.08)" : "transparent", 
+                            border: isSel ? "1.5px solid hsl(var(--wo-oro))" : "0.5px solid rgba(255,255,255,0.1)" 
+                          }}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="font-jakarta font-bold text-sm text-wo-crema">{pkg.name}</span>
-                            <span className="font-jakarta text-[11px] text-wo-crema-muted">{pkg.discount}% OFF · S/ {pkg.investment.toLocaleString()}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-jakarta font-bold text-sm text-wo-crema">{pkg.name}</span>
+                              {hasActDisc && (
+                                <span className="bg-primary text-primary-foreground font-jakarta text-[9px] font-extrabold px-1.5 py-0.5 rounded-wo-pill flex items-center gap-1">
+                                  <Flame size={8} /> {pkg.activationDiscount}% OFF EN PRODUCTOS
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-jakarta text-[11px] text-wo-crema-muted">
+                              {pkg.depthUnlocked} niveles · Inversión S/ {pkg.investment.toLocaleString()}
+                              {pkg.name === "VIP" && (
+                                <span className="text-secondary font-bold block mt-0.5">
+                                  ¡Recibes S/ 22,222 en productos!
+                                </span>
+                              )}
+                            </span>
                           </div>
                           {isSel && <Check size={13} className="text-primary" />}
                         </button>
@@ -294,7 +331,7 @@ export default function RegistroAfiliado() {
                 <InputField label="Código de referido (opcional)" k="referral" placeholder="WIN-XXXXXX" icon={<Gift size={14} />} value={form.referral} onChange={handleInputChange} refValid={refValid} refName={refName} />
 
                 <button type="submit" className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors mt-2">
-                  Continuar → Elegir paquete
+                  Continuar → Resumen de la cuenta
                 </button>
                 <p className="font-jakarta text-[11px] text-wo-crema/40 text-center">
                   Al registrarte aceptas los{" "}
@@ -305,71 +342,12 @@ export default function RegistroAfiliado() {
               </form>
             )}
 
-            {/* ── STEP 2 ───────────────────────────────────────────────── */}
+            {/* ── STEP 2 (Confirmación) ───────────────────────────────────────────────── */}
             {step === 2 && (
-              <div>
-                <h2 className="font-syne font-extrabold text-[24px] text-wo-crema mb-1">Elige tu paquete</h2>
-                <p className="font-jakarta text-sm text-wo-crema-muted mb-6">El plan define tu descuento de activación y los niveles de red disponibles.</p>
-
-                <div className="space-y-2.5 mb-6">
-                  {packages.map((pkg) => {
-                    const isSelected    = selectedPackage === pkg.name;
-                    const isRecommended = pkg.name === "Intermedio";
-                    return (
-                      <button
-                        key={pkg.name}
-                        type="button"
-                        onClick={() => setSelectedPackage(pkg.name)}
-                        className="w-full text-left rounded-wo-card p-4 transition-all"
-                        style={{ background: isSelected ? "rgba(232,116,26,0.08)" : "rgba(255,255,255,0.02)", border: isSelected ? "1.5px solid hsl(var(--wo-oro))" : "0.5px solid rgba(255,255,255,0.1)" }}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-jakarta font-bold text-sm text-wo-crema">{pkg.name}</span>
-                              {isRecommended && (
-                                <span className="font-jakarta font-bold text-[9px] px-1.5 py-0.5 rounded-wo-pill bg-secondary/15 text-secondary" style={{ border: "0.5px solid rgba(30,192,213,0.3)" }}>
-                                  RECOMENDADO
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-baseline gap-2 mb-2">
-                              <span className="font-syne font-extrabold text-xl text-primary">S/ {pkg.investment.toLocaleString()}</span>
-                              <span className="font-jakarta text-[11px] text-wo-crema-muted">{pkg.discount}% OFF · {pkg.depthUnlocked} niveles</span>
-                            </div>
-                            <ul className="space-y-0.5">
-                              {packageFeatures[pkg.name].map((f, i) => (
-                                <li key={i} className="flex items-center gap-1.5 font-jakarta text-[11px] text-wo-crema-muted">
-                                  <Check size={9} className={isSelected ? "text-primary" : "text-wo-crema/25"} />
-                                  {f}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center ${isSelected ? "bg-primary" : "bg-wo-carbon"}`} style={!isSelected ? { border: "0.5px solid rgba(255,255,255,0.15)" } : {}}>
-                            {isSelected && <Check size={10} className="text-primary-foreground" />}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button onClick={handleStep2Continue} className="w-full bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors">
-                  Confirmar paquete {selectedPackage} →
-                </button>
-                <button type="button" onClick={() => setStep(1)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
-                  ← Volver a mis datos
-                </button>
-              </div>
-            )}
-
-            {/* ── STEP 3 ───────────────────────────────────────────────── */}
-            {step === 3 && (
               <div>
                 <h2 className="font-syne font-extrabold text-[24px] text-wo-crema mb-1">¡Casi listo!</h2>
                 <p className="font-jakarta text-sm text-wo-crema-muted mb-6">
-                  Al crear la cuenta accedes a tu panel. Desde ahí elige productos del catálogo hasta alcanzar tu meta de activación.
+                  Revisa tu resumen. Al crear la cuenta accederás a tu panel para elegir productos y activar tu plan.
                 </p>
 
                 {/* Resumen final compacto */}
@@ -384,12 +362,26 @@ export default function RegistroAfiliado() {
                       <p className="font-syne font-extrabold text-2xl text-secondary">S/ {selectedPkg.investment.toLocaleString()}</p>
                     </div>
                   </div>
+                  {selectedPkg.activationDiscount > 0 && (
+                    <div className="mt-2">
+                      <span className="bg-primary text-primary-foreground font-jakarta text-[10px] font-extrabold px-1.5 py-0.5 rounded-wo-pill">
+                        <Flame size={10} className="inline mr-0.5" /> {selectedPkg.activationDiscount}% OFF EN PRODUCTOS
+                      </span>
+                    </div>
+                  )}
                   <p className="font-jakarta text-[11px] text-wo-crema-muted mt-3">
-                    {selectedPkg.discount}% de descuento en tu compra de activación · {selectedPkg.depthUnlocked} niveles de red desbloqueados
+                    {selectedPkg.depthUnlocked} niveles de red desbloqueados · se activa al llegar a tu meta comprando productos.
                   </p>
+                  
+                  {selectedPkg.name === "VIP" && (
+                    <div className="mt-3 p-3 rounded-lg bg-wo-carbon/50 border border-secondary/20">
+                      <p className="font-jakarta text-[10px] text-secondary font-bold uppercase mb-1">Valor en Productos VIP:</p>
+                      <p className="font-jakarta text-xs text-wo-crema-muted">Con el 55% OFF, recibirás <strong className="text-wo-crema">S/ 22,222</strong> en productos al terminar tu activación de S/ 10,000.</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="mb-4 p-4 rounded-wo-btn flex gap-3" style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
+                <div className="mb-6 p-4 rounded-wo-btn flex gap-3" style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
                   <ShoppingBag size={18} className="text-wo-crema-muted shrink-0 mt-0.5" />
                   <p className="font-jakarta text-[13px] text-wo-crema-muted leading-relaxed">
                     Después del registro ve al Catálogo, agrega productos y realiza tu compra de activación. Puedes hacerlo en varias compras — todas se acumulan.
@@ -413,7 +405,7 @@ export default function RegistroAfiliado() {
                 >
                   {submitting ? "Creando cuenta..." : "Crear mi cuenta ahora →"}
                 </button>
-                <button type="button" onClick={() => setStep(2)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
+                <button type="button" onClick={() => setStep(1)} className="w-full font-jakarta text-xs text-wo-crema-muted hover:text-wo-crema mt-3 py-2">
                   ← Cambiar paquete
                 </button>
               </div>

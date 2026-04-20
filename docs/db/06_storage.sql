@@ -1,5 +1,5 @@
 -- =============================================================================
--- WINNER ORGANA — Supabase Storage Buckets
+-- WinClick — Supabase Storage Buckets
 -- Motor: PostgreSQL (Supabase)
 -- Archivo: 06_storage.sql
 -- Configura los buckets y sus políticas de acceso.
