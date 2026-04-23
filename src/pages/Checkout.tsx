@@ -13,123 +13,16 @@ import {
   RECOMPRA_DISCOUNT_PCT,
   hasActivationDiscount,
   getNextPlan,
+  getReachedPlan,
   PLAN_DEPTH,
   getActivationCap,
 } from "@/lib/activationPrice";
 
+import { compressImage } from "@/lib/imageUtils";
+import { ActivationProgress } from "@/components/checkout/ActivationProgress";
+import { CheckoutSuccess } from "@/components/checkout/CheckoutSuccess";
 
-
-/* ── Componente: barra de progreso de activación ──────────────────────── */
-function ActivationProgress({
-  packageName, alreadySpent, cartTotal,
-}: { packageName: string; alreadySpent: number; cartTotal: number }) {
-  const target      = ACTIVATION_TARGET[packageName] ?? 120;
-  const afterCart   = alreadySpent + cartTotal;
-  const pct         = Math.min(100, (afterCart / target) * 100);
-  const prevPct     = Math.min(100, (alreadySpent / target) * 100);
-  const remaining   = Math.max(0, target - afterCart);
-  const willActivate = afterCart >= target;
-
-  return (
-    <div className="rounded-xl overflow-hidden mb-5"
-      style={{ border: willActivate ? "0.5px solid rgba(30,192,213,0.35)" : "0.5px solid rgba(232,116,26,0.28)" }}>
-
-      {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3"
-        style={{ background: willActivate ? "rgba(30,192,213,0.06)" : "rgba(232,116,26,0.05)" }}>
-        <div className="flex items-center gap-2.5">
-          <TrendingUp size={15} style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))", flexShrink: 0 }} />
-          <p className="font-jakarta font-bold text-[13px]"
-            style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))" }}>
-            {willActivate ? "¡Esta compra activa tu cuenta!" : `Activación ${packageName} — progreso`}
-          </p>
-        </div>
-        <span className="font-syne font-extrabold text-[18px] leading-none"
-          style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))" }}>
-          {pct.toFixed(0)}%
-        </span>
-      </div>
-
-      {/* Barra */}
-      <div className="px-4 py-3" style={{ background: willActivate ? "rgba(30,192,213,0.03)" : "rgba(232,116,26,0.02)" }}>
-        <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "rgba(255,255,255,0.06)" }}>
-          {/* Segmento ya gastado */}
-          {prevPct > 0 && (
-            <div className="h-full rounded-l-full inline-block"
-              style={{ width: `${prevPct}%`, background: "rgba(232,116,26,0.4)", float: "left" }} />
-          )}
-          {/* Segmento que agrega este carrito */}
-          <div className="h-full inline-block transition-all duration-500"
-            style={{
-              width: `${pct - prevPct}%`,
-              background: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))",
-              float: "left",
-            }} />
-        </div>
-        <div className="flex justify-between">
-          <span className="font-jakarta text-[10px] text-wo-crema-muted/50">Ya acumulado: S/ {alreadySpent.toFixed(2)}</span>
-          <span className="font-jakarta text-[10px] font-bold"
-            style={{ color: willActivate ? "hsl(var(--secondary))" : "rgba(232,116,26,0.7)" }}>
-            Meta: S/ {target.toLocaleString()}
-          </span>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-3.5" style={{ background: willActivate ? "rgba(30,192,213,0.03)" : "rgba(232,116,26,0.02)" }}>
-        {willActivate ? (
-          <div className="flex items-center gap-2">
-            <Check size={13} style={{ color: "hsl(var(--secondary))" }} />
-            <p className="font-jakarta text-[12px] text-secondary font-semibold">
-              Al completar este pedido tu cuenta quedará en revisión para activación ({"<"}24 h).
-            </p>
-          </div>
-        ) : (
-          <p className="font-jakarta text-[12px] text-wo-crema-muted">
-            Con este pedido llegas a{" "}
-            <span className="font-bold text-wo-crema">S/ {afterCart.toFixed(2)}</span>.
-            {" "}Te faltan{" "}
-            <span className="font-bold" style={{ color: "hsl(var(--primary))" }}>
-              S/ {remaining.toFixed(2)}
-            </span>{" "}más para activar tu membresía {packageName}.{" "}
-            <Link to="/catalogo" className="font-bold underline" style={{ color: "hsl(var(--primary))" }}>
-              Agregar más productos →
-            </Link>
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Comprime una imagen a máx 1200px y calidad 0.8 → File JPEG < ~500 KB
-async function compressImage(file: File): Promise<File> {
-  if (file.type === "application/pdf") return file; // PDFs no se comprimen
-  return new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const MAX = 1200;
-      let { width, height } = img;
-      if (width > MAX || height > MAX) {
-        if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
-        else                { width = Math.round((width * MAX) / height);  height = MAX; }
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width; canvas.height = height;
-      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(url);
-          resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }) : file);
-        },
-        "image/jpeg", 0.82
-      );
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-    img.src = url;
-  });
-}
+/* ── Componente Principal: Checkout ──────────────────────── */
 
 export default function Checkout() {
   const { items, total, clearCart, affiliateCode, setAffiliateCode } = useCart();
@@ -145,13 +38,14 @@ export default function Checkout() {
   const [refValid,         setRefValid]         = useState<boolean | null>(affiliateCode ? true : null);
   const [refName,          setRefName]          = useState("");
   const [processing,       setProcessing]       = useState(false);
+  const [isUpgrading,      setIsUpgrading]      = useState(false);
   const [checkoutError,    setCheckoutError]    = useState<string | null>(null);
   const [success,          setSuccess]          = useState(false);
   const [orderNumber,      setOrderNumber]      = useState("");
   const [confirmedItems,       setConfirmedItems]       = useState<typeof items>([]);
   const [confirmedTotal,       setConfirmedTotal]       = useState(0);
   const [confirmedPayment,     setConfirmedPayment]     = useState<"wallet" | "cash">("cash");
-  const [confirmedHighValue,   setConfirmedHighValue]   = useState(false);   // pago > S/500 → coordinar por WhatsApp
+  const [confirmedHighValue,   setConfirmedHighValue]   = useState(false);   // pago > S/700 → coordinar por WhatsApp con asesor
   const [formData,         setFormData]         = useState({ name: "", email: "", dni: "", phone: "", address: "", city: "" });
   const [savePreferences,  setSavePreferences]  = useState(true);
 
@@ -196,7 +90,40 @@ export default function Checkout() {
     }
   }, [session?.user?.id, affiliate?.id]);
 
-  const validateRef = async (code: string) => {
+  // Sync form con usuario
+  useEffect(() => {
+    if (session?.user && !formData.email) {
+      setFormData(f => ({ ...f, name: affiliate?.name ?? "", email: session.user.email ?? "" }));
+    }
+  }, [session, affiliate]);
+
+  const handleUpgradePlan = async (planName: string) => {
+    if (!affiliate) return;
+    setIsUpgrading(true);
+    setCheckoutError(null);
+    try {
+      // Obtenemos la profundidad correspondiente al nuevo plan
+      const newDepth = PLAN_DEPTH[planName as keyof typeof PLAN_DEPTH] ?? 3;
+
+      const { error } = await supabase
+        .from("affiliates")
+        .update({ 
+          package: planName,
+          depth_unlocked: newDepth 
+        })
+        .eq("id", affiliate.id);
+      
+      if (error) throw error;
+      
+      // Recargar para refrescar descuentos, carrito y estado de auth
+      window.location.reload();
+    } catch (err: any) {
+      setCheckoutError("Error al ascender plan: " + err.message);
+      setIsUpgrading(false);
+    }
+  };
+
+  const validateRef = useCallback(async (code: string) => {
     setRefCode(code);
     if (!code) { setRefValid(null); return; }
     const { data } = await supabase
@@ -292,7 +219,7 @@ export default function Checkout() {
       setConfirmedItems([...items]);
       setConfirmedTotal(total);
       setConfirmedPayment(paymentMethod);
-      setConfirmedHighValue(paymentMethod === "cash" && total > 500);
+      setConfirmedHighValue(paymentMethod === "cash" && total > 700);
       setOrderNumber(order.order_number);
 
       if (session) {
@@ -344,86 +271,6 @@ export default function Checkout() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background pt-20 pb-16">
-        <div className="max-w-lg mx-auto px-4">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-secondary/15 flex items-center justify-center mx-auto mb-4" style={{ border: "1px solid rgba(30,192,213,0.3)" }}>
-              <Check size={28} className="text-secondary" />
-            </div>
-            <h2 className="font-syne font-extrabold text-[26px] text-wo-crema">¡Pedido confirmado!</h2>
-            <p className="font-jakarta text-sm text-wo-crema-muted mt-1">Nos pondremos en contacto contigo cuando sea enviado.</p>
-          </div>
-
-          <div className="rounded-wo-card p-5 text-center mb-4" style={{ background: "rgba(232,116,26,0.06)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
-            <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1">Número de pedido</p>
-            <p className="font-syne font-extrabold text-3xl text-primary">{orderNumber}</p>
-            <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1">Guarda este número para seguimiento</p>
-          </div>
-
-          <div className="bg-wo-grafito rounded-wo-card p-5 mb-4" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-            <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-3">Productos</p>
-            <div className="space-y-2 mb-3">
-              {confirmedItems.map((item) => (
-                <div key={item.product.id} className="flex justify-between items-center gap-2">
-                  <span className="font-jakarta text-xs text-wo-crema">{item.product.name} × {item.quantity}</span>
-                  <span className="font-jakarta text-xs text-primary font-semibold shrink-0">S/ {(item.unitPrice * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between items-center pt-3" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
-              <span className="font-jakarta text-sm text-wo-crema font-semibold">Total</span>
-              <span className="font-syne font-extrabold text-xl text-primary">S/ {confirmedTotal.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div className="bg-wo-grafito rounded-wo-card p-5 mb-6" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1.5">Método de pago</p>
-                <p className="font-jakarta text-sm text-wo-crema">
-                  {confirmedPayment === "wallet" ? "💳 Billetera Winclick" : "💵 Dinero Real"}
-                </p>
-              </div>
-              {formData.address && (
-                <div>
-                  <p className="font-jakarta text-[11px] text-wo-crema-muted uppercase font-semibold mb-1.5">Dirección</p>
-                  <p className="font-jakarta text-sm text-wo-crema">{formData.address}</p>
-                  {formData.city && <p className="font-jakarta text-xs text-wo-crema-muted">{formData.city}</p>}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Pago de alto valor (>S/500) — coordinar transferencia bancaria por WhatsApp */}
-          {confirmedHighValue && (
-            <div className="rounded-wo-card p-5 mb-4"
-              style={{ background: "rgba(37,211,102,0.06)", border: "0.5px solid rgba(37,211,102,0.30)" }}>
-              <div className="flex items-start gap-3">
-                <span className="text-2xl shrink-0">📲</span>
-                <div className="flex-1">
-                  <p className="font-jakarta font-bold text-[14px] text-wo-crema mb-1">
-                    Coordina tu transferencia bancaria
-                  </p>
-                  <p className="font-jakarta text-[12px] text-wo-crema-muted leading-snug mb-3">
-                    Tu pedido supera S/ 500. Comunícate por WhatsApp con tu número de pedido para recibir
-                    los datos bancarios y finalizar el pago.
-                  </p>
-                  <a
-                    href={`https://wa.me/${(settings?.whatsapp_number ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(
-                      `Hola, realicé el pedido *${orderNumber}* por S/ ${confirmedTotal.toFixed(2)}. Solicito los datos de cuenta bancaria para completar el pago.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#25D366] text-white font-jakarta font-bold text-sm px-5 py-3 rounded-wo-btn hover:bg-[#1ebe5d] transition-colors"
-                  >
-                    <MessageCircle size={16} />
-                    Enviar pedido {orderNumber} por WhatsApp
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-col gap-3">
             {!confirmedHighValue && (
               <p className="font-jakarta text-[11px] text-wo-crema/40 text-center">📦 Te contactaremos cuando tu pedido sea enviado</p>
@@ -524,37 +371,46 @@ export default function Checkout() {
           {/* Form */}
           <div className="lg:col-span-3 space-y-5">
 
-            {/* ── Señal de upgrade: el acumulado (total_sales + carrito) ya alcanza el siguiente plan ── */}
+            {/* ── Señal de upgrade dinámico: el acumulado alcanza un plan superior ── */}
             {(() => {
-              if (!affiliate || affiliate.account_status !== "pending" || !affiliate.package) return null;
-              const nextPlan = getNextPlan(affiliate.package);
-              if (!nextPlan) return null;
-              const nextTarget   = ACTIVATION_TARGET[nextPlan];
-              const alreadySpent = affiliate.total_sales ?? 0;
-              const cumulative   = alreadySpent + total;
-              if (cumulative < nextTarget) return null;
-              const nextDiscount = RECOMPRA_DISCOUNT_PCT[nextPlan];  // descuento en recompra del plan superior
-              const nextDepth    = PLAN_DEPTH[nextPlan];
+              // Ahora disponible para todos los afiliados (pending o active) que no sean VIP
+              if (!affiliate || !affiliate.package || affiliate.package === "VIP") return null;
+              
+              // Para activación se usa total_sales + carrito. Para activos, el upgrade se basa en la misma lógica acumulativa.
+              const cumulative = (affiliate.total_sales ?? 0) + total;
+              const reachedPlan = getReachedPlan(affiliate.package, cumulative);
+              if (!reachedPlan) return null;
+              
+              const nextDiscount = RECOMPRA_DISCOUNT_PCT[reachedPlan];
+              const nextDepth    = PLAN_DEPTH[reachedPlan];
+              
               return (
-                <div className="rounded-xl px-4 py-3.5 mb-4 flex items-start gap-3"
+                <div className="rounded-xl px-4 py-3.5 mb-4 flex items-start gap-3 relative overflow-hidden"
                   style={{ background: "rgba(245,200,66,0.07)", border: "0.5px solid rgba(245,200,66,0.35)" }}>
+                  
+                  {isUpgrading && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                      <div className="w-5 h-5 rounded-full border-2 border-wo-oro border-t-transparent animate-spin" />
+                    </div>
+                  )}
+
                   <span className="text-lg shrink-0 mt-0.5">👑</span>
                   <div className="flex-1 min-w-0">
                     <p className="font-jakarta font-bold text-[13px]" style={{ color: "#D4A017" }}>
-                      ¡Tu carrito ya alcanza la meta del plan {nextPlan}!
+                      ¡Tu carrito ya alcanza la meta del plan {reachedPlan}!
                     </p>
                     <p className="font-jakarta text-[12px] text-wo-crema-muted mt-0.5 leading-snug">
-                      Activa como <strong style={{ color: "#D4A017" }}>{nextPlan}</strong> y obtén{" "}
-                      <strong>{nextDiscount}% OFF en todas tus recompras mensuales</strong> más{" "}
+                      Asciende tu cuenta ahora y obtén{" "}
+                      <strong>{nextDiscount}% OFF en tus recompras mensuales</strong> más{" "}
                       <strong>{nextDepth} niveles</strong> de red residual.
-                      {nextPlan === "VIP" && <> Además, el plan VIP incluye <strong>55% OFF también en la activación</strong>.</>}
                     </p>
-                    <Link
-                      to="/area-afiliado"
-                      className="inline-block mt-2.5 font-jakarta text-[11px] font-bold px-3 py-1.5 rounded-full"
-                      style={{ background: "rgba(245,200,66,0.15)", color: "#D4A017", border: "0.5px solid rgba(245,200,66,0.35)" }}>
-                      Cambiar mi plan antes de activar →
-                    </Link>
+                    <button
+                      onClick={() => handleUpgradePlan(reachedPlan)}
+                      disabled={isUpgrading}
+                      className="inline-block mt-2.5 font-jakarta text-[11px] font-bold px-4 py-2 rounded-full transition-transform hover:scale-105 active:scale-95"
+                      style={{ background: "#D4A017", color: "hsl(var(--background))", border: "none" }}>
+                      Ascender a {reachedPlan} ahora →
+                    </button>
                   </div>
                 </div>
               );
@@ -602,11 +458,11 @@ export default function Checkout() {
             ) : (
               <div>
                 <h3 className="font-jakarta font-semibold text-sm text-wo-crema mb-3">
-                  {total > 500 ? "Pago por transferencia bancaria" : "Comprobante de pago"}
+                  {total > 700 ? "Proceso con asesor" : "Comprobante de pago"}
                 </h3>
 
                 {/* ── Datos de pago — siempre visibles ── */}
-                {total <= 500 && (settings?.yape_number || settings?.plin_number) && (
+                {total <= 700 && (settings?.yape_number || settings?.plin_number) && (
                   <div className="rounded-wo-card p-4 mb-4" style={{ background: "rgba(232,116,26,0.05)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
                     <p className="font-jakarta text-[10px] font-bold text-wo-crema-muted uppercase tracking-widest mb-3">Realiza tu pago a</p>
                     <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -638,27 +494,26 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {/* ── Pago > S/500: transferencia bancaria coordinada por WhatsApp ── */}
-                {total > 500 ? (
+                {/* ── Pago > S/700: Proceso de pago con asesor ── */}
+                {total > 700 ? (
                   <div className="rounded-wo-card p-5"
                     style={{ background: "rgba(37,211,102,0.05)", border: "0.5px solid rgba(37,211,102,0.28)" }}>
                     <div className="flex items-start gap-3">
                       <span className="text-xl shrink-0 mt-0.5">📲</span>
                       <div className="flex-1">
                         <p className="font-jakarta font-bold text-[14px] text-wo-crema mb-1">
-                          Compra por transferencia bancaria
+                          Proceso de atención personalizada
                         </p>
                         <p className="font-jakarta text-[12px] text-wo-crema-muted leading-snug mb-1">
-                          Tu pedido supera S/ 500 — límite diario de Yape/Plin.
-                          Al confirmar tu pedido recibirás un número de orden y podrás contactarnos por WhatsApp para coordinar la transferencia bancaria.
+                          Atención: Para compras que superan los S/ 700, el proceso es personalizado. Llena tus datos de envío y confirma tu pedido ahora. No necesitas subir comprobante aquí.
                         </p>
                         <p className="font-jakarta text-[11px] font-bold mb-3" style={{ color: "rgba(37,211,102,0.85)" }}>
-                          ✓ No necesitas subir comprobante ahora — se gestiona tras confirmar el pedido.
+                          ✓ Al confirmar, se registrará tu orden y te daremos un enlace a WhatsApp. Comunícate con un asesor para que procese tu pago y pedido de forma segura.
                         </p>
                         {settings?.whatsapp_number && (
                           <div className="flex items-center gap-2 bg-wo-carbon rounded-lg px-3 py-2" style={{ border: "0.5px solid rgba(37,211,102,0.2)" }}>
                             <MessageCircle size={13} style={{ color: "rgba(37,211,102,0.8)" }} />
-                            <span className="font-jakarta text-[12px] text-wo-crema-muted">WhatsApp: </span>
+                            <span className="font-jakarta text-[12px] text-wo-crema-muted">WhatsApp Asesor: </span>
                             <span className="font-syne font-bold text-sm text-wo-crema">{settings.whatsapp_number}</span>
                           </div>
                         )}
@@ -842,10 +697,10 @@ export default function Checkout() {
               onClick={handleSubmit}
               disabled={
                 processing ||
-                // Para pagos en efectivo: receipt requerido solo si total ≤ 500
-                // Compras > S/500 coordinan por WhatsApp después del pedido — sin receipt previo
-                (paymentMethod === "cash" && !receipt && total <= 500) ||
-                (paymentMethod === "wallet" && walletBalance < total) ||
+                // Para pagos en efectivo: receipt requerido solo si total <= 700
+                // Compras > S/700 coordinan con asesor por WhatsApp después del pedido — sin receipt previo
+                (paymentMethod === "cash" && !receipt && total <= 700) ||
+                (paymentMethod === "wallet" && total > walletBalance) ||
                 // Bloquear si el acumulado (entregado + carrito) no alcanza la meta de activación
                 (affiliate?.account_status === "pending" && !!affiliate.package &&
                   (affiliate.total_sales ?? 0) + total < (ACTIVATION_TARGET[affiliate.package] ?? 120))
@@ -856,7 +711,7 @@ export default function Checkout() {
                 ? "Procesando..."
                 : paymentMethod === "wallet"
                   ? `Pagar S/ ${total.toFixed(2)} con Billetera`
-                  : total > 500
+                  : total > 700
                     ? `Generar pedido (S/ ${total.toFixed(2)}) y coordinar pago`
                     : `Confirmar Pedido (S/ ${total.toFixed(2)})`}
             </button>

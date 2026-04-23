@@ -10,12 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const packages = [
   { name: "Básico"      as const, investment: 120,   depthUnlocked: 3,  discount: 40, activationDiscount: 0 },
-  { name: "Intermedio"  as const, investment: 2000,  depthUnlocked: 7,  discount: 45, activationDiscount: 0 },
-  { name: "VIP"         as const, investment: 10000, depthUnlocked: 10, discount: 50, activationDiscount: 55 },
+  { name: "Ejecutivo"   as const, investment: 600,   depthUnlocked: 5,  discount: 50, activationDiscount: 0 },
+  { name: "Intermedio"  as const, investment: 2000,  depthUnlocked: 7,  discount: 50, activationDiscount: 0 },
+  { name: "VIP"         as const, investment: 10000, depthUnlocked: 10, discount: 50, activationDiscount: 50 },
 ];
 
 const packageFeatures: Record<PackageType, string[]> = {
   Básico:      ["Comisiones niveles 1–3", "Tienda online propia", "Dashboard completo"],
+  Ejecutivo:   ["Comisiones niveles 1–5", "50% OFF en recompra", "Mayor expansión de red"],
   Intermedio:  ["Comisiones niveles 1–7", "Red 7 niveles de profundidad", "Mayor potencial de ingresos"],
   VIP:         ["Comisiones niveles 1–10", "Nivel 8: comisión 3% ★", "Máximo potencial de red"],
 };

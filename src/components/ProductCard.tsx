@@ -37,7 +37,7 @@ export default function ProductCard({ product, affiliateCode }: Props) {
   //     • VIP        → 55% OFF sobre public_price (beneficio exclusivo del plan VIP)
   //     • Básico/Int → precio público sin descuento (el incentivo es la red residual)
   // - Afiliado ACTIVO (recompra mensual):
-  //     • Básico     → 40% OFF  |  Intermedio → 45% OFF  |  VIP → 55% OFF
+  //     • Básico     → 40% OFF  |  Intermedio → 50% OFF  |  VIP → 55% OFF
   // - Público / tienda  → public_price
   const isPending      = affiliate?.account_status === "pending";
   const activationPlan = affiliate?.package ?? null;

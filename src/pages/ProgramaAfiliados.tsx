@@ -82,7 +82,7 @@ export default function ProgramaAfiliados() {
             Tu paquete define cuántos niveles de comisión desbloqueas. A mayor inversión, mayor profundidad y mayor potencial de ingresos.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {packages.map((pkg, i) => {
               const isVip = pkg.name === "VIP";
               return (
@@ -196,7 +196,7 @@ export default function ProgramaAfiliados() {
               {
                 num: "1",
                 title: "Elige tu paquete",
-                desc: "Básico (S/120), Intermedio (S/2,000) o VIP (S/10,000).",
+                desc: "Básico (S/120), Ejecutivo (S/600), Intermedio (S/2,000) o VIP (S/10,000).",
                 img: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&h=280&fit=crop&crop=center&auto=format&q=80",
                 alt: "Productos orgánicos",
               },

@@ -46,10 +46,10 @@ export default function ProductDetail() {
 
   // ── Precio según contexto ─────────────────────────────────────────────
   // - Afiliado PENDIENTE (activación):
-  //     • VIP        → 55% OFF sobre public_price
+  //     • VIP        → 50% OFF sobre public_price
   //     • Básico/Int → precio público (sin descuento durante activación)
   // - Afiliado ACTIVO (recompra mensual, genera comisiones):
-  //     • Básico 40% OFF | Intermedio 45% OFF | VIP 55% OFF
+  //     • Básico 40% OFF | Intermedio 50% OFF | VIP 50% OFF
   // - Público → public_price
   const isPending      = affiliate?.account_status === "pending";
   const activationPlan = affiliate?.package ?? null;
@@ -206,7 +206,7 @@ export default function ProductDetail() {
                 {
                   key: "pub-act",
                   icon: <ShoppingBag size={18} />,
-                  label: "Básico / Intermedio",
+                  label: "Básico / Ejec. / Inter.",
                   sublabel: "Activación al precio público",
                   price: base,
                   badge: null,
@@ -218,9 +218,9 @@ export default function ProductDetail() {
                   key: "vip-act",
                   icon: <Crown size={18} />,
                   label: "Activación VIP",
-                  sublabel: "55% OFF — beneficio exclusivo del plan VIP",
-                  price: base * 0.45,
-                  badge: "-55%",
+                  sublabel: "50% OFF — beneficio exclusivo del plan VIP",
+                  price: base * 0.50,
+                  badge: "-50%",
                   badgeBg: "rgba(245,200,66,0.18)",
                   badgeColor: "#D4A017",
                   bg: "rgba(245,200,66,0.07)",
@@ -245,12 +245,25 @@ export default function ProductDetail() {
                   priceColor: "hsl(var(--primary))",
                 },
                 {
+                  key: "rc-ejecutivo",
+                  icon: <Target size={16} />,
+                  label: "Ejecutivo",
+                  sublabel: "5 niveles residual",
+                  price: base * 0.50,
+                  badge: "-50%",
+                  badgeBg: "rgba(99,102,241,0.15)",
+                  badgeColor: "#6366f1",
+                  bg: "rgba(99,102,241,0.06)",
+                  border: "rgba(99,102,241,0.20)",
+                  priceColor: "#6366f1",
+                },
+                {
                   key: "rc-inter",
                   icon: <Zap size={16} />,
                   label: "Intermedio",
                   sublabel: "7 niveles residual",
-                  price: base * 0.55,
-                  badge: "-45%",
+                  price: base * 0.50,
+                  badge: "-50%",
                   badgeBg: "rgba(30,192,213,0.15)",
                   badgeColor: "hsl(var(--secondary))",
                   bg: "rgba(30,192,213,0.06)",
@@ -315,7 +328,7 @@ export default function ProductDetail() {
                       </span>
                       <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {recompraTiers.map((t) => (
                         <div key={t.key} className="rounded-xl p-2.5 flex flex-col gap-1" style={{ background: t.bg, border: `0.5px solid ${t.border}` }}>
                           <div className="flex items-center justify-between">

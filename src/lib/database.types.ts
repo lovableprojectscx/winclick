@@ -279,6 +279,7 @@ export type Database = {
           notify_new_affiliates: boolean
           notify_new_orders: boolean
           package_basico_price: number
+          package_ejecutivo_price: number
           package_intermedio_price: number
           package_vip_price: number
           partner_price_base: number
@@ -317,6 +318,7 @@ export type Database = {
           notify_new_affiliates?: boolean
           notify_new_orders?: boolean
           package_basico_price?: number
+          package_ejecutivo_price?: number
           package_intermedio_price?: number
           package_vip_price?: number
           partner_price_base?: number
@@ -355,6 +357,7 @@ export type Database = {
           notify_new_affiliates?: boolean
           notify_new_orders?: boolean
           package_basico_price?: number
+          package_ejecutivo_price?: number
           package_intermedio_price?: number
           package_vip_price?: number
           partner_price_base?: number
@@ -1208,4 +1211,4 @@ export type BusinessSettings = Tables<"business_settings">
 export type CreditTransaction = Tables<"credit_transactions">
 
 /** Paquetes de afiliado disponibles */
-export type PackageType = "Básico" | "Intermedio" | "VIP"
+export type PackageType = "Básico" | "Ejecutivo" | "Intermedio" | "VIP"

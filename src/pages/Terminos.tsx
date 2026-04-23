@@ -26,7 +26,7 @@ export default function Terminos() {
             },
             {
               title: "3. Paquetes de activación",
-              body: "Existen tres paquetes de activación definidos por la compra de volumen de productos: Básico (Meta de compras S/ 120, niveles 1-3), Intermedio (S/ 2,000, niveles 1-7) y VIP (S/ 10,000, niveles 1-10). Todos los paquetes requieren compras personales acumulables en el catálogo de productos por un valor estipulado (ej. S/ 300 mensuales) para mantener activo el derecho a percibir comisiones.",
+              body: "Existen cuatro paquetes de activación definidos por la compra de volumen de productos: Básico (Meta de compras S/ 120, niveles 1-3), Ejecutivo (S/ 600, niveles 1-5), Intermedio (S/ 2,000, niveles 1-7) y VIP (S/ 10,000, niveles 1-10). Todos los paquetes requieren compras personales acumulables en el catálogo de productos por un valor estipulado (ej. S/ 300 mensuales) para mantener activo el derecho a percibir comisiones.",
             },
             {
               title: "4. Comisiones",

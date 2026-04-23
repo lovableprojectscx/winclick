@@ -9,7 +9,7 @@ import {
 import { useProducts } from "@/hooks/useProducts";
 
 /* ─── Tipos ──────────────────────────────────────────────────────────────── */
-type PlanKey = "Básico" | "Intermedio" | "VIP";
+type PlanKey = "Básico" | "Ejecutivo" | "Intermedio" | "VIP";
 interface Plan {
   key: PlanKey; icon: React.ReactNode; label: string; tag: string;
   price: number; discount: number; multiplier: number; levels: number;
@@ -25,20 +25,32 @@ const PLANS: Plan[] = [
     popular: false,
     details: [
       { icon: <Award size={15} />,          text: "Comisiones en 3 niveles de red" },
-      { icon: <ShoppingBag size={15} />,    text: "Tienda online personalizada" },
+      { icon: <ShoppingBag size={15} />,    text: "40% de descuento en productos en recompra" },
       { icon: <LayoutDashboard size={15} />,text: "Dashboard de red en tiempo real" },
       { icon: <MessageCircle size={15} />,  text: "Soporte por WhatsApp" },
     ],
   },
   {
+    key: "Ejecutivo", icon: <Target size={20} />, label: "Membresía Ejecutivo", tag: "Crecimiento rápido",
+    price: 600, discount: 50, multiplier: 0.50, levels: 5,
+    color: "#6366f1", border: "rgba(99,102,241,0.30)", bg: "rgba(99,102,241,0.06)", glow: "0 0 0px transparent",
+    popular: false,
+    details: [
+      { icon: <Award size={15} />,          text: "Comisiones en 5 niveles de red" },
+      { icon: <ShoppingBag size={15} />,    text: "50% de descuento en productos en recompra" },
+      { icon: <LayoutDashboard size={15} />,text: "Dashboard de red avanzado" },
+      { icon: <MessageCircle size={15} />,  text: "Soporte prioritario" },
+    ],
+  },
+  {
     key: "Intermedio", icon: <Zap size={20} />, label: "Pack 2,000", tag: "El más elegido",
-    price: 2000, discount: 45, multiplier: 0.55, levels: 7,
+    price: 2000, discount: 50, multiplier: 0.50, levels: 7,
     color: "hsl(var(--secondary))", border: "rgba(30,192,213,0.45)", bg: "rgba(30,192,213,0.07)",
     glow: "0 0 48px rgba(30,192,213,0.18), 0 0 0 1px rgba(30,192,213,0.30)",
     popular: true,
     details: [
       { icon: <Award size={15} />,          text: "Comisiones en 7 niveles de red" },
-      { icon: <ShoppingBag size={15} />,    text: "Todo lo del plan Básico" },
+      { icon: <ShoppingBag size={15} />,    text: "50% de descuento en productos en recompra" },
       { icon: <Network size={15} />,        text: "Red de 7 niveles de profundidad" },
       { icon: <TrendingUp size={15} />,     text: "Mayor potencial de ingresos" },
     ],
@@ -51,6 +63,7 @@ const PLANS: Plan[] = [
     details: [
       { icon: <Award size={15} />,          text: "Comisiones en 10 niveles de red" },
       { icon: <Zap size={15} />,            text: "Todo lo del Pack 2,000" },
+      { icon: <ShoppingBag size={15} />,    text: "50% de descuento en productos desde tu afiliación" },
       { icon: <Star size={15} />,           text: "Nivel 8 con comisión especial 3%" },
       { icon: <Gem size={15} />,            text: "El mayor potencial del sistema" },
     ],
@@ -112,14 +125,19 @@ function PlanModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6"
       style={{ background: "rgba(5,10,20,0.88)", backdropFilter: "blur(8px)" }} onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl p-6 relative animate-in slide-in-from-bottom-4 duration-200"
-        style={{ background: "hsl(var(--wo-grafito))", border: `0.5px solid ${plan.border}`, boxShadow: plan.glow }}
+      <div className="w-full sm:max-w-[340px] bg-wo-grafito rounded-t-3xl sm:rounded-2xl p-6 relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-300"
+        style={{ borderTop: `1px solid ${plan.border}`, borderLeft: `0.5px solid ${plan.border}`, borderRight: `0.5px solid ${plan.border}`, borderBottom: `0.5px solid ${plan.border}`, boxShadow: plan.glow }}
         onClick={e => e.stopPropagation()}>
+        
+        {/* Mobile handle */}
+        <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6 sm:hidden" />
+        
         <button onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-wo-crema-muted hover:text-wo-crema transition-colors"
-          style={{ background: "rgba(255,255,255,0.06)" }}><X size={14} /></button>
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 text-wo-crema-muted/50 hover:text-wo-crema transition-colors">
+          <X size={20} />
+        </button>
         <div className="flex items-center gap-3 mb-5">
           <PlanIcon plan={plan} size={48} />
           <div>
@@ -147,65 +165,71 @@ function PlanModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   );
 }
 
-/* ─── Plan Card ──────────────────────────────────────────────────────────── */
-function PlanCard({ plan, index }: { plan: Plan; index: number }) {
-  const [openModal, setOpenModal] = useState(false);
-  const { ref, visible } = useReveal();
+function PlanCard({ plan, index, onShowDetails }: { plan: any; index: number; onShowDetails: () => void }) {
+  const { ref, visible } = useReveal(0.1 + index * 0.05);
   return (
-    <>
-      <div ref={ref} className="relative flex flex-col rounded-2xl overflow-hidden" style={{
-        background: plan.bg, border: `0.5px solid ${plan.border}`,
-        boxShadow: visible ? plan.glow : "none",
-        opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(24px)",
-        transition: `opacity 0.5s ${index * 100}ms, transform 0.55s ${index * 100}ms cubic-bezier(0.22,1,0.36,1), box-shadow 0.5s ease`,
+    <div ref={ref}
+      className={`relative group rounded-2xl p-[1px] transition-all duration-300 ${plan.popular ? "scale-105 z-10" : "hover:scale-[1.02]"}`}
+      style={{
+        background: plan.popular ? `linear-gradient(135deg, ${plan.color}, transparent)` : "rgba(255,255,255,0.05)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(20px)"
       }}>
-        {plan.popular && (
-          <div className="py-2 text-center font-jakarta text-[11px] font-bold uppercase tracking-[0.12em]"
-            style={{ background: "hsl(var(--secondary))", color: "hsl(var(--background))" }}>Más popular</div>
-        )}
-        <div className="p-5 flex flex-col gap-4 flex-1">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <PlanIcon plan={plan} size={36} />
-              <div>
-                <p className="font-syne font-extrabold text-[15px] text-wo-crema leading-tight">{plan.label}</p>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted">{plan.tag}</p>
+      <div className="h-full bg-wo-carbon rounded-2xl p-6 flex flex-col gap-6 relative overflow-hidden">
+        {/* Glow corner */}
+        <div className="absolute -top-12 -right-12 w-24 h-24 blur-[40px] opacity-20" style={{ background: plan.color }} />
+
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <PlanIcon plan={plan} size={36} />
+            <div>
+              <p className="font-syne font-extrabold text-[15px] text-wo-crema leading-tight">{plan.label}</p>
+              <p className="font-jakarta text-[11px] text-wo-crema-muted">{plan.tag}</p>
+            </div>
+          </div>
+          <button onClick={onShowDetails}
+            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 hover:scale-110 transition-transform"
+            style={{ background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.10)", color: "rgba(248,244,236,0.35)" }}>
+            <HelpCircle size={13} />
+          </button>
+        </div>
+
+        <div className="rounded-xl py-5 text-center" style={{ background: `${plan.color}10`, border: `0.5px solid ${plan.border}` }}>
+          <p className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/50 mb-1">Activación de membresía</p>
+          <div className="flex items-start justify-center">
+            <span className="font-syne font-bold text-[18px] mr-1 mt-1.5" style={{ color: plan.color }}>S/</span>
+            <span className="font-syne font-extrabold leading-none" style={{ fontSize: 44, color: plan.color }}>{plan.price.toLocaleString()}</span>
+          </div>
+          <div className="flex flex-col items-center gap-2.5 mt-3.5">
+            <span className="font-jakarta text-[10px] opacity-80 uppercase tracking-widest font-bold px-3 py-0.5 rounded-full inline-block" style={{ background: `rgba(255,255,255,0.05)`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
+              + Bonos especiales
+            </span>
+            <div className="relative">
+              <div className="absolute -inset-0.5 rounded-full blur opacity-60 animate-pulse" style={{ background: plan.color }}></div>
+              <div className="relative font-jakarta text-[11px] font-black px-3 py-1.5 rounded-full flex items-center justify-center gap-1.5 uppercase" style={{ background: plan.color, color: "hsl(var(--background))" }}>
+                <Star size={11} fill="currentColor" /> BONO: {plan.discount}% DCTO {plan.key === "VIP" ? "DESDE AFILIACIÓN" : "EN RECOMPRA"}
               </div>
             </div>
-            <button onClick={() => setOpenModal(true)}
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 hover:scale-110 transition-transform"
-              style={{ background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.10)", color: "rgba(248,244,236,0.35)" }}>
-              <HelpCircle size={13} />
-            </button>
           </div>
-          <div className="rounded-xl py-5 text-center" style={{ background: `${plan.color}10`, border: `0.5px solid ${plan.border}` }}>
-            <p className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/50 mb-1">Activación de membresía</p>
-            <div className="flex items-start justify-center">
-              <span className="font-syne font-bold text-[18px] mr-1 mt-1.5" style={{ color: plan.color }}>S/</span>
-              <span className="font-syne font-extrabold leading-none" style={{ fontSize: 44, color: plan.color }}>{plan.price.toLocaleString()}</span>
-            </div>
-            <p className="font-jakarta text-[11px] font-bold mt-2.5 px-3 py-1 rounded-full inline-block" style={{ background: `rgba(255,255,255,0.05)`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
-              + Bonos especiales
-            </p>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/40">Residual</span>
-              <span className="font-syne font-bold text-sm" style={{ color: plan.color }}>{plan.levels} / 10 niveles</span>
-            </div>
-            <LevelBar levels={plan.levels} color={plan.color} animate={visible} />
-          </div>
-          <Link to={`/registro-afiliado?package=${plan.key}`}
-            className="mt-auto block w-full text-center font-jakarta font-bold text-sm py-3.5 rounded-xl transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-            style={plan.popular ? { background: "hsl(var(--secondary))", color: "hsl(var(--background))" }
-              : { background: `${plan.color}18`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
-            Comenzar →
-          </Link>
-          <p className="font-jakarta text-[10px] text-wo-crema-muted/30 text-center -mt-2">Comisiones desde tu primera recompra</p>
         </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/40">Residual</span>
+            <span className="font-syne font-bold text-sm" style={{ color: plan.color }}>{plan.levels} / 10 niveles</span>
+          </div>
+          <LevelBar levels={plan.levels} color={plan.color} animate={visible} />
+        </div>
+
+        <Link to={`/registro-afiliado?package=${plan.key}`}
+          className="mt-auto block w-full text-center font-jakarta font-bold text-sm py-3.5 rounded-xl transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+          style={plan.popular ? { background: "hsl(var(--secondary))", color: "hsl(var(--background))" }
+            : { background: `${plan.color}18`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
+          Comenzar →
+        </Link>
+        <p className="font-jakarta text-[10px] text-wo-crema-muted/30 text-center -mt-2">Comisiones desde tu primera recompra</p>
       </div>
-      {openModal && <PlanModal plan={plan} onClose={() => setOpenModal(false)} />}
-    </>
+    </div>
   );
 }
 
@@ -311,6 +335,7 @@ function FaqItem({ q, a, delay }: { q: string; a: string; delay: number }) {
 
 /* ─── Página ─────────────────────────────────────────────────────────────── */
 export default function Planes() {
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const plansRef  = useReveal();
   const stepsRef  = useReveal();
   const diffRef   = useReveal();
@@ -405,11 +430,13 @@ export default function Planes() {
           Toca <HelpCircle size={11} className="inline mx-0.5" /> para ver los beneficios completos
         </p>
         <div ref={plansRef.ref}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
           style={{ opacity: plansRef.visible ? 1 : 0, transform: plansRef.visible ? "translateY(0)" : "translateY(20px)", transition: "opacity 0.5s ease, transform 0.5s ease" }}>
-          {PLANS.map((plan, i) => <PlanCard key={plan.key} plan={plan} index={i} />)}
+          {PLANS.map((plan, i) => <PlanCard key={plan.key} plan={plan} index={i} onShowDetails={() => setSelectedPlan(plan)} />)}
         </div>
       </section>
+
+      {selectedPlan && <PlanModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />}
 
       {/* ══ PRECIOS REALES DEL CATÁLOGO ═══════════════════════════════════ */}
       <div id="precios" className="scroll-mt-24 mt-12">
@@ -419,8 +446,9 @@ export default function Planes() {
       {/* ══ TABLA COMPARATIVA ═════════════════════════════════════════════ */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 mb-16">
         <p className="font-jakarta text-[11px] font-bold uppercase tracking-[0.12em] text-wo-crema-muted/35 text-center mb-5">Comparativa rápida</p>
-        <div className="rounded-2xl overflow-hidden" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-          <div className="grid grid-cols-4" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+        <div className="overflow-x-auto pb-4 custom-scrollbar">
+          <div className="min-w-[640px] rounded-2xl overflow-hidden" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+            <div className="grid grid-cols-5" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
             <div className="p-3" />
             {PLANS.map(p => (
               <div key={p.key} className="p-3 flex flex-col items-center gap-2" style={{ borderLeft: "0.5px solid rgba(255,255,255,0.06)" }}>
@@ -430,11 +458,11 @@ export default function Planes() {
             ))}
           </div>
           {[
-            { label: "Desc. recompra", vals: ["40% OFF",  "45% OFF", "50% OFF"], colors: PLANS.map(p => p.color) },
-            { label: "Niveles red",   vals: ["3",        "7",       "10"    ], colors: PLANS.map(p => p.color) },
-            { label: "Comisiones",    vals: ["1–3",      "1–7",     "1–10"  ], colors: PLANS.map(p => p.color) },
+            { label: "Desc. recompra", vals: ["40% OFF", "50% OFF", "50% OFF", "50% OFF"], colors: PLANS.map(p => p.color) },
+            { label: "Niveles red",   vals: ["3", "5", "7", "10"], colors: PLANS.map(p => p.color) },
+            { label: "Comisiones",    vals: ["1–3", "1–5", "1–7", "1–10"], colors: PLANS.map(p => p.color) },
           ].map((row, ri, arr) => (
-            <div key={row.label} className="grid grid-cols-4" style={{ borderBottom: ri < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none" }}>
+            <div key={row.label} className="grid grid-cols-5" style={{ borderBottom: ri < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none" }}>
               <div className="px-3 py-3.5 flex items-center"><span className="font-jakarta text-[12px] text-wo-crema-muted">{row.label}</span></div>
               {row.vals.map((v, i) => (
                 <div key={i} className="px-3 py-3.5 flex items-center justify-center" style={{ borderLeft: "0.5px solid rgba(255,255,255,0.05)" }}>
@@ -443,6 +471,7 @@ export default function Planes() {
               ))}
             </div>
           ))}
+          </div>
         </div>
       </section>
 

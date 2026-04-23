@@ -8,6 +8,7 @@ import { useMyOrders } from "@/hooks/useOrders";
 
 const PACKAGES: { name: PackageType; depthUnlocked: number; investment: number }[] = [
   { name: "Básico",      depthUnlocked: 3,  investment: 120 },
+  { name: "Ejecutivo",   depthUnlocked: 5,  investment: 600 },
   { name: "Intermedio",  depthUnlocked: 7,  investment: 2000 },
   { name: "VIP",         depthUnlocked: 10, investment: 10000 },
 ];

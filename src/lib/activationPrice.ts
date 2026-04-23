@@ -6,17 +6,17 @@ import type { Product } from "@/lib/database.types";
 // ACTIVACIÓN (afiliado pending — primera compra obligatoria para activar membresía):
 //   • Básico     → precio público  (sin descuento — el incentivo es la red residual)
 //   • Intermedio → precio público  (sin descuento)
-//   • VIP        → 55% OFF         (beneficio exclusivo de elegir el plan premium)
+//   • VIP        → 50% OFF         (beneficio exclusivo de elegir el plan premium)
 //
 // RECOMPRA MENSUAL (afiliado activo — genera comisiones en red):
 //   • Básico     → 40% OFF
-//   • Intermedio → 45% OFF
+//   • Intermedio → 50% OFF
 //   • VIP        → 50% OFF
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Orden ascendente de planes (para upgrade banner y utilidades) */
-export const PLAN_ORDER = ["Básico", "Intermedio", "VIP"] as const;
+export const PLAN_ORDER = ["Básico", "Ejecutivo", "Intermedio", "VIP"] as const;
 export type PlanName = typeof PLAN_ORDER[number];
 
 // ── Activación ────────────────────────────────────────────────────────────────
@@ -27,20 +27,23 @@ export type PlanName = typeof PLAN_ORDER[number];
  */
 export const ACTIVATION_FACTOR: Record<string, number> = {
   Básico:     1.00,   // sin descuento — paga precio público
+  Ejecutivo:  1.00,   // sin descuento — paga precio público
   Intermedio: 1.00,   // sin descuento — paga precio público
-  VIP:        0.45,   // 55% OFF
+  VIP:        0.50,   // 50% OFF
 };
 
 /** Porcentaje de descuento visible en la UI durante activación (0 = sin badge) */
 export const ACTIVATION_DISCOUNT_PCT: Record<string, number> = {
   Básico:     0,
+  Ejecutivo:  0,
   Intermedio: 0,
-  VIP:        55,
+  VIP:        50,
 };
 
 /** Metas de compra acumulada para completar la activación (en S/) */
 export const ACTIVATION_TARGET: Record<string, number> = {
   Básico:     120,
+  Ejecutivo:  600,
   Intermedio: 2000,
   VIP:        10000,
 };
@@ -54,14 +57,14 @@ export const ACTIVATION_MAX_OVERAGE = 100;
 
 /** Tope absoluto del carrito de activación (total_sales + cart total ≤ cap) */
 export function getActivationCap(plan: string): number {
-  // Solo aplicamos tope a VIP porque es el único con descuento (55% OFF) de activación
+  // Solo aplicamos tope a VIP porque es el único con descuento (50% OFF) de activación
   if (plan !== "VIP") return Infinity;
   return (ACTIVATION_TARGET[plan] ?? 120) + ACTIVATION_MAX_OVERAGE;
 }
 
 /**
  * Precio de activación de un producto para el plan dado.
- * Básico e Intermedio pagan precio público; VIP obtiene 55% OFF.
+ * Básico e Intermedio pagan precio público; VIP obtiene 50% OFF.
  */
 export function getActivationPrice(product: Product, plan: string): number {
   const base   = product.public_price ?? product.price;
@@ -97,14 +100,16 @@ export function canAddActivationItem(
  */
 export const RECOMPRA_FACTOR: Record<string, number> = {
   Básico:     0.60,   // 40% OFF
-  Intermedio: 0.55,   // 45% OFF
+  Ejecutivo:  0.50,   // 50% OFF
+  Intermedio: 0.50,   // 50% OFF
   VIP:        0.50,   // 50% OFF
 };
 
 /** Porcentaje de descuento visible en la UI para recompra */
 export const RECOMPRA_DISCOUNT_PCT: Record<string, number> = {
   Básico:     40,
-  Intermedio: 45,
+  Ejecutivo:  50,
+  Intermedio: 50,
   VIP:        50,
 };
 
@@ -129,9 +134,28 @@ export function getNextPlan(plan: string): PlanName | null {
   return PLAN_ORDER[idx + 1];
 }
 
+/** 
+ * Devuelve el plan más alto alcanzado según el monto acumulado.
+ * Se excluye 'VIP' del auto-upgrade en carrito por reglas de negocio.
+ */
+export function getReachedPlan(currentPlan: string, cumulative: number): PlanName | null {
+  const currentIndex = PLAN_ORDER.indexOf(currentPlan as PlanName);
+  if (currentIndex === -1) return null;
+  
+  // Evaluamos de arriba hacia abajo, hasta el nivel Intermedio (índice 2).
+  for (let i = 2; i > currentIndex; i--) {
+    const plan = PLAN_ORDER[i];
+    if (cumulative >= (ACTIVATION_TARGET[plan] || Infinity)) {
+      return plan;
+    }
+  }
+  return null;
+}
+
 /** Niveles de red desbloqueados por plan (para la UI del upgrade banner) */
 export const PLAN_DEPTH: Record<string, number> = {
   Básico:     3,
+  Ejecutivo:  5,
   Intermedio: 7,
   VIP:        10,
 };

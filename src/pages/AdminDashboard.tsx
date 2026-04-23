@@ -215,7 +215,7 @@ export default function AdminDashboard() {
   const { data: selectedReferralTree = [] } = useAffiliateReferralTree(viewingAffiliate?.id ?? null);
   const { data: selectedPayments = [] }     = useAffiliatePayments(viewingAffiliate?.id ?? null);
 
-  const packageDepth: Record<string, number> = { "Básico": 3, "Intermedio": 7, "VIP": 10 };
+  const packageDepth: Record<string, number> = { "Básico": 3, "Ejecutivo": 5, "Intermedio": 7, "VIP": 10 };
   const depthUnlocked = viewingAffiliate ? packageDepth[viewingAffiliate.package] || 10 : 10;
   const visibleReferralTree = selectedReferralTree.filter(r => r.level <= depthUnlocked);
 
@@ -1773,27 +1773,28 @@ export default function AdminDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead><tr style={rowBorder}>
-                    {["Nivel", "Comisión", "Básico (1–3)", "Intermedio (1–7)", "VIP (1–10)"].map((h) => (
+                    {["Nivel", "Comisión", "Básico (1–3)", "Ejecutivo (1–5)", "Intermedio (1–7)", "VIP (1–10)"].map((h) => (
                       <th key={h} className="text-left px-3 py-2 font-jakarta text-[10px] text-wo-crema-muted uppercase">{h}</th>
                     ))}
                   </tr></thead>
                   <tbody>
                     {[
-                      { level: 1,  pct: "10%",   basico: true,  inter: true,  vip: true },
-                      { level: 2,  pct: "4%",    basico: true,  inter: true,  vip: true },
-                      { level: 3,  pct: "2%",    basico: true,  inter: true,  vip: true },
-                      { level: 4,  pct: "2%",    basico: false, inter: true,  vip: true },
-                      { level: 5,  pct: "1%",    basico: false, inter: true,  vip: true },
-                      { level: 6,  pct: "1%",    basico: false, inter: true,  vip: true },
-                      { level: 7,  pct: "1%",    basico: false, inter: true,  vip: true },
-                      { level: 8,  pct: "3% ★",  basico: false, inter: false, vip: true },
-                      { level: 9,  pct: "0.5%",  basico: false, inter: false, vip: true },
-                      { level: 10, pct: "0.5%",  basico: false, inter: false, vip: true },
+                      { level: 1,  pct: "10%",   basico: true,  ejecu: true,  inter: true,  vip: true },
+                      { level: 2,  pct: "4%",    basico: true,  ejecu: true,  inter: true,  vip: true },
+                      { level: 3,  pct: "2%",    basico: true,  ejecu: true,  inter: true,  vip: true },
+                      { level: 4,  pct: "2%",    basico: false, ejecu: true,  inter: true,  vip: true },
+                      { level: 5,  pct: "1%",    basico: false, ejecu: true,  inter: true,  vip: true },
+                      { level: 6,  pct: "1%",    basico: false, ejecu: false, inter: true,  vip: true },
+                      { level: 7,  pct: "1%",    basico: false, ejecu: false, inter: true,  vip: true },
+                      { level: 8,  pct: "3% ★",  basico: false, ejecu: false, inter: false, vip: true },
+                      { level: 9,  pct: "0.5%",  basico: false, ejecu: false, inter: false, vip: true },
+                      { level: 10, pct: "0.5%",  basico: false, ejecu: false, inter: false, vip: true },
                     ].map((row) => (
                       <tr key={row.level} style={rowBorder}>
                         <td className="px-3 py-2 font-jakarta text-xs text-wo-crema-muted">Nivel {row.level}</td>
                         <td className="px-3 py-2 font-syne font-bold text-sm text-primary">{row.pct}</td>
                         <td className="px-3 py-2 font-jakarta text-xs">{row.basico ? <span className="text-secondary">✓</span> : <span className="text-wo-crema/20">breakage</span>}</td>
+                        <td className="px-3 py-2 font-jakarta text-xs">{row.ejecu ? <span className="text-secondary">✓</span> : <span className="text-wo-crema/20">breakage</span>}</td>
                         <td className="px-3 py-2 font-jakarta text-xs">{row.inter ? <span className="text-secondary">✓</span> : <span className="text-wo-crema/20">breakage</span>}</td>
                         <td className="px-3 py-2 font-jakarta text-xs">{row.vip ? <span className="text-secondary">✓</span> : <span className="text-wo-crema/20">breakage</span>}</td>
                       </tr>
@@ -1812,6 +1813,7 @@ export default function AdminDashboard() {
                 <div className="space-y-3">
                   {[
                     "Básico: activación S/ 120 · niveles 1 al 3",
+                    "Ejecutivo: activación S/ 600 · niveles 1 al 5",
                     "Intermedio: activación S/ 2,000 · niveles 1 al 7",
                     "VIP / Élite: activación S/ 10,000 · niveles 1 al 10",
                     "Reactivación mensual: Compras acumuladas S/ 300 desde el mes 2",
@@ -1967,6 +1969,7 @@ export default function AdminDashboard() {
                 <label className="font-jakarta text-xs text-wo-crema-muted mb-1 block">Paquete</label>
                 <select value={affPackage} onChange={(e) => setAffPackage(e.target.value)} className="w-full bg-wo-carbon text-wo-crema font-jakarta text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-1 focus:ring-primary" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
                   <option value="Básico">Básico</option>
+                  <option value="Ejecutivo">Ejecutivo</option>
                   <option value="Intermedio">Intermedio</option>
                   <option value="VIP">VIP</option>
                 </select>

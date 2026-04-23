@@ -1,4 +1,4 @@
-export type PackageType = "Básico" | "Intermedio" | "VIP";
+export type PackageType = "Básico" | "Ejecutivo" | "Intermedio" | "VIP";
 
 export interface Affiliate {
   id: string;
@@ -31,6 +31,14 @@ export const packages = [
     reactivation: 300,
     reactivationProducts: 3,
     description: "Ideal para empezar. Accede a los 3 primeros niveles de comisión.",
+  },
+  {
+    name: "Ejecutivo" as const,
+    investment: 600,
+    depthUnlocked: 5,
+    reactivation: 300,
+    reactivationProducts: 3,
+    description: "Crecimiento rápido. Desbloquea 5 niveles de profundidad.",
   },
   {
     name: "Intermedio" as const,
