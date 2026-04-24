@@ -154,11 +154,12 @@ Tipos TypeScript auto-generados desde el esquema de Supabase. Define los tipos `
 |---|---|---|
 | `auto_mark_activation_order` | `BEFORE INSERT` en `orders` | Si el `affiliate_id` apunta a un afiliado `pending`, marca `is_activation_order = TRUE` automáticamente |
 | `trigger_commissions_on_delivery` | `AFTER UPDATE OF status` en `orders` | Cuando `status` cambia a `"entregado"`, llama a `distribute_commissions_v2` |
-| `distribute_commissions_v2` | Llamado por el trigger anterior | **Flujo A (activación):** reparte bonos fijos a 4 niveles según el paquete del nuevo afiliado. **Flujo B (recompra):** reparte porcentajes (10%, 4%, 2%...) a 10 niveles. Aplica *breakage* en ambos flujos si el upline no tiene suficiente `depth_unlocked` o está inactivo. |
+| `distribute_commissions_v2` | Llamado por el trigger anterior | **Flujo A (activación):** reparte bonos fijos a 4 niveles según el paquete del nuevo afiliado. **Flujo B (recompra):** reparte porcentajes (10%, 4%, 2%...) a 10 niveles (Total 25%). **Regla V3:** Aplica *breakage* únicamente si el nivel de red supera la profundidad desbloqueada (`depth_unlocked`). El estado de cuenta (`pending/suspended`) ya no bloquea el cobro. |
 | `register_affiliate` (RPC) | Al registrarse | Crea el perfil en `affiliates` y llena el árbol `referrals` |
 | `approve_affiliate_payment` (RPC) | Al aprobar pago | Mueve saldo de comisión a `wallet_balance` del afiliado |
 | `admin_delete_user` (RPC) | Al eliminar afiliado | Borrado en cascada seguro incluyendo `auth.users` |
-| `handle_order_status_change` | `AFTER UPDATE` en `orders` | **Gestor de Activación:** Si una orden entregada alcanza la meta de inversión (`ACTIVATION_TARGET`), cambia al afiliado de `pending` a `active` y desbloquea su profundidad (`depth_unlocked`). También maneja reactivaciones de cuentas `suspended`. *Corregido para incluir el plan Ejecutivo.* |
+| `handle_order_status_change` | `AFTER UPDATE` en `orders` | **Gestor de Activación:** Si una orden entregada alcanza la meta de inversión (`ACTIVATION_TARGET`), cambia al afiliado de `pending` a `active`. También maneja reactivaciones. |
+| `trg_set_depth_on_insert` | `BEFORE INSERT` en `affiliates` | **Regla V3:** Asigna automáticamente el `depth_unlocked` inicial según el paquete al momento del registro. |
 
 ### Tabla de Bonos Fijos (Flujo A — Activación)
 | Paquete Activado | Nivel 1 (Patrocinador Directo) | Nivel 2 (Abuelo) | Nivel 3 (Bisabuelo) | Nivel 4 (Tatarabuelo) |
