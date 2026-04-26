@@ -5,13 +5,21 @@ import type { Product } from "@/lib/database.types";
 //
 // ACTIVACIÓN (afiliado pending — primera compra obligatoria para activar membresía):
 //   • Básico     → precio público  (sin descuento — el incentivo es la red residual)
+//   • Ejecutivo  → precio público  (sin descuento)
 //   • Intermedio → precio público  (sin descuento)
 //   • VIP        → 50% OFF         (beneficio exclusivo de elegir el plan premium)
 //
 // RECOMPRA MENSUAL (afiliado activo — genera comisiones en red):
 //   • Básico     → 40% OFF
+//   • Ejecutivo  → 50% OFF
 //   • Intermedio → 50% OFF
 //   • VIP        → 50% OFF
+//
+// METAS DE ACTIVACIÓN (compra acumulada mínima para activar la membresía):
+//   • Básico     → S/   120
+//   • Ejecutivo  → S/   600
+//   • Intermedio → S/ 2,000
+//   • VIP        → S/10,000
 //
 // ─────────────────────────────────────────────────────────────────────────────
 

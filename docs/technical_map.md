@@ -1,4 +1,4 @@
-# 🗺️ Mapa de Arquitectura Exhaustivo — WinClick V2
+# 🗺️ Mapa de Arquitectura Exhaustivo — WinClick V3
 
 ---
 
@@ -286,5 +286,6 @@ supabase/
 ├── MIGRATION_ACTIVATION_COMMISSIONS.sql  ← Columna is_activation_order + trigger de comisiones original
 ├── MIGRATION_V2_EJECUTIVO.sql            ← Columna precio Ejecutivo en business_settings
 ├── MIGRATION_V2_BONO_PATROCINIO.sql      ← Bonos fijos V2 (función distribute_commissions_v2)
+├── MIGRATION_V3_RULES.sql                ← V3: bonos sin restricción de account_status + trg_set_depth_on_insert
 └── MIGRATION_ADMIN_DELETE_USER.sql       ← Función RPC de borrado seguro
 ```

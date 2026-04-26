@@ -3,6 +3,9 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Affiliate, Order, OrderItem, AffiliatePayment, Commission, Product, BusinessSettings } from "@/lib/database.types";
 import { toN } from "@/lib/utils";
+// Mapas autoritativos de planes — fuente única de verdad. Evita el bug H-01
+// (Ejecutivo ausente) y la divergencia H-06 (depth_unlocked en dos lugares).
+import { ACTIVATION_TARGET, PLAN_DEPTH } from "@/lib/activationPrice";
 
 /** Normalize affiliate numeric fields returned as strings by PostgREST */
 function normalizeAffiliate<T extends Affiliate>(a: T): T {
@@ -195,10 +198,11 @@ export function useUpdateOrderStatus() {
             .in("status", confirmedStatuses);
 
           const totalConfirmed = (orders ?? []).reduce((sum, o) => sum + Number(o.total), 0);
-          
-          // Definir metas (sincronizado con activationPrice.ts)
-          const targets: Record<string, number> = { "Básico": 120, "Intermedio": 2000, "VIP": 10000 };
-          const target = targets[affiliate.package || "Básico"] ?? 120;
+
+          // FIX H-01 + recomendación 7.1 del audit: usar el mapa autoritativo
+          // de activationPrice.ts. Antes había un objeto local que omitía
+          // "Ejecutivo" y dejaba esos afiliados sin transición a 'active'.
+          const target = ACTIVATION_TARGET[affiliate.package || "Básico"] ?? 120;
 
           // Si el acumulado confirma el cumplimiento de la meta:
           if (totalConfirmed >= target) {
@@ -223,15 +227,15 @@ export function useUpdateOrderStatus() {
 
 // ─── Actualizar afiliado ──────────────────────────────────────────────────────
 
-const PACKAGE_DEPTH: Record<string, number> = { "VIP": 10, "Intermedio": 7, "Básico": 3 };
-
 export function useUpdateAffiliate() {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, name, yape_number, pkg }: { id: string; name: string; yape_number: string; pkg: string }) => {
-      // Sincronizar depth_unlocked según paquete — evita el bug de depth desincronizado
-      const depth_unlocked = PACKAGE_DEPTH[pkg] ?? 3;
+      // FIX H-01 + recomendación 7.1: depth_unlocked se sincroniza con el mapa
+      // autoritativo PLAN_DEPTH (incluye Ejecutivo=5). Evita perder niveles de
+      // cobro de bonos y comisiones residuales si el admin cambia el paquete.
+      const depth_unlocked = PLAN_DEPTH[pkg] ?? 3;
       const { error } = await supabase
         .from("affiliates")
         .update({ name, yape_number, package: pkg, depth_unlocked })

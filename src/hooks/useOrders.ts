@@ -46,8 +46,9 @@ export function usePlaceOrder() {
       }
 
       // 2. Crear el pedido (order_number lo genera el trigger)
-      const isActivation = affiliate?.account_status === "pending";
-
+      // FIX H-02: NO seteamos is_activation_order desde el cliente.
+      // El trigger BD `auto_mark_activation_order` lee el account_status real del
+      // afiliado y lo marca correctamente. Evita divergencia entre cache JS y BD.
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -62,7 +63,6 @@ export function usePlaceOrder() {
           status:               "pendiente",
           affiliate_id:         affiliateId,
           shipping_voucher_url: args.receiptUrl,
-          is_activation_order:  isActivation,
         })
         .select()
         .maybeSingle();
