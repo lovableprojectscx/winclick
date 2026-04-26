@@ -134,7 +134,7 @@ export default function Checkout() {
     setRefValid(!!data);
     setRefName(data?.name ?? "");
     if (data) setAffiliateCode(data.affiliate_code);
-  };
+  }, [setAffiliateCode]);
 
   const handleSubmit = async () => {
     setCheckoutError(null);
@@ -271,19 +271,15 @@ export default function Checkout() {
 
   if (success) {
     return (
-          <div className="flex flex-col gap-3">
-            {!confirmedHighValue && (
-              <p className="font-jakarta text-[11px] text-wo-crema/40 text-center">📦 Te contactaremos cuando tu pedido sea enviado</p>
-            )}
-            <Link to="/catalogo" className="block text-center bg-primary text-primary-foreground font-jakarta font-bold text-sm py-4 rounded-wo-btn hover:bg-wo-oro-dark transition-colors min-h-[52px] flex items-center justify-center">
-              Seguir comprando
-            </Link>
-            <Link to="/area-afiliado" className="block text-center font-jakarta text-sm text-wo-crema-muted hover:text-wo-crema py-3">
-              Ir a mi dashboard →
-            </Link>
-          </div>
-        </div>
-      </div>
+      <CheckoutSuccess
+        orderNumber={orderNumber}
+        confirmedItems={confirmedItems}
+        confirmedTotal={confirmedTotal}
+        confirmedPayment={confirmedPayment}
+        formData={formData}
+        confirmedHighValue={confirmedHighValue}
+        settings={settings}
+      />
     );
   }
 

@@ -27,7 +27,6 @@ import Contacto from "./pages/Contacto";
 import ResetPassword from "./pages/ResetPassword";
 import Terminos from "./pages/Terminos";
 import Privacidad from "./pages/Privacidad";
-import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 
 const DevTools = import.meta.env.DEV
@@ -59,8 +58,8 @@ function FullPageLoader() {
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAdmin, session, loading } = useAuth();
   if (loading) return <FullPageLoader />;
-  // No hay sesión → puede ser el admin intentando entrar
-  if (!session) return <Navigate to="/admin-login" replace />;
+  // No hay sesión → al login normal (admin entra por la misma puerta)
+  if (!session) return <Navigate to="/login-afiliado" replace />;
   // Hay sesión pero no es admin → es un afiliado, mandarlo a su área
   if (!isAdmin) return <Navigate to="/area-afiliado" replace />;
   return <>{children}</>;
@@ -133,7 +132,6 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/terminos" element={<Terminos />} />
               <Route path="/privacidad" element={<Privacidad />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
               {import.meta.env.DEV && DevTools && (
                 <Route path="/dev-tools" element={<Suspense fallback={null}><DevTools /></Suspense>} />
               )}

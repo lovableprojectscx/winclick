@@ -42,7 +42,22 @@ export default function AreaAfiliado() {
   const { data: payments = [] }    = useMyPayments();
   const { data: walletData }       = useWallet();
 
-  if (!affiliate) return null;
+  // Mientras se carga el perfil tras el login, muestra un loader en lugar de
+  // renderizar la página en blanco (evita el flash de footer-only que se veía
+  // antes de que `affiliate` se poblara).
+  if (loading || !affiliate) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%",
+          border: "2.5px solid hsl(var(--primary))",
+          borderTopColor: "transparent",
+          animation: "spin 0.75s linear infinite",
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   const currentPackageIdx = PACKAGES.findIndex((p) => p.name === affiliate.package);
   const currentPackage    = PACKAGES[Math.max(0, currentPackageIdx)];
@@ -894,18 +909,20 @@ export default function AreaAfiliado() {
                   setTimeout(() => {
                     setShowProfileModal(false);
                     setSaveSuccess(false);
-                  }, 1200);
+                  }, 2000);
+                } catch (error) {
+                  console.error("Error al guardar perfil:", error);
                 } finally {
                   setUpdatingProfile(false);
                 }
               }}
-              className={`w-full font-jakarta font-bold text-sm py-3 mt-6 rounded-wo-btn transition-colors disabled:cursor-not-allowed ${saveSuccess ? "bg-secondary text-white border-transparent" : "bg-primary text-primary-foreground hover:bg-wo-oro-dark disabled:opacity-40"}`}
+              className="w-full mt-6 bg-primary hover:bg-primary-hover font-jakarta font-bold text-sm text-wo-carbon py-3.5 rounded-wo-btn transition-colors disabled:opacity-50"
             >
-              {saveSuccess ? "¡Guardado exitosamente!" : updatingProfile ? "Guardando..." : "Guardar mis datos"}
+              {updatingProfile ? "Guardando..." : saveSuccess ? "¡Guardado!" : "Guardar Cambios"}
             </button>
           </div>
         </div>
       )}
     </div>
   );
-}
+};

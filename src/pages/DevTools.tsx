@@ -435,7 +435,6 @@ export default function DevTools() {
             {[
               { label: "Inicio",          path: "/" },
               { label: "Catálogo",        path: "/catalogo" },
-              { label: "Admin Login",     path: "/admin-login" },
               { label: "Admin Dashboard", path: "/admin-dashboard" },
               { label: "Login Afiliado",  path: "/login-afiliado" },
               { label: "Área Afiliado",   path: "/area-afiliado" },

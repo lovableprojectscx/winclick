@@ -65,8 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setSession(currentSession);
       if (currentSession) {
-        // En cambios posteriores (refresh, etc), no bloqueamos la UI con el loader global
-        loadProfile(currentSession.user.id, false);
+        // SIGNED_IN (login fresco) → bloqueamos UI con loader global hasta que el perfil
+        // termine de cargar, para evitar que páginas como /area-afiliado renderen con
+        // affiliate=null mientras la query del perfil aún corre.
+        // TOKEN_REFRESHED y similares → no bloqueamos, así no parpadea la UI.
+        const treatAsInitial = _event === "SIGNED_IN";
+        loadProfile(currentSession.user.id, treatAsInitial);
       } else {
         setAffiliate(null);
         setRole(null);
@@ -173,20 +177,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   }
 
-  return (
-    <AuthContext.Provider value={{
-      session,
-      affiliate,
-      role,
-      isAdmin: role === "admin",
-      loading,
-      login,
-      register,
-      logout,
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    session,
+    affiliate,
+    role,
+    isAdmin: role === "admin",
+    loading,
+    login,
+    register,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
