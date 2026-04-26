@@ -33,7 +33,7 @@ describe("ProductCard — renderizado básico", () => {
   it("el link apunta a /catalogo/{id}", () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", `/catalogo/${mockProduct.id}`);
+    expect(link).toHaveAttribute("href", `/catalogo/${mockProduct.slug || mockProduct.id}`);
   });
 });
 

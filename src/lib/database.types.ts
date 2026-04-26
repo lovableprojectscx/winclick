@@ -790,6 +790,7 @@ export type Database = {
           public_price: number | null
           rating: number | null
           reviews_count: number
+          slug: string
           stock: number | null
           tags: string[] | null
           updated_at: string | null
@@ -810,6 +811,7 @@ export type Database = {
           public_price?: number | null
           rating?: number | null
           reviews_count?: number
+          slug?: string
           stock?: number | null
           tags?: string[] | null
           updated_at?: string | null
@@ -830,6 +832,7 @@ export type Database = {
           public_price?: number | null
           rating?: number | null
           reviews_count?: number
+          slug?: string
           stock?: number | null
           tags?: string[] | null
           updated_at?: string | null

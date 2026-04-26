@@ -89,7 +89,7 @@ export default function ProductCard({ product, affiliateCode }: Props) {
 
   return (
     <Link
-      to={`/catalogo/${product.id}${affiliateCode ? `?ref=${affiliateCode}` : ""}`}
+      to={`/catalogo/${product.slug || product.id}${affiliateCode ? `?ref=${affiliateCode}` : ""}`}
       className="product-card group block bg-wo-grafito rounded-wo-card overflow-hidden"
     >
       {/* Image */}

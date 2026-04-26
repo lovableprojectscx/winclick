@@ -32,19 +32,24 @@ export function useProducts(categoryId?: string, includeInactive = false) {
   });
 }
 
-export function useProduct(id: string) {
+export function useProduct(idOrSlug: string) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+  
   return useQuery<Product | null>({
-    queryKey: ["product", id],
+    queryKey: ["product", idOrSlug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", id)
-        .single();
+      let q = supabase.from("products").select("*");
+      if (isUuid) {
+        q = q.eq("id", idOrSlug);
+      } else {
+        q = q.eq("slug", idOrSlug);
+      }
+      
+      const { data, error } = await q.maybeSingle();
       if (error) throw error;
-      return data ? normalizeProduct(data) : null;
+      return data ? normalizeProduct(data as Product) : null;
     },
-    enabled: !!id,
+    enabled: !!idOrSlug,
   });
 }
 

@@ -271,7 +271,7 @@ function CatalogPrices() {
             const pub = product.public_price ?? product.price;
             const act = pub * plan.multiplier;
             return (
-              <Link key={product.id} to={`/catalogo/${product.id}`}
+              <Link key={product.id} to={`/catalogo/${product.slug || product.id}`}
                 className="group rounded-2xl overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5"
                 style={{ background: "rgba(255,255,255,0.02)", border: `0.5px solid ${plan.border}` }}>
                 <div className="relative h-[120px] sm:h-[140px] overflow-hidden bg-wo-carbon">
