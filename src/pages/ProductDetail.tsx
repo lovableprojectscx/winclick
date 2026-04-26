@@ -1,6 +1,6 @@
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Star, Check, Shield, Leaf, Truck, ArrowLeft, Flame, ShoppingBag, Crown, Zap, RefreshCw, AlertTriangle, Sparkles } from "lucide-react";
+import { Star, Check, Shield, Leaf, Truck, ArrowLeft, Flame, ShoppingBag, Crown, Zap, RefreshCw, AlertTriangle, Sparkles, Target } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
