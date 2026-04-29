@@ -7,77 +7,102 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  getActivationPrice,
-  getRecompraPrice,
-  hasActivationDiscount,
-  ACTIVATION_DISCOUNT_PCT,
-  RECOMPRA_DISCOUNT_PCT,
   canAddActivationItem,
   getActivationCap,
+  ACTIVATION_DISCOUNT_PCT,
+  RECOMPRA_DISCOUNT_PCT,
 } from "@/lib/activationPrice";
+import {
+  getDisplayPrice,
+  type AffiliateStoreContext,
+} from "@/lib/storeContext";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Props
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface Props {
   product:        Product;
   affiliateCode?: string;
+  /**
+   * Contexto de tienda.
+   * - Sin esta prop → modo WinClick (aplica descuentos de membresía)
+   * - Con esta prop → modo Tienda Afiliado (siempre precio público / custom)
+   *
+   * Uso en tienda afiliado:
+   *   <ProductCard product={p} storeCtx={{ mode: "affiliate", customPrices: {...} }} />
+   */
+  storeCtx?: AffiliateStoreContext;
 }
 
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
 
-export default function ProductCard({ product, affiliateCode }: Props) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Componente
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function ProductCard({ product, affiliateCode, storeCtx }: Props) {
   const { addItem, total } = useCart();
   const { session, affiliate } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-
   const { toast } = useToast();
   const [added, setAdded] = useState(false);
-  const isFav = favoriteIds.includes(product.id);
 
-  // ── Precio según contexto ─────────────────────────────────────────────
-  // - Afiliado PENDIENTE (activación):
-  //     • VIP        → 55% OFF sobre public_price (beneficio exclusivo del plan VIP)
-  //     • Básico/Int → precio público sin descuento (el incentivo es la red residual)
-  // - Afiliado ACTIVO (recompra mensual):
-  //     • Básico     → 40% OFF  |  Intermedio → 50% OFF  |  VIP → 55% OFF
-  // - Público / tienda  → public_price
-  const isPending      = affiliate?.account_status === "pending";
-  const activationPlan = affiliate?.package ?? null;
+  const isFav        = favoriteIds.includes(product.id);
+  const isAffStore   = storeCtx?.mode === "affiliate";
+  const isPending    = !isAffStore && affiliate?.account_status === "pending";
+  const plan         = !isAffStore ? (affiliate?.package ?? null) : null;
 
-  // Descuento visible en badge de activación (solo VIP tiene badge)
-  const activationDiscountPct = isPending && activationPlan && hasActivationDiscount(activationPlan)
-    ? ACTIVATION_DISCOUNT_PCT[activationPlan]
-    : null;
+  // ── Precio final ────────────────────────────────────────────────────────────
+  // getDisplayPrice garantiza el precio correcto según el tipo de tienda.
+  const displayPrice = getDisplayPrice({
+    product,
+    storeMode:       isAffStore ? "affiliate" : "winclick",
+    customPrices:    isAffStore ? storeCtx!.customPrices : {},
+    affiliatePlan:   plan,
+    affiliateStatus: !isAffStore ? (affiliate?.account_status as any ?? null) : null,
+  });
 
-  // Descuento visible en badge de recompra (afiliado activo)
-  const recompraDiscountPct = !isPending && affiliate && activationPlan
-    ? (RECOMPRA_DISCOUNT_PCT[activationPlan] ?? null)
-    : null;
+  // ── Badges de descuento (SOLO en tienda WinClick) ──────────────────────────
+  const activationDiscountPct =
+    !isAffStore && isPending && plan
+      ? (ACTIVATION_DISCOUNT_PCT[plan] ?? 0) > 0 ? ACTIVATION_DISCOUNT_PCT[plan] : null
+      : null;
 
-  const displayPrice = isPending && activationPlan
-    ? getActivationPrice(product, activationPlan)          // VIP: 55% OFF; resto: public_price
-    : affiliate
-      ? getRecompraPrice(product, affiliate.package)        // plan-tier: 40/45/55% OFF
-      : (product.public_price ?? product.price);            // visitante: precio público
+  const recompraDiscountPct =
+    !isAffStore && !isPending && affiliate && plan
+      ? (RECOMPRA_DISCOUNT_PCT[plan] ?? null)
+      : null;
 
-  // ── Tope de activación ────────────────────────────────────────────────
-  // Afiliados pendientes no pueden superar TARGET + S/100 en total acumulado
+  // ── Tope de activación (SOLO en tienda WinClick) ───────────────────────────
   const activationCapBlocked =
+    !isAffStore &&
     isPending &&
-    activationPlan != null &&
+    plan != null &&
     !canAddActivationItem(
       affiliate?.total_sales ?? 0,
       total,
       displayPrice,
-      activationPlan,
+      plan,
     );
+
+  // ── Precio público para tachado (SOLO en tienda WinClick) ──────────────────
+  const publicPriceStriked =
+    !isAffStore &&
+    affiliate &&
+    product.public_price &&
+    displayPrice < product.public_price
+      ? product.public_price
+      : null;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (activationCapBlocked) {
-      const cap = getActivationCap(activationPlan!);
+      const cap = getActivationCap(plan!);
       toast({
         title: "Límite de activación alcanzado",
-        description: `Tu plan ${activationPlan} permite un máximo de S/ ${cap.toLocaleString()} en compras de activación. Retira algún producto del carrito si deseas agregar este.`,
+        description: `Tu plan ${plan} permite un máximo de S/ ${cap.toLocaleString()} en compras de activación. Retira algún producto del carrito si deseas agregar este.`,
         variant: "destructive",
       });
       return;
@@ -131,13 +156,15 @@ export default function ProductCard({ product, affiliateCode }: Props) {
         </div>
         <p className="font-syne font-extrabold text-xl text-primary mt-2">S/ {displayPrice.toFixed(2)}</p>
 
-        {/* Precio público tachado — se muestra cuando hay descuento sobre public_price */}
-        {affiliate && product.public_price && displayPrice < product.public_price && (
-          <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {product.public_price.toFixed(2)}</p>
+        {/* Precio público tachado — solo en tienda WinClick con descuento */}
+        {publicPriceStriked && (
+          <p className="font-jakarta text-[11px] text-wo-crema-muted line-through">S/ {publicPriceStriked.toFixed(2)}</p>
         )}
 
-        {/* Badge activación VIP — solo cuando hay descuento real (VIP pending) */}
-        {isPending && activationDiscountPct != null && (
+        {/* ── Badges — SOLO en tienda WinClick ────────────────────────────── */}
+
+        {/* Badge activación VIP */}
+        {activationDiscountPct != null && (
           <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
             style={{ background: "rgba(245,200,66,0.14)", border: "0.5px solid rgba(245,200,66,0.45)" }}>
             <span style={{ fontSize: "9px" }}>👑</span>
@@ -147,8 +174,8 @@ export default function ProductCard({ product, affiliateCode }: Props) {
           </div>
         )}
 
-        {/* Badge recompra — afiliado activo con descuento por plan */}
-        {!isPending && affiliate && recompraDiscountPct != null && (
+        {/* Badge recompra mensual */}
+        {recompraDiscountPct != null && (
           <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
             style={{ background: "rgba(30,192,213,0.10)", border: "0.5px solid rgba(30,192,213,0.28)" }}>
             <span style={{ color: "hsl(var(--secondary))", fontSize: "9px" }}>✓</span>
@@ -158,8 +185,8 @@ export default function ProductCard({ product, affiliateCode }: Props) {
           </div>
         )}
 
-        {/* Badge promo afiliados — visible sólo para visitantes no afiliados */}
-        {!affiliate && (
+        {/* Badge promo — visitante sin sesión en tienda WinClick */}
+        {!isAffStore && !affiliate && (
           <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
             style={{ background: "rgba(232,116,26,0.10)", border: "0.5px solid rgba(232,116,26,0.30)" }}>
             <span style={{ color: "hsl(var(--primary))", fontSize: "9px" }}>✦</span>
@@ -168,6 +195,18 @@ export default function ProductCard({ product, affiliateCode }: Props) {
             </span>
           </div>
         )}
+
+        {/* Indicador "precio de la tienda" — en tienda afiliado */}
+        {isAffStore && storeCtx!.customPrices[product.id] != null && (
+          <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(232,116,26,0.10)", border: "0.5px solid rgba(232,116,26,0.30)" }}>
+            <span style={{ color: "hsl(var(--primary))", fontSize: "9px" }}>🏷</span>
+            <span className="font-jakarta font-bold text-[10px]" style={{ color: "hsl(var(--primary))" }}>
+              Precio de esta tienda
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mt-3 gap-2">
           <button
             onClick={handleAdd}

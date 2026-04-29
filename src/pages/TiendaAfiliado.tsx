@@ -1,10 +1,21 @@
+/**
+ * TiendaAfiliado — Vitrina pública del socio WinClick
+ *
+ * REGLA FUNDAMENTAL:
+ *  Esta tienda es para los CLIENTES FINALES del socio, no para otros socios.
+ *  → Los precios mostrados son SIEMPRE el precio público (o precio custom del socio).
+ *  → Nunca se aplican descuentos de membresía WinClick, sin importar quién esté logueado.
+ *  → El contexto `storeCtx` de tipo AffiliateStoreContext es lo que garantiza este blindaje.
+ */
+
 import { useParams, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useStoreProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import ProductCard from "@/components/ProductCard";
 import { MessageCircle } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
+import { parseCustomPrices, type AffiliateStoreContext } from "@/lib/storeContext";
 
 export default function TiendaAfiliado() {
   const { codigo = "" } = useParams<{ codigo: string }>();
@@ -15,6 +26,19 @@ export default function TiendaAfiliado() {
   useEffect(() => {
     if (codigo) setAffiliateCode(codigo.toUpperCase());
   }, [codigo, setAffiliateCode]);
+
+  /**
+   * Contexto de tienda afiliado — se construye una sola vez y se pasa a TODOS los ProductCard.
+   * Al recibir este contexto, ProductCard sabe que debe usar siempre el precio público / custom,
+   * NUNCA el precio de membresía WinClick.
+   */
+  const storeCtx = useMemo<AffiliateStoreContext | undefined>(() => {
+    if (!data?.store) return undefined;
+    return {
+      mode: "affiliate",
+      customPrices: parseCustomPrices(data.store.custom_prices),
+    };
+  }, [data?.store]);
 
   if (isLoading) {
     return (
@@ -36,7 +60,7 @@ export default function TiendaAfiliado() {
   const { store, products } = data;
   const affiliateInitials = (store.store_name ?? codigo).substring(0, 2).toUpperCase();
 
-  const bannerBgStyle = store.banner_type === 'image' && store.banner_image_url 
+  const bannerBgStyle = store.banner_type === 'image' && store.banner_image_url
     ? { backgroundImage: `url(${store.banner_image_url})`, backgroundColor: store.accent_color ?? "hsl(var(--wo-grafito))" }
     : { backgroundColor: store.accent_color ?? "hsl(var(--wo-grafito))" };
 
@@ -88,11 +112,16 @@ export default function TiendaAfiliado() {
 
         <p className="font-jakarta text-[11px] text-wo-crema-muted mb-6">Powered by Winclick</p>
 
-        {/* Products */}
+        {/* Products — con contexto de tienda afiliado garantizado */}
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {products.map((p) => (
-              <ProductCard key={p.id} product={p} affiliateCode={codigo.toUpperCase()} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                affiliateCode={codigo.toUpperCase()}
+                storeCtx={storeCtx}   // ← BLINDAJE: fuerza precio público / custom
+              />
             ))}
           </div>
         ) : (
