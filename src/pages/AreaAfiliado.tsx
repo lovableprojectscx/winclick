@@ -768,7 +768,7 @@ export default function AreaAfiliado() {
       {showUpgradeModal && nextPackage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
           <div className="w-full max-w-md bg-wo-grafito rounded-wo-card p-6 relative" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
-            <button onClick={() => { setShowUpgradeModal(false); setUpgradeReceipt(null); }} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema">
+            <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema">
               <X size={16} />
             </button>
 

@@ -47,20 +47,20 @@ describe("useSEO hook", () => {
     renderHook(() => useSEO({
       title: "Test",
       description: "desc",
-      ogImage: "https://winclick.pe/foto-index.webp",
+      ogImage: "https://winclick.online/foto-index.webp",
     }));
     const el = document.querySelector<HTMLMetaElement>('meta[property="og:image"]');
-    expect(el?.content).toBe("https://winclick.pe/foto-index.webp");
+    expect(el?.content).toBe("https://winclick.online/foto-index.webp");
   });
 
   it("crea canonical link cuando se provee", () => {
     renderHook(() => useSEO({
       title: "Test",
       description: "desc",
-      canonical: "https://winclick.pe/catalogo",
+      canonical: "https://winclick.online/catalogo",
     }));
     const el = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    expect(el?.href).toBe("https://winclick.pe/catalogo");
+    expect(el?.href).toBe("https://winclick.online/catalogo");
   });
 
   it("no crea canonical link cuando no se provee", () => {

@@ -34,7 +34,7 @@ DELETE FROM auth.users;
 
 -- ─── PASO 3: Crear usuario Admin ─────────────────────────────────────────────
 -- Credenciales del nuevo admin:
---   Email:    admin@winclick.pe
+--   Email:    admin@winclick.online
 --   Password: Winclick2024!
 
 DO $$
@@ -64,7 +64,7 @@ BEGIN
     '00000000-0000-0000-0000-000000000000',
     'authenticated',
     'authenticated',
-    'admin@winclick.pe',
+    'admin@winclick.online',
     crypt('Winclick2024!', gen_salt('bf')),
     NOW(),
     '{"provider": "email", "providers": ["email"]}',
@@ -91,10 +91,10 @@ BEGIN
   ) VALUES (
     gen_random_uuid(),
     new_user_id,
-    'admin@winclick.pe',
+    'admin@winclick.online',
     jsonb_build_object(
       'sub',   new_user_id::text,
-      'email', 'admin@winclick.pe'
+      'email', 'admin@winclick.online'
     ),
     'email',
     NOW(),
@@ -159,7 +159,7 @@ ON CONFLICT DO NOTHING;
 -- =============================================================================
 -- ✅ RESULTADO
 -- Admin creado:
---   Email:    admin@winclick.pe
+--   Email:    admin@winclick.online
 --   Password: Winclick2024!
---   Ruta:     /admin-login
--- =============================================================================
+--   Ruta:     /login-afiliado  (la ruta /admin-login fue eliminada el 2026-04-26)
+-- ===================

@@ -17,7 +17,7 @@ export default function ProgramaAfiliados() {
   useSEO({
     title: "Programa de Afiliados Winclick Perú | Gana hasta 25% de Comisiones",
     description: "Únete al programa de afiliados Winclick. Gana hasta 25% de comisiones en 10 niveles de red vendiendo productos orgánicos y premium desde casa en Perú.",
-    canonical: "https://winclick.pe/programa-afiliados",
+    canonical: "https://winclick.online/programa-afiliados",
   });
 
   return (

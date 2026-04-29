@@ -16,7 +16,7 @@ export default function Contacto() {
   useSEO({
     title: "Contacto Winclick Perú | Soporte y Atención al Socio",
     description: "¿Tienes dudas sobre Winclick? Contáctanos por WhatsApp, email o formulario. Respondemos en menos de 24h. Lima, Perú.",
-    canonical: "https://winclick.pe/contacto",
+    canonical: "https://winclick.online/contacto",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

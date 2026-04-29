@@ -25,7 +25,7 @@ export default function Catalogo() {
   useSEO({
     title: "Productos Orgánicos y Premium Winclick Perú | Tienda Online",
     description: "Compra productos orgánicos y premium en Winclick Perú. Suplementos, proteínas, colágeno, detox y más. Envíos a Lima y todo el Perú. Gana comisiones revendiendo.",
-    canonical: "https://winclick.pe/catalogo",
+    canonical: "https://winclick.online/catalogo",
   });
 
   return (

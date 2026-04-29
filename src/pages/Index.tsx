@@ -31,8 +31,8 @@ export default function Index() {
   useSEO({
     title: "Winclick Perú | Gana Comisiones con Productos Orgánicos",
     description: "Únete a Winclick y gana hasta 25% de comisiones vendiendo productos orgánicos y premium. Red de 10 niveles. Empieza tu negocio desde casa en Perú. ¡Regístrate gratis\!",
-    canonical: "https://winclick.pe/",
-    ogImage: "https://winclick.pe/foto-index.webp",
+    canonical: "https://winclick.online/",
+    ogImage: "https://winclick.online/foto-index.webp",
   });
 
   return (

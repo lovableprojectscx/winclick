@@ -80,12 +80,14 @@ export function useAllPayments() {
   return useQuery<PaymentWithAffiliate[]>({
     queryKey: ["admin-payments"],
     queryFn: async () => {
+      // Hint FK explicito para que TS infiera el tipo correctamente
+      // (sin el, Supabase devuelve SelectQueryError).
       const { data, error } = await supabase
         .from("affiliate_payments")
-        .select("*, affiliate:affiliates(name, affiliate_code)")
+        .select("*, affiliate:affiliates!affiliate_payments_affiliate_id_fkey(name, affiliate_code)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return ((data as PaymentWithAffiliate[]) ?? []).map(p => ({
+      return ((data as unknown as PaymentWithAffiliate[]) ?? []).map(p => ({
         ...normalizePayment(p),
         affiliate: p.affiliate,
       }));
@@ -367,7 +369,10 @@ export function useDeleteAffiliate() {
   return useMutation({
     mutationFn: async (affiliateId: string) => {
       // 1. Intentar el borrado total seguro usando la función RPC
-      const { error: rpcError } = await supabase.rpc("admin_delete_user", { p_user_id: affiliateId });
+      // Cast porque admin_delete_user esta en BD (MIGRATION_ADMIN_DELETE_USER.sql)
+      // pero todavia no figura en los tipos generados (database.types.ts).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rpcError } = await (supabase.rpc as any)("admin_delete_user", { p_user_id: affiliateId });
       
       // Si la función SQL aún no está desplegada (Method Not Allowed / Not Found), aplicamos fallback
       if (rpcError) {

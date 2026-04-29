@@ -11,4 +11,4 @@ Allow: /logo-winclick.png
 Allow: /foto-index.webp
 Allow: /icono-winclick.png
 
-Sitemap: https://winclick.pe/sitemap.xml
+Sitemap: https://winclick.online/sitemap.xml

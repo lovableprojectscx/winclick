@@ -300,7 +300,9 @@ Ambas páginas incluyen diseño consistente con el sistema de diseño existente 
 
 ---
 
-### P2 · Login de admin separado
+### P2 · Login de admin separado ⚠️ REVERTIDO (2026-04-26)
+
+> **Nota:** Esta sección describe una página `/admin-login` que existió temporalmente. **Fue eliminada** porque el chequeo de email estaba hardcodeado a un dominio incorrecto y la ruta no funcionaba en producción. El acceso de admin ahora se hace a través del flujo unificado `/login-afiliado`, y `RequireAdmin` redirige a esa misma ruta. El archivo `src/pages/AdminLogin.tsx` ya no existe en el repo.
 
 **Problema:** `/login-afiliado` era la única puerta de entrada, pública y compartible, tanto para afiliados como para el admin. Compartir esa URL exponía la puerta de entrada al panel de control.
 

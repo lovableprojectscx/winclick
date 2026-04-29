@@ -49,21 +49,23 @@ export function usePlaceOrder() {
       // FIX H-02: NO seteamos is_activation_order desde el cliente.
       // El trigger BD `auto_mark_activation_order` lee el account_status real del
       // afiliado y lo marca correctamente. Evita divergencia entre cache JS y BD.
+      const orderPayload = {
+        customer_name:        args.customerName,
+        customer_email:       args.customerEmail,
+        customer_phone:       args.customerPhone,
+        customer_dni:         args.customerDni,
+        shipping_address:     args.shippingAddress,
+        shipping_city:        args.shippingCity,
+        payment_method:       args.paymentMethod,
+        total,
+        status:               "pendiente",
+        affiliate_id:         affiliateId,
+        shipping_voucher_url: args.receiptUrl,
+      };
       const { data: order, error: orderError } = await supabase
         .from("orders")
-        .insert({
-          customer_name:        args.customerName,
-          customer_email:       args.customerEmail,
-          customer_phone:       args.customerPhone,
-          customer_dni:         args.customerDni,
-          shipping_address:     args.shippingAddress,
-          shipping_city:        args.shippingCity,
-          payment_method:       args.paymentMethod,
-          total,
-          status:               "pendiente",
-          affiliate_id:         affiliateId,
-          shipping_voucher_url: args.receiptUrl,
-        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(orderPayload as any)
         .select()
         .maybeSingle();
 
@@ -71,10 +73,12 @@ export function usePlaceOrder() {
 
       // 3. Descontar billetera DESPUÉS de crear el pedido (nunca antes)
       if (args.paymentMethod === "wallet" && session) {
-        const { data: result } = await supabase.rpc("use_credits_for_purchase", {
+        const { data } = await supabase.rpc("use_credits_for_purchase", {
           p_amount:   total,
           p_order_id: order.id,
         });
+        // El RPC retorna Json; tipamos para acceder a los campos esperados
+        const result = data as { success?: boolean; error?: string } | null;
         if (!result?.success) {
           // Revertir el pedido si falla el pago
           await supabase.from("orders").delete().eq("id", order.id);

@@ -150,9 +150,12 @@ export function useMyNetwork() {
   return useQuery({
     queryKey: ["network", affiliate?.id],
     queryFn: async () => {
+      // Hint FK explícito: la tabla `referrals` tiene 2 FK a `affiliates`
+      // (referrer_id y referred_id), así que sin alias Supabase devuelve un
+      // SelectQueryError en TypeScript.
       const { data, error } = await supabase
         .from("referrals")
-        .select("level, referred:referred_id(id, name, affiliate_code, package, account_status, total_sales, created_at)")
+        .select("level, referred:affiliates!referrals_referred_id_fkey(id, name, affiliate_code, package, account_status, total_sales, created_at)")
         .eq("referrer_id", affiliate!.id)
         .order("level");
       if (error) throw error;

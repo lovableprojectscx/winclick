@@ -39,9 +39,9 @@ describe("SEO — index.html meta tags", () => {
     expect(html).toContain("Lima");
   });
 
-  it("tiene canonical hacia winclick.pe", () => {
+  it("tiene canonical hacia winclick.online", () => {
     expect(html).toContain('rel="canonical"');
-    expect(html).toContain("winclick.pe");
+    expect(html).toContain("winclick.online");
   });
 
   it("Open Graph tiene og:image", () => {

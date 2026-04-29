@@ -22,7 +22,6 @@ El archivo raíz de la app define todas las rutas y sus guardias de seguridad.
 | `/reset-password` | `ResetPassword.tsx` | Recuperación de contraseña |
 | `/terminos` | `Terminos.tsx` | Términos legales |
 | `/privacidad` | `Privacidad.tsx` | Política de privacidad |
-| `/admin-login` | `AdminLogin.tsx` | Login exclusivo del admin |
 
 ### Rutas Privadas (requieren sesión activa)
 | Ruta | Guardia | Redirige a si falla |
@@ -30,7 +29,7 @@ El archivo raíz de la app define todas las rutas y sus guardias de seguridad.
 | `/area-afiliado` | `RequireAuth` | `/login-afiliado` |
 | `/mi-billetera` | `RequireAuth` | `/login-afiliado` |
 | `/editar-tienda` | `RequireAuth` | `/login-afiliado` |
-| `/admin-dashboard` | `RequireAdmin` | Si sin sesión → `/admin-login`, si afiliado → `/area-afiliado` |
+| `/admin-dashboard` | `RequireAdmin` | Si sin sesión → `/login-afiliado`, si afiliado → `/area-afiliado` |
 | `/dev-tools` | Solo en `DEV` | Solo modo desarrollo |
 
 ---
