@@ -558,37 +558,93 @@ export default function AreaAfiliado() {
                   cancelado:  "Cancelado",
                 };
                 return (
-                  <div key={order.id} className="bg-wo-grafito rounded-wo-card p-4" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                  <div key={order.id} className="bg-wo-grafito rounded-wo-card p-5 relative overflow-hidden" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
+                    {/* Decoración de estado */}
+                    <div className="absolute top-0 left-0 w-1 h-full" style={{ background: order.status === "entregado" ? "hsl(var(--secondary))" : order.status === "enviado" ? "#6366f1" : order.status === "aprobado" ? "hsl(var(--primary))" : "rgba(255,255,255,0.1)" }} />
+
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
                       <div>
                         <p className="font-jakarta font-bold text-sm text-wo-crema">{order.order_number ?? `#${order.id.slice(0, 8)}`}</p>
                         <p className="font-jakarta text-[11px] text-wo-crema-muted mt-0.5">
-                          {new Date(order.created_at).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
+                          Realizado el {new Date(order.created_at).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <p className="font-syne font-bold text-lg text-primary">S/ {order.total.toFixed(2)}</p>
-                        <span className={`font-jakarta font-bold text-[10px] px-2 py-0.5 rounded-wo-pill border ${statusColor}`}>
-                          {statusLabel[order.status] ?? order.status}
-                        </span>
+                      <div className="text-right">
+                        <p className="font-syne font-extrabold text-xl text-primary leading-none mb-1">S/ {order.total.toFixed(2)}</p>
+                        <p className="font-jakarta text-[10px] text-wo-crema/40 uppercase tracking-widest">{order.payment_method === "wallet" ? "Billetera" : "Transferencia"}</p>
                       </div>
                     </div>
+
+                    {/* Stepper de Seguimiento */}
+                    <div className="flex items-center justify-between mb-6 relative">
+                      {/* Línea de fondo */}
+                      <div className="absolute top-4 left-[10%] right-[10%] h-[1.5px] bg-white/5 z-0" />
+                      {/* Línea de progreso */}
+                      <div className="absolute top-4 left-[10%] h-[1.5px] bg-primary transition-all duration-500 z-0" 
+                        style={{ width: order.status === "entregado" ? "80%" : order.status === "enviado" ? "53%" : order.status === "aprobado" ? "26%" : "0%" }} />
+
+                      {[
+                        { s: "pendiente", icon: <Clock size={12} />, label: "Pendiente" },
+                        { s: "aprobado",  icon: <Check size={12} />, label: "Pagado" },
+                        { s: "enviado",   icon: <Package size={12} />, label: "En Camino" },
+                        { s: "entregado", icon: <Award size={12} />, label: "Recibido" },
+                      ].map((step, i) => {
+                        const states = ["pendiente", "aprobado", "enviado", "entregado"];
+                        const currentIdx = states.indexOf(order.status);
+                        const isDone = currentIdx >= i;
+                        const isCurrent = currentIdx === i;
+
+                        return (
+                          <div key={step.s} className="flex flex-col items-center gap-2 relative z-10">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                              isDone ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(232,116,26,0.3)]" : "bg-wo-carbon text-wo-crema/20 border border-white/5"
+                            } ${isCurrent ? "scale-110 ring-4 ring-primary/10" : ""}`}>
+                              {step.icon}
+                            </div>
+                            <span className={`font-jakarta text-[9px] font-bold uppercase tracking-tighter ${isDone ? "text-wo-crema" : "text-wo-crema/20"}`}>
+                              {step.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Información de envío (solo si está aprobado/enviado) */}
+                    {(order.tracking_number || order.shipping_address) && (
+                      <div className="bg-white/5 rounded-xl p-3 mb-4 border border-white/5">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-wo-carbon flex items-center justify-center shrink-0 text-wo-crema/40">
+                            <Share2 size={14} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold">Destino de entrega</p>
+                            <p className="font-jakarta text-xs text-wo-crema truncate">{order.shipping_address}</p>
+                            {order.tracking_number && (
+                              <div className="mt-2 flex items-center justify-between bg-primary/10 rounded-lg px-2.5 py-2 border border-primary/20">
+                                <span className="font-jakarta text-[10px] text-primary font-bold">TRACKING: {order.tracking_number}</span>
+                                <button onClick={() => { navigator.clipboard.writeText(order.tracking_number!); }} className="text-primary hover:scale-110 transition-transform">
+                                  <Copy size={12} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Items (Colapsados por defecto o discretos) */}
                     {order.order_items && order.order_items.length > 0 && (
-                      <div className="border-t pt-3 space-y-1.5" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                      <div className="space-y-1.5 opacity-60 hover:opacity-100 transition-opacity">
                         {order.order_items.map((item) => (
                           <div key={item.id} className="flex items-center justify-between">
-                            <p className="font-jakarta text-xs text-wo-crema-muted">
+                            <p className="font-jakarta text-[11px] text-wo-crema-muted">
                               {item.name} <span className="text-wo-crema/40">× {item.quantity}</span>
                             </p>
-                            <p className="font-jakarta text-xs text-wo-crema">S/ {(item.price * item.quantity).toFixed(2)}</p>
+                            <p className="font-jakarta text-[11px] text-wo-crema">S/ {(item.price * item.quantity).toFixed(2)}</p>
                           </div>
                         ))}
                       </div>
                     )}
-                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-jakarta text-wo-crema/40">
-                      <span>📦 {order.shipping_address}, {order.shipping_city}</span>
-                      <span>💳 {order.payment_method === "wallet" ? "Billetera" : "Transferencia"}</span>
-                    </div>
                   </div>
                 );
               })}

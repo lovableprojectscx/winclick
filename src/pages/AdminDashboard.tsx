@@ -31,6 +31,7 @@ import {
 const tabs = [
   { id: "resumen",      label: "Resumen",       icon: <BarChart3 size={14} /> },
   { id: "pedidos",      label: "Pedidos",        icon: <ShoppingBag size={14} /> },
+  { id: "logistica",    label: "Logística",      icon: <Package size={14} /> },
   { id: "afiliados",    label: "Afiliados",      icon: <Users size={14} /> },
   { id: "catalogo",     label: "Catálogo",       icon: <Package size={14} /> },
   { id: "reportes",     label: "Reportes",       icon: <BarChart3 size={14} /> },
@@ -184,6 +185,9 @@ export default function AdminDashboard() {
   const [catName,        setCatName]        = useState("");
   const [catColor,       setCatColor]       = useState("#F59E0B");
   const [confirmDeleteCatId, setConfirmDeleteCatId] = useState<string | null>(null);
+  const [logisticsTab,   setLogisticsTab]   = useState<"por_enviar" | "en_camino" | "entregados">("por_enviar");
+  const [trackingModal,  setTrackingModal]  = useState<OrderWithItems | null>(null);
+  const [trackingVal,    setTrackingVal]    = useState("");
 
   // Data hooks
   const { data: affiliates = [], isLoading: loadingAffiliates } = useAllAffiliates();
@@ -725,6 +729,85 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* =================== LOGÍSTICA =================== */}
+        {activeTab === "logistica" && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex gap-2">
+                {[
+                  { id: "por_enviar", label: "📦 Por Enviar", count: orders.filter(o => o.status === "aprobado").length },
+                  { id: "en_camino",  label: "🚚 En Camino",  count: orders.filter(o => o.status === "enviado").length },
+                  { id: "entregados", label: "✅ Entregados", count: orders.filter(o => o.status === "entregado").length },
+                ].map(t => (
+                  <button key={t.id} onClick={() => setLogisticsTab(t.id as any)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-jakarta text-xs font-bold transition-all ${
+                    logisticsTab === t.id ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"
+                  }`}>
+                    {t.label} <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${logisticsTab === t.id ? "bg-white/20" : "bg-white/5"}`}>{t.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {orders.filter(o => {
+                if (logisticsTab === "por_enviar") return o.status === "aprobado";
+                if (logisticsTab === "en_camino")  return o.status === "enviado";
+                if (logisticsTab === "entregados") return o.status === "entregado";
+                return false;
+              }).map(o => (
+                <div key={o.id} className="bg-wo-grafito rounded-2xl p-5 flex flex-wrap items-center justify-between gap-6" style={cardStyle}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-wo-carbon flex items-center justify-center text-primary shrink-0">
+                      <Package size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-syne font-bold text-wo-crema text-base">{o.order_number} — {o.customer_name}</h4>
+                      <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5 flex items-center gap-1.5 text-secondary">
+                        <Tag size={12} /> {o.shipping_address || "Dirección no especificada"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="text-right mr-4">
+                      <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold">Total Pedido</p>
+                      <p className="font-syne font-extrabold text-lg text-primary">S/ {o.total.toFixed(2)}</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button onClick={() => { setTrackingModal(o); setTrackingVal(o.tracking_number || ""); }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wo-carbon text-wo-crema hover:bg-white/5 transition-colors font-jakarta text-xs font-bold border border-white/5">
+                        <Edit2 size={14} /> {o.tracking_number ? "Editar Tracking" : "Asignar Tracking"}
+                      </button>
+
+                      {o.status === "aprobado" && (
+                        <button onClick={() => updateOrderStatus.mutate({ id: o.id, status: "enviado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
+                          <CheckCircle size={14} /> Marcar como Enviado
+                        </button>
+                      )}
+
+                      {o.status === "enviado" && (
+                        <>
+                          <button onClick={() => updateOrderStatus.mutate({ id: o.id, status: "entregado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
+                            <CheckCircle size={14} /> Confirmar Entrega
+                          </button>
+                          <a 
+                            href={`https://wa.me/${o.customer_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${o.customer_name.split(" ")[0]}, te saluda WinClick. Tu pedido ${o.order_number} ya está en camino. Tracking: ${o.tracking_number}`)}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:brightness-110 transition-all font-jakarta text-xs font-bold"
+                          >
+                            <MessageCircle size={14} /> Avisar por WhatsApp
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
 
         {/* =================== AFILIADOS =================== */}
         {activeTab === "afiliados" && (
@@ -2561,7 +2644,43 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
+      {/* Modal: Tracking Number */}
+      {trackingModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-wo-grafito rounded-3xl p-6 w-full max-w-sm border border-white/10 shadow-2xl">
+            <h3 className="font-syne font-bold text-lg text-wo-crema mb-4">Actualizar Tracking</h3>
+            <p className="font-jakarta text-xs text-wo-crema-muted mb-4">Ingresa el código de seguimiento de Olva, Shalom u otro courier para el pedido <strong className="text-primary">{trackingModal.order_number}</strong>.</p>
+            
+            <input 
+              type="text" 
+              value={trackingVal}
+              onChange={(e) => setTrackingVal(e.target.value)}
+              placeholder="Ej: OLVA-98234123"
+              className="w-full bg-wo-carbon rounded-xl px-4 py-3 font-jakarta text-sm text-wo-crema border border-white/5 mb-6 focus:ring-2 ring-primary/20 outline-none"
+            />
 
+            <div className="flex gap-3">
+              <button onClick={() => setTrackingModal(null)} className="flex-1 py-3 rounded-xl font-jakarta text-xs font-bold text-wo-crema-muted hover:bg-white/5 transition-colors">Cancelar</button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const { error } = await supabase.from("orders").update({ tracking_number: trackingVal }).eq("id", trackingModal.id);
+                    if (error) throw error;
+                    toast({ title: "✓ Tracking actualizado" });
+                    setTrackingModal(null);
+                    // Refresh orders manually if needed or let hooks do it
+                  } catch (err) {
+                    toast({ title: "Error", description: "No se pudo actualizar", variant: "destructive" });
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-jakarta text-xs font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all"
+              >
+                Guardar Tracking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
