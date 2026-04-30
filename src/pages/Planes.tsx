@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
-  Check, ChevronRight, ChevronDown, X, HelpCircle,
+  Check, CheckCircle2, ChevronRight, ChevronDown, X, HelpCircle,
   Star, Zap, Crown, Target, Share2, Wallet,
   RefreshCw, Award, ShoppingBag, LayoutDashboard,
   MessageCircle, Network, TrendingUp, Gem, ArrowRight,
@@ -19,62 +19,58 @@ interface Plan {
 
 const PLANS: Plan[] = [
   {
-    key: "Básico", icon: <Star size={20} />, label: "Membresía Básica", tag: "Entrada ideal",
+    key: "Básico", icon: <Star size={20} />, label: "Membresía Básico", tag: "Inicio rápido",
     price: 120, discount: 40, multiplier: 0.60, levels: 3,
     color: "hsl(var(--primary))", border: "rgba(232,116,26,0.30)", bg: "rgba(232,116,26,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
-      { icon: <Award size={15} />,          text: "Comisiones en 3 niveles de red" },
-      { icon: <ShoppingBag size={15} />,    text: "40% de descuento en productos en recompra" },
-      { icon: <LayoutDashboard size={15} />,text: "Dashboard de red en tiempo real" },
-      { icon: <MessageCircle size={15} />,  text: "Soporte por WhatsApp" },
+      { icon: <Award size={15} />,          text: "Ganancia: 3 Niveles Residual" },
+      { icon: <X size={15} className="text-destructive" />, text: "No cobra Bonos de Patrocinio" },
+      { icon: <ShoppingBag size={15} />,    text: "Membresía: Precio Público" },
+      { icon: <CheckCircle2 size={15} />,   text: "Ahorro: 40% OFF en Recompra" },
     ],
   },
   {
-    key: "Ejecutivo", icon: <Target size={20} />, label: "Membresía Ejecutivo", tag: "Crecimiento rápido",
-    price: 600, discount: 50, multiplier: 0.50, levels: 5,
+    key: "Ejecutivo", icon: <Target size={20} />, label: "Membresía Ejecutivo", tag: "Más Niveles",
+    price: 600, discount: 45, multiplier: 0.55, levels: 5,
     color: "#6366f1", border: "rgba(99,102,241,0.30)", bg: "rgba(99,102,241,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
-      { icon: <Award size={15} />,          text: "Comisiones en 5 niveles de red" },
-      { icon: <ShoppingBag size={15} />,    text: "50% de descuento en productos en recompra" },
-      { icon: <LayoutDashboard size={15} />,text: "Dashboard de red avanzado" },
-      { icon: <MessageCircle size={15} />,  text: "Soporte prioritario" },
+      { icon: <Award size={15} />,          text: "Ganancia: 5 Niveles Residual" },
+      { icon: <ShoppingBag size={15} />,    text: "Ahorro: 45% Inicial | 50% Recompra" },
+      { icon: <LayoutDashboard size={15} />,text: "Soporte Prioritario" },
     ],
   },
   {
-    key: "Intermedio", icon: <Zap size={20} />, label: "Pack 2,000", tag: "El más elegido",
+    key: "Intermedio", icon: <Zap size={20} />, label: "Membresía 2,000", tag: "El más elegido",
     price: 2000, discount: 50, multiplier: 0.50, levels: 7,
     color: "hsl(var(--secondary))", border: "rgba(30,192,213,0.45)", bg: "rgba(30,192,213,0.07)",
     glow: "0 0 48px rgba(30,192,213,0.18), 0 0 0 1px rgba(30,192,213,0.30)",
     popular: true,
     details: [
-      { icon: <Award size={15} />,          text: "Comisiones en 7 niveles de red" },
-      { icon: <ShoppingBag size={15} />,    text: "50% de descuento en productos en recompra" },
-      { icon: <Network size={15} />,        text: "Red de 7 niveles de profundidad" },
-      { icon: <TrendingUp size={15} />,     text: "Mayor potencial de ingresos" },
+      { icon: <Award size={15} />,          text: "Ganancia: 7 Niveles Residual" },
+      { icon: <ShoppingBag size={15} />,    text: "Ahorro: 50% OFF Permanente" },
+      { icon: <Network size={15} />,        text: "Red de Alta Profundidad" },
     ],
   },
   {
-    key: "VIP", icon: <Crown size={20} />, label: "Membresía VIP", tag: "Máximo potencial",
-    price: 10000, discount: 50, multiplier: 0.50, levels: 10,
+    key: "VIP", icon: <Crown size={20} />, label: "Membresía VIP", tag: "Máximo Ahorro",
+    price: 10000, discount: 55, multiplier: 0.45, levels: 10,
     color: "#C9920A", border: "rgba(201,146,10,0.35)", bg: "rgba(201,146,10,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
-      { icon: <Award size={15} />,          text: "Comisiones en 10 niveles de red" },
-      { icon: <Zap size={15} />,            text: "Todo lo del Pack 2,000" },
-      { icon: <ShoppingBag size={15} />,    text: "50% de descuento en productos desde tu afiliación" },
-      { icon: <Star size={15} />,           text: "Nivel 8 con comisión especial 3%" },
-      { icon: <Gem size={15} />,            text: "El mayor potencial del sistema" },
+      { icon: <Award size={15} />,          text: "Ganancia: 10 Niveles Residual" },
+      { icon: <Zap size={15} />,            text: "Ahorro: 55% Inicial | 50% Recompra" },
+      { icon: <Star size={15} />,           text: "Bono Especial Nivel 8 (3%)" },
     ],
   },
 ];
 
 const FAQS = [
-  { q: "¿La primera membresía genera comisiones para mi red?",  a: "No. La activación inicial activa tu membresía con bonos especiales, pero no genera comisiones en la pirámide. Las comisiones arrancan desde tu primera recompra mensual." },
-  { q: "¿Qué es la recompra mensual?",                          a: "Es la compra mensual que realiza cada afiliado activo. Tendrás entre 40% y 50% de descuento según tu plan, y estas compras sí generan comisiones para toda la red." },
-  { q: "¿El descuento aplica a cualquier producto?",            a: "Sí. En recompras mensuales, el descuento de tu plan aplica a cualquier producto del catálogo, sin mínimo de compra." },
-  { q: "¿Puedo subir de plan después?",                         a: "Sí. Puedes hacer upgrade cuando quieras y desbloquear más niveles de comisión desde ese momento." },
+  { q: "¿La primera membresía genera comisiones para mi red?",  a: "No. La membresía inicial activa tu cuenta con descuentos exclusivos según tu plan, pero no genera comisiones en la red. Las comisiones arrancan desde tu primera recompra mensual." },
+  { q: "¿Qué es la recompra mensual?",                          a: "Es la compra mensual que realiza cada afiliado activo. Tendrás entre 40% y 55% de descuento según tu plan, y estas compras sí generan comisiones para toda la red." },
+  { q: "¿El descuento aplica a cualquier producto?",            a: "Sí. En membersía y recompras mensuales, el descuento de tu plan aplica a cualquier producto del catálogo, sin mínimo de compra." },
+  { q: "¿Puedo subir de plan después?",                         a: "Sí. Puedes hacer upgrade cuando quieras y desbloquear más niveles de comisión y mayor descuento desde ese momento." },
 ];
 
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";
@@ -194,21 +190,25 @@ function PlanCard({ plan, index, onShowDetails }: { plan: any; index: number; on
           </button>
         </div>
 
-        <div className="rounded-xl py-5 text-center" style={{ background: `${plan.color}10`, border: `0.5px solid ${plan.border}` }}>
-          <p className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/50 mb-1">Activación de membresía</p>
+        <div className="rounded-xl py-5 text-center mb-1" style={{ background: `${plan.color}10`, border: `0.5px solid ${plan.border}` }}>
+          <p className="font-jakarta text-[10px] uppercase tracking-widest text-wo-crema-muted/50 mb-1">Membresía Mínima</p>
           <div className="flex items-start justify-center">
             <span className="font-syne font-bold text-[18px] mr-1 mt-1.5" style={{ color: plan.color }}>S/</span>
-            <span className="font-syne font-extrabold leading-none" style={{ fontSize: 44, color: plan.color }}>{plan.price.toLocaleString()}</span>
+            <span className="font-syne font-extrabold leading-none" style={{ fontSize: 48, color: plan.color }}>{plan.price.toLocaleString()}</span>
           </div>
-          <div className="flex flex-col items-center gap-2.5 mt-3.5">
-            <span className="font-jakarta text-[10px] opacity-80 uppercase tracking-widest font-bold px-3 py-0.5 rounded-full inline-block" style={{ background: `rgba(255,255,255,0.05)`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
-              + Bonos especiales
-            </span>
-            <div className="relative">
-              <div className="absolute -inset-0.5 rounded-full blur opacity-60 animate-pulse" style={{ background: plan.color }}></div>
-              <div className="relative font-jakarta text-[11px] font-black px-3 py-1.5 rounded-full flex items-center justify-center gap-1.5 uppercase" style={{ background: plan.color, color: "hsl(var(--background))" }}>
-                <Star size={11} fill="currentColor" /> BONO: {plan.discount}% DCTO {plan.key === "VIP" ? "DESDE AFILIACIÓN" : "EN RECOMPRA"}
-              </div>
+          
+          <div className="flex flex-col gap-2 mt-4 px-3">
+            <div className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-black/20 border border-white/5">
+              <span className="font-jakarta text-[9px] uppercase font-bold text-wo-crema-muted/60">Desc. Inicial</span>
+              <span className="font-syne font-bold text-[12px]" style={{ color: plan.color }}>
+                {plan.key === "Básico" ? "Público" : `${plan.discount}% OFF`}
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-black/20 border border-white/5">
+              <span className="font-jakarta text-[9px] uppercase font-bold text-wo-crema-muted/60">Desc. Recompra</span>
+              <span className="font-syne font-bold text-[12px] text-secondary">
+                {plan.key === "Básico" ? "40%" : "50%"} OFF
+              </span>
             </div>
           </div>
         </div>
@@ -222,12 +222,11 @@ function PlanCard({ plan, index, onShowDetails }: { plan: any; index: number; on
         </div>
 
         <Link to={`/registro-afiliado?package=${plan.key}`}
-          className="mt-auto block w-full text-center font-jakarta font-bold text-sm py-3.5 rounded-xl transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+          className="mt-auto block w-full text-center font-jakarta font-bold text-[13px] py-4 rounded-xl transition-all duration-150 hover:opacity-90 active:scale-[0.98] uppercase tracking-wide"
           style={plan.popular ? { background: "hsl(var(--secondary))", color: "hsl(var(--background))" }
             : { background: `${plan.color}18`, color: plan.color, border: `0.5px solid ${plan.border}` }}>
-          Comenzar →
+          Seleccionar Plan →
         </Link>
-        <p className="font-jakarta text-[10px] text-wo-crema-muted/30 text-center -mt-2">Comisiones desde tu primera recompra</p>
       </div>
     </div>
   );
@@ -257,7 +256,7 @@ function CatalogPrices() {
               ? { background: p.color, color: "hsl(var(--background))" }
               : { background: "rgba(255,255,255,0.04)", color: "rgba(248,244,236,0.45)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
             <span style={{ color: activePlan === p.key ? "hsl(var(--background))" : p.color }}>{p.icon}</span>
-            {p.label} <span className="opacity-75">-{p.discount}%</span>
+            {p.label} <span className="opacity-75">{p.key === "Básico" ? "0%" : p.key === "Ejecutivo" ? "45%" : "50%+"} OFF</span>
           </button>
         ))}
       </div>
@@ -269,7 +268,8 @@ function CatalogPrices() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {items.map(product => {
             const pub = product.public_price ?? product.price;
-            const act = pub * plan.multiplier;
+            const factor = plan.key === "Básico" ? 1.00 : plan.key === "Ejecutivo" ? 0.55 : 0.50;
+            const act = pub * factor;
             return (
               <Link key={product.id} to={`/catalogo/${product.slug || product.id}`}
                 className="group rounded-2xl overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5"
@@ -279,7 +279,7 @@ function CatalogPrices() {
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     onError={e => { (e.currentTarget as HTMLImageElement).src = IMG_FALLBACK; }} />
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full font-jakarta text-[10px] font-extrabold"
-                    style={{ background: plan.color, color: "hsl(var(--background))" }}>-{plan.discount}%</div>
+                    style={{ background: plan.color, color: "hsl(var(--background))" }}>{plan.key === "Básico" ? "PÚBLICO" : `-${plan.discount}%`}</div>
                 </div>
                 <div className="p-3 flex flex-col gap-2 flex-1">
                   <p className="font-jakarta font-semibold text-[12px] text-wo-crema leading-tight line-clamp-2">{product.name}</p>
@@ -377,7 +377,7 @@ export default function Planes() {
             {/* Mini stats bajo los botones */}
             <div className="flex gap-6 mt-8">
               {[
-                { v: "Hasta 50%", l: "desc. recompra",  c: "hsl(var(--primary))" },
+                { v: "Hasta 55%", l: "desc. membresía",  c: "hsl(var(--primary))" },
                 { v: "10",  l: "niveles de red",  c: "hsl(var(--secondary))" },
                 { v: "+ Bonos", l: "en activación", c: "#C9920A" },
               ].map(s => (
@@ -458,7 +458,8 @@ export default function Planes() {
             ))}
           </div>
           {[
-            { label: "Desc. recompra", vals: ["40% OFF", "50% OFF", "50% OFF", "50% OFF"], colors: PLANS.map(p => p.color) },
+            { label: "Desc. membresía", vals: ["0% (Público)", "45% OFF", "50% OFF", "55% OFF"], colors: PLANS.map(p => p.color) },
+            { label: "Desc. recompra",  vals: ["40% OFF", "50% OFF", "50% OFF", "50% OFF"], colors: PLANS.map(p => p.color) },
             { label: "Niveles red",   vals: ["3", "5", "7", "10"], colors: PLANS.map(p => p.color) },
             { label: "Comisiones",    vals: ["1–3", "1–5", "1–7", "1–10"], colors: PLANS.map(p => p.color) },
           ].map((row, ri, arr) => (
@@ -597,8 +598,8 @@ export default function Planes() {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <p className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-wo-crema/50 mb-1">Beneficios para afiliados activos</p>
-                <span className="font-syne font-extrabold leading-none" style={{ fontSize: "clamp(36px,7vw,48px)", color: "hsl(var(--secondary))" }}>Hasta 50% OFF</span>
-                <p className="font-jakarta text-sm text-wo-crema-muted">en recompras mensuales según membresía</p>
+                <span className="font-syne font-extrabold leading-none" style={{ fontSize: "clamp(36px,7vw,48px)", color: "hsl(var(--secondary))" }}>Hasta 55% OFF</span>
+                <p className="font-jakarta text-sm text-wo-crema-muted">en membresía y recompras mensuales según tu plan</p>
               </div>
             </div>
           </div>

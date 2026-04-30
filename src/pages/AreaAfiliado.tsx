@@ -206,6 +206,71 @@ export default function AreaAfiliado() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* ── Tab: Inicio ─────────────────────────────────────────── */}
         {activeTab === "inicio" && <>
+        
+        {/* Qualification Status Indicator */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className={`rounded-2xl p-4 flex items-center gap-4 border transition-all duration-300 ${
+            !isPending && !isSuspended 
+              ? "bg-secondary/5 border-secondary/20 shadow-[0_0_15px_rgba(30,192,213,0.05)]" 
+              : isPending 
+                ? "bg-primary/5 border-primary/20" 
+                : "bg-destructive/5 border-destructive/20"
+          }`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+              !isPending && !isSuspended ? "bg-secondary/20 text-secondary" : isPending ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"
+            }`}>
+              {!isPending && !isSuspended ? <Check size={20} strokeWidth={3} /> : isPending ? <Clock size={20} /> : <AlertTriangle size={20} />}
+            </div>
+            <div>
+              <p className="font-jakarta text-[10px] uppercase font-bold tracking-widest opacity-50 mb-0.5">Estado de Calificación</p>
+              <h4 className={`font-syne font-bold text-base leading-tight ${
+                !isPending && !isSuspended ? "text-secondary" : isPending ? "text-primary" : "text-destructive"
+              }`}>
+                {!isPending && !isSuspended ? "Cuenta Calificada" : isPending ? "Pendiente de Activación" : "Cuenta Suspendida"}
+              </h4>
+              <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1 leading-snug">
+                {!isPending && !isSuspended 
+                  ? "¡Felicidades! Estás apto para recibir todas las comisiones de tu red." 
+                  : isPending 
+                    ? "Completa tu meta de compra para empezar a generar ganancias." 
+                    : "Realiza tu recompra mensual para reactivar el cobro de comisiones."}
+              </p>
+            </div>
+          </div>
+
+          {/* Sponsorship Bonus Restriction Alert */}
+          {affiliate.package === "Básico" && (
+            <div className="rounded-2xl p-4 flex items-center gap-4 bg-wo-carbon border border-white/5">
+              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-wo-crema-muted">
+                <Lock size={18} />
+              </div>
+              <div>
+                <p className="font-jakarta text-[10px] uppercase font-bold tracking-widest opacity-50 mb-0.5">Restricción de Plan</p>
+                <h4 className="font-syne font-bold text-base leading-tight text-wo-crema">Sin Bonos de Patrocinio</h4>
+                <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1 leading-snug">
+                  Tu plan actual solo genera residuales. Sube a <strong className="text-primary">Ejecutivo</strong> para cobrar bonos de hasta S/ 1,500.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Active & Executive+ Status (Success state) */}
+          {(!isPending && !isSuspended && affiliate.package !== "Básico") && (
+            <div className="rounded-2xl p-4 flex items-center gap-4 bg-primary/5 border border-primary/20">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-primary">
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <p className="font-jakarta text-[10px] uppercase font-bold tracking-widest opacity-50 mb-0.5">Potencial de Ganancia</p>
+                <h4 className="font-syne font-bold text-base leading-tight text-primary">Máximo Nivel de Cobro</h4>
+                <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1 leading-snug">
+                  Tienes habilitados los Bonos de Patrocinio y Residuales según tu plan {affiliate.package}.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[

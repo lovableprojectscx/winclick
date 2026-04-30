@@ -27,6 +27,7 @@ import Contacto from "./pages/Contacto";
 import ResetPassword from "./pages/ResetPassword";
 import Terminos from "./pages/Terminos";
 import Privacidad from "./pages/Privacidad";
+import Bonos from "./pages/Bonos";
 import NotFound from "./pages/NotFound";
 
 const DevTools = import.meta.env.DEV
@@ -132,6 +133,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/terminos" element={<Terminos />} />
               <Route path="/privacidad" element={<Privacidad />} />
+              <Route path="/bonos" element={<Bonos />} />
               {import.meta.env.DEV && DevTools && (
                 <Route path="/dev-tools" element={<Suspense fallback={null}><DevTools /></Suspense>} />
               )}

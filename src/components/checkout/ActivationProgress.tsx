@@ -29,7 +29,7 @@ export function ActivationProgress({
           <TrendingUp size={15} style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))", flexShrink: 0 }} />
           <p className="font-jakarta font-bold text-[13px]"
             style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))" }}>
-            {willActivate ? "¡Esta compra activa tu cuenta!" : `Activación ${packageName} — progreso`}
+            {willActivate ? "¡Esta compra activa tu cuenta!" : `Membresía ${packageName} — progreso`}
           </p>
         </div>
         <span className="font-syne font-extrabold text-[18px] leading-none"

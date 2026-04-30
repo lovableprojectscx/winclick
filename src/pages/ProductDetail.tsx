@@ -45,11 +45,10 @@ export default function ProductDetail() {
   }
 
   // ── Precio según contexto ─────────────────────────────────────────────
-  // - Afiliado PENDIENTE (activación):
-  //     • VIP        → 50% OFF sobre public_price
-  //     • Básico/Int → precio público (sin descuento durante activación)
+  // - Afiliado PENDIENTE (membresía):
+  //     • Básico 40% OFF | Ejecutivo 45% OFF | Intermedio 50% OFF | VIP 55% OFF
   // - Afiliado ACTIVO (recompra mensual, genera comisiones):
-  //     • Básico 40% OFF | Intermedio 50% OFF | VIP 50% OFF
+  //     • Básico 40% OFF | Ejecutivo 45% OFF | Intermedio 50% OFF | VIP 55% OFF
   // - Público → public_price
   const isPending      = affiliate?.account_status === "pending";
   const activationPlan = affiliate?.package ?? null;
@@ -60,7 +59,7 @@ export default function ProductDetail() {
       ? getRecompraPrice(product, affiliate.package)
       : (product.public_price ?? product.price);
 
-  // Badge de descuento visible (solo VIP en activación / todos en recompra)
+  // Badge de descuento visible (todos los planes tienen descuento en membresía)
   const activationDiscountPct = isPending && activationPlan && hasActivationDiscount(activationPlan)
     ? ACTIVATION_DISCOUNT_PCT[activationPlan]
     : null;
@@ -183,7 +182,7 @@ export default function ProductDetail() {
                   {/* Etiqueta contextual */}
                   {isPending ? (
                     <span className="font-jakarta text-[11px] font-bold flex items-center gap-1" style={{ color: "hsl(var(--primary))" }}>
-                      {activationDiscountPct ? <><Flame size={12} /> {activationDiscountPct}% OFF ·</> : <><ShoppingBag size={12} /></>} Activa tu cuenta ahora comprando esta meta
+                      {activationDiscountPct ? <><Flame size={12} /> {activationDiscountPct}% OFF ·</> : <><ShoppingBag size={12} /></>} Precio membresía · activa tu cuenta
                     </span>
                   ) : affiliate && !isPending && product.partner_price && product.public_price && product.partner_price < product.public_price ? (
                     <span className="font-jakarta text-[11px] font-bold" style={{ color: "hsl(var(--secondary))" }}>Precio socio ✓</span>
@@ -192,7 +191,7 @@ export default function ProductDetail() {
               </div>
               {isPending && (
                 <p className="font-jakarta text-[10px] text-wo-crema-muted/60 mt-1.5">
-                  Precio promocional exclusivo para tu activación. Luego de activar se aplica el precio socio estándar.
+                  Precio exclusivo de membresía según tu plan. Luego de activar se mantiene el mismo descuento en recompras.
                 </p>
               )}
             </div>
@@ -201,26 +200,54 @@ export default function ProductDetail() {
             {(() => {
               const base = product.public_price ?? product.price;
 
-              // ─── Activación: solo VIP tiene precio especial ───────────────
-              const activationTiers = [
+              // ─── Membresía: todos los planes tienen descuento ─────────────
+              const membershipTiers = [
                 {
-                  key: "pub-act",
-                  icon: <ShoppingBag size={18} />,
-                  label: "Básico / Ejec. / Inter.",
-                  sublabel: "Activación al precio público",
+                  key: "mb-basico",
+                  icon: <Star size={16} />,
+                  label: "Básico",
+                  sublabel: "3 niveles · Precio Público",
                   price: base,
-                  badge: null,
-                  bg: "rgba(248,244,236,0.05)",
-                  border: "rgba(248,244,236,0.12)",
-                  priceColor: "hsl(var(--wo-crema))",
+                  badge: "PÚBLICO",
+                  badgeBg: "rgba(255,255,255,0.05)",
+                  badgeColor: "rgba(255,255,255,0.4)",
+                  bg: "rgba(255,255,255,0.02)",
+                  border: "rgba(255,255,255,0.08)",
+                  priceColor: "hsl(var(--wo-crema-muted))",
                 },
                 {
-                  key: "vip-act",
-                  icon: <Crown size={18} />,
-                  label: "Activación VIP",
-                  sublabel: "50% OFF — beneficio exclusivo del plan VIP",
+                  key: "mb-ejecutivo",
+                  icon: <Target size={16} />,
+                  label: "Ejecutivo",
+                  sublabel: "5 niveles · 45% OFF",
+                  price: base * 0.55,
+                  badge: "-45%",
+                  badgeBg: "rgba(99,102,241,0.15)",
+                  badgeColor: "#6366f1",
+                  bg: "rgba(99,102,241,0.06)",
+                  border: "rgba(99,102,241,0.20)",
+                  priceColor: "#6366f1",
+                },
+                {
+                  key: "mb-inter",
+                  icon: <Zap size={16} />,
+                  label: "2,000",
+                  sublabel: "7 niveles · 50% OFF",
                   price: base * 0.50,
                   badge: "-50%",
+                  badgeBg: "rgba(30,192,213,0.15)",
+                  badgeColor: "hsl(var(--secondary))",
+                  bg: "rgba(30,192,213,0.06)",
+                  border: "rgba(30,192,213,0.20)",
+                  priceColor: "hsl(var(--secondary))",
+                },
+                {
+                  key: "mb-vip",
+                  icon: <Crown size={16} />,
+                  label: "VIP",
+                  sublabel: "10 niveles · 55% OFF",
+                  price: base * 0.45,
+                  badge: "-55%",
                   badgeBg: "rgba(245,200,66,0.18)",
                   badgeColor: "#D4A017",
                   bg: "rgba(245,200,66,0.07)",
@@ -235,7 +262,7 @@ export default function ProductDetail() {
                   key: "rc-basico",
                   icon: <Star size={16} />,
                   label: "Básico",
-                  sublabel: "3 niveles residual",
+                  sublabel: "3 niveles · 40% OFF",
                   price: base * 0.60,
                   badge: "-40%",
                   badgeBg: "rgba(232,116,26,0.15)",
@@ -248,7 +275,7 @@ export default function ProductDetail() {
                   key: "rc-ejecutivo",
                   icon: <Target size={16} />,
                   label: "Ejecutivo",
-                  sublabel: "5 niveles residual",
+                  sublabel: "5 niveles · 50% OFF",
                   price: base * 0.50,
                   badge: "-50%",
                   badgeBg: "rgba(99,102,241,0.15)",
@@ -261,7 +288,7 @@ export default function ProductDetail() {
                   key: "rc-inter",
                   icon: <Zap size={16} />,
                   label: "Intermedio",
-                  sublabel: "7 niveles residual",
+                  sublabel: "7 niveles · 50% OFF",
                   price: base * 0.50,
                   badge: "-50%",
                   badgeBg: "rgba(30,192,213,0.15)",
@@ -274,7 +301,7 @@ export default function ProductDetail() {
                   key: "rc-vip",
                   icon: <Crown size={16} />,
                   label: "VIP",
-                  sublabel: "10 niveles · máximo ahorro",
+                  sublabel: "10 niveles · 50% OFF",
                   price: base * 0.50,
                   badge: "-50%",
                   badgeBg: "rgba(245,200,66,0.18)",
@@ -287,35 +314,33 @@ export default function ProductDetail() {
 
               return (
                 <div className="mb-5 space-y-3">
-                  {/* ── Activación ── */}
+                  {/* ── Membresía ── */}
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
-                      <span className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-wo-crema-muted">Primera compra · Activación</span>
+                      <span className="font-jakarta text-[10px] font-bold uppercase tracking-widest text-wo-crema-muted">Membresía · Precio por plan</span>
                       <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {activationTiers.map((t) => (
-                        <div key={t.key} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: t.bg, border: `0.5px solid ${t.border}` }}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {membershipTiers.map((t) => (
+                        <div key={t.key} className="rounded-xl p-2.5 flex flex-col gap-1" style={{ background: t.bg, border: `0.5px solid ${t.border}` }}>
                           <div className="flex items-center justify-between">
-                            <span className="text-base leading-none">{t.icon}</span>
-                            {t.badge && (
-                              <span className="font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                                style={{ background: t.badgeBg, color: t.badgeColor }}>
-                                {t.badge}
-                              </span>
-                            )}
+                            <span className="text-sm leading-none" style={{ color: t.priceColor }}>{t.icon}</span>
+                            <span className="font-jakarta text-[9px] font-bold px-1 py-0.5 rounded-full"
+                              style={{ background: t.badgeBg, color: t.badgeColor }}>
+                              {t.badge}
+                            </span>
                           </div>
-                          <p className="font-jakarta text-[11px] font-semibold text-wo-crema leading-tight">{t.label}</p>
-                          <p className="font-syne font-extrabold text-[20px] leading-none" style={{ color: t.priceColor }}>
+                          <p className="font-jakarta text-[10px] font-semibold text-wo-crema leading-tight">{t.label}</p>
+                          <p className="font-syne font-extrabold text-[16px] leading-none" style={{ color: t.priceColor }}>
                             S/ {t.price.toFixed(2)}
                           </p>
-                          <p className="font-jakarta text-[10px] text-wo-crema-muted leading-tight">{t.sublabel}</p>
+                          <p className="font-jakarta text-[9px] text-wo-crema-muted leading-tight">{t.sublabel}</p>
                         </div>
                       ))}
                     </div>
                     <p className="font-jakarta text-[10px] text-wo-crema-muted/45 text-center mt-1.5 px-2">
-                      La compra de activación no genera comisiones de red.
+                      La compra de membresía no genera comisiones de red.
                     </p>
                   </div>
 

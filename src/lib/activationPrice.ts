@@ -3,19 +3,19 @@ import type { Product } from "@/lib/database.types";
 // ─────────────────────────────────────────────────────────────────────────────
 // ESTRUCTURA DE PRECIOS POR PLAN
 //
-// ACTIVACIÓN (afiliado pending — primera compra obligatoria para activar membresía):
-//   • Básico     → precio público  (sin descuento — el incentivo es la red residual)
-//   • Ejecutivo  → precio público  (sin descuento)
-//   • Intermedio → precio público  (sin descuento)
-//   • VIP        → 50% OFF         (beneficio exclusivo de elegir el plan premium)
+// MEMBRESÍA (afiliado pending — primera compra obligatoria para activar membresía):
+//   • Básico     → SIN DESCUENTO (Precio Público)
+//   • Ejecutivo  → 45% OFF
+//   • Intermedio → 50% OFF
+//   • VIP        → 55% OFF
 //
 // RECOMPRA MENSUAL (afiliado activo — genera comisiones en red):
 //   • Básico     → 40% OFF
-//   • Ejecutivo  → 50% OFF
+//   • Ejecutivo  → 45% OFF
 //   • Intermedio → 50% OFF
-//   • VIP        → 50% OFF
+//   • VIP        → 55% OFF
 //
-// METAS DE ACTIVACIÓN (compra acumulada mínima para activar la membresía):
+// METAS DE MEMBRESÍA (compra acumulada mínima para activar la membresía):
 //   • Básico     → S/   120
 //   • Ejecutivo  → S/   600
 //   • Intermedio → S/ 2,000
@@ -27,25 +27,25 @@ import type { Product } from "@/lib/database.types";
 export const PLAN_ORDER = ["Básico", "Ejecutivo", "Intermedio", "VIP"] as const;
 export type PlanName = typeof PLAN_ORDER[number];
 
-// ── Activación ────────────────────────────────────────────────────────────────
+// ── Membresía (primera compra) ────────────────────────────────────────────────
 
 /**
- * Factor multiplicador sobre public_price durante la activación.
- * Solo VIP recibe descuento en la compra de activación.
+ * Factor multiplicador sobre public_price durante la membresía (primera compra).
+ * Todos los planes reciben descuento desde el día de afiliación.
  */
 export const ACTIVATION_FACTOR: Record<string, number> = {
-  Básico:     1.00,   // sin descuento — paga precio público
-  Ejecutivo:  1.00,   // sin descuento — paga precio público
-  Intermedio: 1.00,   // sin descuento — paga precio público
-  VIP:        0.50,   // 50% OFF
+  Básico:     1.00,   // 0% OFF
+  Ejecutivo:  0.55,   // 45% OFF
+  Intermedio: 0.50,   // 50% OFF
+  VIP:        0.45,   // 55% OFF
 };
 
-/** Porcentaje de descuento visible en la UI durante activación (0 = sin badge) */
+/** Porcentaje de descuento visible en la UI durante membresía */
 export const ACTIVATION_DISCOUNT_PCT: Record<string, number> = {
   Básico:     0,
-  Ejecutivo:  0,
-  Intermedio: 0,
-  VIP:        50,
+  Ejecutivo:  45,
+  Intermedio: 50,
+  VIP:        55,
 };
 
 /** Metas de compra acumulada para completar la activación (en S/) */
@@ -63,16 +63,16 @@ export const ACTIVATION_TARGET: Record<string, number> = {
  */
 export const ACTIVATION_MAX_OVERAGE = 100;
 
-/** Tope absoluto del carrito de activación (total_sales + cart total ≤ cap) */
+/** Tope absoluto del carrito de membresía (total_sales + cart total ≤ cap) */
 export function getActivationCap(plan: string): number {
-  // Solo aplicamos tope a VIP porque es el único con descuento (50% OFF) de activación
-  if (plan !== "VIP") return Infinity;
+  // Solo aplicamos tope a planes con descuento de membresía (Ejecutivo+)
+  // Para el Básico, al ser precio público, permitimos mayor margen o mantenemos el estándar
   return (ACTIVATION_TARGET[plan] ?? 120) + ACTIVATION_MAX_OVERAGE;
 }
 
 /**
- * Precio de activación de un producto para el plan dado.
- * Básico e Intermedio pagan precio público; VIP obtiene 50% OFF.
+ * Precio de membresía de un producto para el plan dado.
+ * Básico SIN DESC | Ejecutivo 45% OFF | Intermedio 50% OFF | VIP 55% OFF.
  */
 export function getActivationPrice(product: Product, plan: string): number {
   const base   = product.public_price ?? product.price;
@@ -81,8 +81,8 @@ export function getActivationPrice(product: Product, plan: string): number {
 }
 
 /**
- * ¿El plan tiene descuento de activación visible?
- * Solo VIP — para ocultar el badge en Básico e Intermedio.
+ * ¿El plan tiene descuento de membresía visible?
+ * Todos los planes tienen descuento, por lo que siempre retorna true si el plan existe.
  */
 export function hasActivationDiscount(plan: string): boolean {
   return (ACTIVATION_DISCOUNT_PCT[plan] ?? 0) > 0;

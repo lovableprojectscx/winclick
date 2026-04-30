@@ -114,7 +114,7 @@ export default function CartDrawer() {
                     <TrendingUp size={12} style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))" }} />
                     <span className="font-jakarta text-[11px] font-bold"
                       style={{ color: willActivate ? "hsl(var(--secondary))" : "hsl(var(--primary))" }}>
-                      {willActivate ? "¡Compra activa tu membresía!" : atCap ? "Tope máximo alcanzado" : `Activación ${affiliate!.package}`}
+                      {willActivate ? "¡Compra activa tu membresía!" : atCap ? "Tope máximo alcanzado" : `Membresía ${affiliate!.package}`}
                     </span>
                   </div>
                   <span className="font-jakarta text-[11px] font-bold text-wo-crema-muted">

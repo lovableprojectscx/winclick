@@ -24,6 +24,7 @@ export default function Navbar() {
   const links = [
     { to: "/catalogo", label: "Productos" },
     { to: "/planes", label: "Planes" },
+    { to: "/bonos", label: "Bonos" },
     { to: "/programa-afiliados", label: "Ganar" },
     { to: "/contacto", label: "Contacto" },
   ];

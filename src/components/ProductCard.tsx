@@ -163,13 +163,13 @@ export default function ProductCard({ product, affiliateCode, storeCtx }: Props)
 
         {/* ── Badges — SOLO en tienda WinClick ────────────────────────────── */}
 
-        {/* Badge activación VIP */}
+        {/* Badge membresía — descuento por plan */}
         {activationDiscountPct != null && (
           <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
             style={{ background: "rgba(245,200,66,0.14)", border: "0.5px solid rgba(245,200,66,0.45)" }}>
-            <span style={{ fontSize: "9px" }}>👑</span>
+            <span style={{ fontSize: "9px" }}>★</span>
             <span className="font-jakarta font-bold text-[10px]" style={{ color: "#D4A017" }}>
-              {activationDiscountPct}% OFF · Beneficio VIP
+              {activationDiscountPct}% OFF · Membres.
             </span>
           </div>
         )}

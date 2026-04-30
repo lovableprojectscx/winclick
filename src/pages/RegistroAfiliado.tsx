@@ -10,9 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const packages = [
   { name: "Básico"      as const, investment: 120,   depthUnlocked: 3,  discount: 40, activationDiscount: 0 },
-  { name: "Ejecutivo"   as const, investment: 600,   depthUnlocked: 5,  discount: 50, activationDiscount: 0 },
-  { name: "Intermedio"  as const, investment: 2000,  depthUnlocked: 7,  discount: 50, activationDiscount: 0 },
-  { name: "VIP"         as const, investment: 10000, depthUnlocked: 10, discount: 50, activationDiscount: 50 },
+  { name: "Ejecutivo"   as const, investment: 600,   depthUnlocked: 5,  discount: 45, activationDiscount: 45 },
+  { name: "Intermedio"  as const, investment: 2000,  depthUnlocked: 7,  discount: 50, activationDiscount: 50 },
+  { name: "VIP"         as const, investment: 10000, depthUnlocked: 10, discount: 55, activationDiscount: 55 },
 ];
 
 const packageFeatures: Record<PackageType, string[]> = {
