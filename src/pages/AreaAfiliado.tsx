@@ -85,6 +85,23 @@ export default function AreaAfiliado() {
 
   const visibleNetwork = network.filter((n) => n.level <= currentPackage.depthUnlocked);
 
+  // ─── CÁLCULO DE REACTIVACIÓN (S/ 300) ──────────────────────────────────
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const monthlyPurchases = myOrders
+    .filter(o => {
+      const orderDate = new Date(o.created_at);
+      const isThisMonth = orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+      const isValidStatus = ["aprobado", "enviado", "entregado"].includes(o.status);
+      return isThisMonth && isValidStatus;
+    })
+    .reduce((sum, o) => sum + o.total, 0);
+
+  const qualificationGoal = 300;
+  const progressPercent = Math.min(Math.round((monthlyPurchases / qualificationGoal) * 100), 100);
+  const isQualified = monthlyPurchases >= qualificationGoal;
+
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-16">
@@ -208,6 +225,53 @@ export default function AreaAfiliado() {
         {activeTab === "inicio" && <>
         
         {/* Qualification Status Indicator */}
+        {/* Medidor de Calificación Mensual */}
+        <div className="bg-wo-grafito rounded-2xl p-6 relative overflow-hidden mb-8 shadow-2xl" style={{ border: "0.5px solid rgba(255,255,255,0.08)" }}>
+          <div className="absolute top-0 right-0 p-4 opacity-5">
+            <TrendingUp size={120} />
+          </div>
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isQualified ? "bg-secondary text-secondary-foreground" : "bg-primary/20 text-primary"}`}>
+                  {isQualified ? "Calificado ✓" : "En Proceso"}
+                </span>
+                <span className="font-jakarta text-[11px] text-wo-crema-muted">Meta Mensual: S/ {qualificationGoal}</span>
+              </div>
+              <h3 className="font-syne font-extrabold text-2xl text-wo-crema mb-1">
+                Calificación del Mes
+              </h3>
+              <p className="font-jakarta text-sm text-wo-crema-muted max-w-md">
+                {isQualified 
+                  ? "¡Excelente! Has alcanzado la meta de compras para calificar al siguiente mes."
+                  : `Te faltan S/ ${(qualificationGoal - monthlyPurchases).toFixed(2)} en compras este mes para mantenerte activo.`}
+              </p>
+              {!isQualified && (
+                <Link 
+                  to="/catalogo" 
+                  className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-jakarta text-xs font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all"
+                >
+                  <ShoppingBag size={14} /> Hacer mi compra ahora
+                </Link>
+              )}
+            </div>
+
+            <div className="w-full md:w-64">
+              <div className="flex justify-between items-end mb-2">
+                <span className="font-syne font-bold text-primary text-xl">S/ {monthlyPurchases.toFixed(2)}</span>
+                <span className="font-jakarta text-xs text-wo-crema-muted font-bold">{progressPercent}%</span>
+              </div>
+              <div className="h-3 w-full bg-wo-carbon rounded-full overflow-hidden p-0.5 border border-white/5">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ${isQualified ? "bg-secondary shadow-[0_0_10px_rgba(30,192,213,0.5)]" : "bg-primary shadow-[0_0_10px_rgba(232,116,26,0.5)]"}`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className={`rounded-2xl p-4 flex items-center gap-4 border transition-all duration-300 ${
             !isPending && !isSuspended 
@@ -222,18 +286,18 @@ export default function AreaAfiliado() {
               {!isPending && !isSuspended ? <Check size={20} strokeWidth={3} /> : isPending ? <Clock size={20} /> : <AlertTriangle size={20} />}
             </div>
             <div>
-              <p className="font-jakarta text-[10px] uppercase font-bold tracking-widest opacity-50 mb-0.5">Estado de Calificación</p>
+              <p className="font-jakarta text-[10px] uppercase font-bold tracking-widest opacity-50 mb-0.5">Estado de Cuenta</p>
               <h4 className={`font-syne font-bold text-base leading-tight ${
                 !isPending && !isSuspended ? "text-secondary" : isPending ? "text-primary" : "text-destructive"
               }`}>
-                {!isPending && !isSuspended ? "Cuenta Calificada" : isPending ? "Pendiente de Activación" : "Cuenta Suspendida"}
+                {!isPending && !isSuspended ? "Cuenta Activa" : isPending ? "Pago Pendiente" : "Cuenta Suspendida"}
               </h4>
               <p className="font-jakarta text-[11px] text-wo-crema-muted mt-1 leading-snug">
                 {!isPending && !isSuspended 
-                  ? "¡Felicidades! Estás apto para recibir todas las comisiones de tu red." 
+                  ? "Estás calificado para cobrar comisiones este periodo." 
                   : isPending 
-                    ? "Completa tu meta de compra para empezar a generar ganancias." 
-                    : "Realiza tu recompra mensual para reactivar el cobro de comisiones."}
+                    ? "Sube tu comprobante de activación para empezar." 
+                    : "Tu cuenta está inactiva. Regulariza tus compras mensuales."}
               </p>
             </div>
           </div>

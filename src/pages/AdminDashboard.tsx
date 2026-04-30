@@ -897,26 +897,47 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
+                    {/* Controles de Estado Rápidos */}
+                    <div className="flex items-center justify-between gap-2 mb-5 p-2 bg-wo-grafito/50 rounded-xl border border-white/5">
+                      <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold ml-1">Estado:</p>
+                      <div className="flex gap-1">
+                        {(["active", "suspended", "pending"] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => handleStatusChange(a.id, s)}
+                            className={`px-2 py-1 rounded-lg font-jakarta text-[9px] font-extrabold uppercase transition-all ${
+                              a.account_status === s 
+                                ? (s === "active" ? "bg-secondary text-secondary-foreground shadow-lg shadow-secondary/20" : s === "suspended" ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20" : "bg-wo-crema/20 text-wo-crema")
+                                : "text-wo-crema/20 hover:bg-white/5"
+                            }`}
+                          >
+                            {s === "active" ? "Activar" : s === "suspended" ? "Suspender" : "Pendiente"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="flex gap-2 pt-4 border-t border-white/[0.06]">
                       <button 
                         onClick={() => { setViewingAffiliate(a); setAffDetailTab("info"); }} 
                         className="flex-1 flex items-center justify-center gap-2 font-jakarta font-bold text-xs py-2.5 rounded-xl bg-wo-carbon border border-white/5 hover:bg-wo-grafito hover:border-white/10 transition-all text-wo-crema-muted hover:text-wo-crema shadow-sm"
                       >
-                        <Eye size={12} className="text-primary" /> Ver Detalle
+                        <Eye size={12} className="text-primary" /> Perfil
                       </button>
+                      <a 
+                        href={`https://wa.me/${a.contact_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${a.name.split(" ")[0]}, te saluda el Admin de WinClick.`)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-wo-carbon border border-white/5 hover:bg-[#25D366]/10 hover:border-[#25D366]/20 transition-all text-wo-crema-muted hover:text-[#25D366] shadow-sm"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle size={13} />
+                      </a>
                       <button 
                         onClick={() => openEditAffiliate(a)} 
                         className="p-2.5 rounded-xl bg-wo-carbon border border-white/5 hover:bg-wo-grafito hover:border-white/10 transition-all text-wo-crema-muted hover:text-wo-crema shadow-sm"
                         title="Editar"
                       >
                         <Edit2 size={13} />
-                      </button>
-                      <button 
-                        onClick={() => setConfirmDeleteId(a.id)} 
-                        className="p-2.5 rounded-xl bg-destructive/5 border border-destructive/10 hover:bg-destructive/20 transition-all text-destructive shadow-sm"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={13} />
                       </button>
                     </div>
                   </div>
