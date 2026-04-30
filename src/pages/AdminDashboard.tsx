@@ -17,6 +17,7 @@ import {
   useCreateCategory, useUpdateCategory, useDeleteCategory, useDeleteProduct,
   usePendingCommissions, useTotalWallets,
   useAllWallets, useAllPendingCommissions,
+  useLiquidateCommission, useLiquidateAllCommissions,
   type OrderWithItems, type PaymentWithAffiliate,
 } from "@/hooks/useAdmin";
 import { useBusinessSettings } from "@/hooks/useAffiliate";
@@ -24,7 +25,7 @@ import type { Affiliate, Product } from "@/lib/database.types";
 import {
   Settings, ShoppingBag, Users, Package, BarChart3, Wallet, CreditCard,
   AlertTriangle, Search, Eye, CheckCircle, XCircle, ArrowUpRight,
-  ArrowDownRight, TrendingUp, Target,
+  ArrowDownRight, TrendingUp, Target, ArrowRightCircle,
   DollarSign, Download, Edit2, Trash2, Plus, Tag,
 } from "lucide-react";
 
@@ -49,7 +50,7 @@ function statusBadge(status: string) {
     pendiente: "bg-primary/15 text-primary",
     rechazado: "bg-destructive/15 text-destructive",
     entregado: "bg-secondary/15 text-secondary",
-    procesando: "bg-wo-crema/10 text-wo-crema-muted",
+    procesando: "bg-primary/15 text-primary",
     enviado: "bg-wo-crema/10 text-wo-crema-muted",
     cancelado: "bg-destructive/15 text-destructive",
   };
@@ -186,6 +187,7 @@ export default function AdminDashboard() {
   const [catColor,       setCatColor]       = useState("#F59E0B");
   const [confirmDeleteCatId, setConfirmDeleteCatId] = useState<string | null>(null);
   const [logisticsTab,   setLogisticsTab]   = useState<"por_enviar" | "en_camino" | "entregados">("por_enviar");
+  const [logisticsSearch, setLogisticsSearch] = useState("");
   const [trackingModal,  setTrackingModal]  = useState<OrderWithItems | null>(null);
   const [trackingVal,    setTrackingVal]    = useState("");
 
@@ -201,6 +203,8 @@ export default function AdminDashboard() {
   const deleteCategory = useDeleteCategory();
   const approvePayment        = useApprovePayment();
   const rejectPayment         = useRejectPayment();
+  const liquidateCommission   = useLiquidateCommission();
+  const liquidateAll          = useLiquidateAllCommissions();
   const updateAffiliate       = useUpdateAffiliate();
   const updateProduct         = useUpdateProduct();
   const createProduct         = useCreateProduct();
@@ -736,7 +740,7 @@ export default function AdminDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex gap-2">
                 {[
-                  { id: "por_enviar", label: "📦 Por Enviar", count: orders.filter(o => o.status === "aprobado").length },
+                  { id: "por_enviar", label: "📦 Por Enviar", count: orders.filter(o => o.status === "procesando").length },
                   { id: "en_camino",  label: "🚚 En Camino",  count: orders.filter(o => o.status === "enviado").length },
                   { id: "entregados", label: "✅ Entregados", count: orders.filter(o => o.status === "entregado").length },
                 ].map(t => (
@@ -747,11 +751,26 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
+
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-wo-crema-muted" />
+                <input
+                  type="text"
+                  placeholder="Buscar por # o cliente..."
+                  value={logisticsSearch}
+                  onChange={(e) => setLogisticsSearch(e.target.value)}
+                  className="pl-9 pr-4 py-2 bg-wo-carbon rounded-xl font-jakarta text-xs text-wo-crema placeholder:text-wo-crema-muted w-64 border border-white/5"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
               {orders.filter(o => {
-                if (logisticsTab === "por_enviar") return o.status === "aprobado";
+                const matchesSearch = o.order_number.toLowerCase().includes(logisticsSearch.toLowerCase()) || 
+                                     o.customer_name.toLowerCase().includes(logisticsSearch.toLowerCase());
+                if (!matchesSearch) return false;
+                
+                if (logisticsTab === "por_enviar") return o.status === "procesando";
                 if (logisticsTab === "en_camino")  return o.status === "enviado";
                 if (logisticsTab === "entregados") return o.status === "entregado";
                 return false;
@@ -765,7 +784,25 @@ export default function AdminDashboard() {
                       <h4 className="font-syne font-bold text-wo-crema text-base">{o.order_number} — {o.customer_name}</h4>
                       <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5 flex items-center gap-1.5 text-secondary">
                         <Tag size={12} /> {o.shipping_address || "Dirección no especificada"}
+                        {o.shipping_address && (
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(o.shipping_address!); }}
+                            className="p-1 rounded hover:bg-white/10 text-wo-crema/20 hover:text-secondary transition-colors"
+                            title="Copiar dirección"
+                          >
+                            <Copy size={10} />
+                          </button>
+                        )}
                       </p>
+                      {o.order_items && o.order_items.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {o.order_items.map((item, idx) => (
+                            <span key={idx} className="px-1.5 py-0.5 bg-white/5 rounded text-[9px] text-wo-crema-muted border border-white/5">
+                              {item.quantity}x {item.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -780,15 +817,15 @@ export default function AdminDashboard() {
                         <Edit2 size={14} /> {o.tracking_number ? "Editar Tracking" : "Asignar Tracking"}
                       </button>
 
-                      {o.status === "aprobado" && (
-                        <button onClick={() => updateOrderStatus.mutate({ id: o.id, status: "enviado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
+                      {o.status === "procesando" && (
+                        <button onClick={() => updateOrderStatus.mutate({ orderId: o.id, status: "enviado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
                           <CheckCircle size={14} /> Marcar como Enviado
                         </button>
                       )}
 
                       {o.status === "enviado" && (
                         <>
-                          <button onClick={() => updateOrderStatus.mutate({ id: o.id, status: "entregado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
+                          <button onClick={() => updateOrderStatus.mutate({ orderId: o.id, status: "entregado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
                             <CheckCircle size={14} /> Confirmar Entrega
                           </button>
                           <a 
@@ -1333,13 +1370,30 @@ export default function AdminDashboard() {
             {/* ── Por acreditar (comisiones pendientes a liquidar) ── */}
             {billeraSubTab === "por_acreditar" && (
               <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
-                <p className="px-5 pt-4 font-jakarta text-xs text-wo-crema-muted">
-                  Comisiones generadas por ventas entregadas que aún no se han acreditado en las billeteras de los afiliados.
-                </p>
+                <div className="px-5 pt-4 pb-2 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-jakarta text-xs text-wo-crema-muted">
+                      Comisiones generadas por ventas entregadas que aún no se han acreditado en las billeteras de los afiliados.
+                    </p>
+                  </div>
+                  {pendingCommRows.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (confirm("¿Estás seguro de acreditar TODAS las comisiones pendientes? Esta acción moverá el saldo a las billeteras de los afiliados.")) {
+                          liquidateAll.mutate();
+                        }
+                      }}
+                      disabled={liquidateAll.isPending}
+                      className="px-4 py-2 bg-secondary text-secondary-foreground font-jakarta font-bold text-[11px] rounded-wo-pill hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {liquidateAll.isPending ? "Procesando..." : "Liquidar todas"} <ArrowRightCircle size={14} />
+                    </button>
+                  )}
+                </div>
                 <div className="overflow-x-auto mt-3">
                   <table className="w-full">
                     <thead><tr style={rowBorder}>
-                      {["Afiliado", "Código", "Nivel", "Pedido", "Monto", "Fecha"].map((h) => (
+                      {["Afiliado", "Código", "Nivel", "Pedido", "Monto", "Fecha", "Acciones"].map((h) => (
                         <th key={h} className="text-left px-4 py-3 font-jakarta text-[11px] text-wo-crema-muted uppercase">{h}</th>
                       ))}
                     </tr></thead>
@@ -1356,6 +1410,20 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted font-mono">{c.order_id?.slice(0, 8) ?? "—"}…</td>
                           <td className="px-4 py-3 font-syne font-bold text-sm text-destructive">S/ {c.amount.toFixed(2)}</td>
                           <td className="px-4 py-3 font-jakarta text-xs text-wo-crema-muted">{new Date(c.created_at).toLocaleDateString("es-PE")}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => {
+                                if (confirm(`¿Acreditar S/ ${c.amount.toFixed(2)} a la billetera de ${c.affiliate?.name}?`)) {
+                                  liquidateCommission.mutate(c.id);
+                                }
+                              }}
+                              disabled={liquidateCommission.isPending}
+                              className="p-2 rounded bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors disabled:opacity-50"
+                              title="Acreditar saldo"
+                            >
+                              {liquidateCommission.isPending ? <div className="w-4 h-4 border-2 border-secondary border-t-transparent rounded-full animate-spin" /> : <CheckCircle size={14} />}
+                            </button>
+                          </td>
                         </tr>
                       ))}
                       {pendingCommRows.length === 0 && (

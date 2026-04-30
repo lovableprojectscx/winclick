@@ -24,9 +24,9 @@ const PLANS: Plan[] = [
     color: "hsl(var(--primary))", border: "rgba(232,116,26,0.30)", bg: "rgba(232,116,26,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
-      { icon: <Award size={15} />,          text: "Ganancia: 3 Niveles Residual" },
+      { icon: <Award size={15} />,          text: "Ganancia: 3 Niveles de Red" },
       { icon: <X size={15} className="text-destructive" />, text: "No cobra Bonos de Patrocinio" },
-      { icon: <ShoppingBag size={15} />,    text: "Membresía: Precio Público" },
+      { icon: <ShoppingBag size={15} />,    text: "Membresía: Sin descuento inicial" },
       { icon: <CheckCircle2 size={15} />,   text: "Ahorro: 40% OFF en Recompra" },
     ],
   },
@@ -36,7 +36,7 @@ const PLANS: Plan[] = [
     color: "#6366f1", border: "rgba(99,102,241,0.30)", bg: "rgba(99,102,241,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
-      { icon: <Award size={15} />,          text: "Ganancia: 5 Niveles Residual" },
+      { icon: <Award size={15} />,          text: "Ganancia: 5 Niveles de Red" },
       { icon: <ShoppingBag size={15} />,    text: "Ahorro: 45% Inicial | 50% Recompra" },
       { icon: <LayoutDashboard size={15} />,text: "Soporte Prioritario" },
     ],
@@ -48,7 +48,7 @@ const PLANS: Plan[] = [
     glow: "0 0 48px rgba(30,192,213,0.18), 0 0 0 1px rgba(30,192,213,0.30)",
     popular: true,
     details: [
-      { icon: <Award size={15} />,          text: "Ganancia: 7 Niveles Residual" },
+      { icon: <Award size={15} />,          text: "Ganancia: 7 Niveles de Red" },
       { icon: <ShoppingBag size={15} />,    text: "Ahorro: 50% OFF Permanente" },
       { icon: <Network size={15} />,        text: "Red de Alta Profundidad" },
     ],
@@ -59,7 +59,7 @@ const PLANS: Plan[] = [
     color: "#C9920A", border: "rgba(201,146,10,0.35)", bg: "rgba(201,146,10,0.06)", glow: "0 0 0px transparent",
     popular: false,
     details: [
-      { icon: <Award size={15} />,          text: "Ganancia: 10 Niveles Residual" },
+      { icon: <Award size={15} />,          text: "Ganancia: 10 Niveles de Red" },
       { icon: <Zap size={15} />,            text: "Ahorro: 55% Inicial | 50% Recompra" },
       { icon: <Star size={15} />,           text: "Bono Especial Nivel 8 (3%)" },
     ],
@@ -67,10 +67,10 @@ const PLANS: Plan[] = [
 ];
 
 const FAQS = [
-  { q: "¿La primera membresía genera comisiones para mi red?",  a: "No. La membresía inicial activa tu cuenta con descuentos exclusivos según tu plan, pero no genera comisiones en la red. Las comisiones arrancan desde tu primera recompra mensual." },
-  { q: "¿Qué es la recompra mensual?",                          a: "Es la compra mensual que realiza cada afiliado activo. Tendrás entre 40% y 55% de descuento según tu plan, y estas compras sí generan comisiones para toda la red." },
-  { q: "¿El descuento aplica a cualquier producto?",            a: "Sí. En membersía y recompras mensuales, el descuento de tu plan aplica a cualquier producto del catálogo, sin mínimo de compra." },
-  { q: "¿Puedo subir de plan después?",                         a: "Sí. Puedes hacer upgrade cuando quieras y desbloquear más niveles de comisión y mayor descuento desde ese momento." },
+  { q: "¿La primera membresía genera comisiones para mi red?",  a: "No. La membresía inicial activa tu cuenta con beneficios exclusivos según tu plan, pero no genera comisiones en la red. Las comisiones (ganancia de equipo) arrancan desde tu primera recompra mensual." },
+  { q: "¿Qué es la ganancia residual de red?",                  a: "Es la comisión que recibes por cada compra que realicen las personas que se unan a tu equipo, hasta la profundidad (niveles) que desbloquee tu plan." },
+  { q: "¿Qué es la recompra mensual?",                          a: "Es la compra mensual que realiza cada afiliado activo para mantenerse calificado. Tendrás entre 40% y 50% de descuento según tu plan, y estas compras sí generan comisiones para toda la red." },
+  { q: "¿El descuento aplica a cualquier producto?",            a: "Sí. El descuento de tu plan aplica a cualquier producto del catálogo, sin mínimo de compra." },
 ];
 
 const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop&auto=format&q=82";

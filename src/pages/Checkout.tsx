@@ -286,7 +286,7 @@ export default function Checkout() {
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <h1 className="font-syne font-extrabold text-[26px] sm:text-[28px] text-wo-crema mb-4">Checkout</h1>
+        <h1 className="font-syne font-extrabold text-[26px] sm:text-[28px] text-wo-crema mb-4">Finalizar Compra</h1>
 
         {/* ── Banner contextual ─────────────────────────────────────────── */}
         {!session ? (
@@ -576,7 +576,7 @@ export default function Checkout() {
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { key: "dni",   label: "DNI",     placeholder: "12345678",      maxLength: 8, sensitive: true },
+                  { key: "dni",   label: "DNI / CE",     placeholder: "Número de documento",      maxLength: 12, sensitive: true },
                   { key: "phone", label: "Teléfono", placeholder: "+51 987654321",              sensitive: true },
                 ].map((f) => (
                   <div key={f.key}>

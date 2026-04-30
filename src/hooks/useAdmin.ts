@@ -136,6 +136,57 @@ export function useRejectPayment() {
   });
 }
 
+// ─── Liquidar/Acreditar Comisión individual ───────────────────────────────────
+
+export function useLiquidateCommission() {
+  const { session } = useAuth();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commissionId: string) => {
+      // @ts-ignore - RPC puede no estar en tipos todavía
+      const { data, error } = await supabase.rpc("liquidate_commission", {
+        p_commission_id: commissionId,
+        p_admin_id:      session!.user.id,
+      });
+      if (error) throw error;
+      if (data && !(data as any).success) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-all-pending-commissions"] });
+      qc.invalidateQueries({ queryKey: ["admin-total-wallets"] });
+      qc.invalidateQueries({ queryKey: ["admin-all-wallets"] });
+      qc.invalidateQueries({ queryKey: ["admin-pending-commissions"] });
+    },
+  });
+}
+
+// ─── Liquidar/Acreditar TODAS las comisiones pendientes ────────────────────────
+
+export function useLiquidateAllCommissions() {
+  const { session } = useAuth();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      // @ts-ignore - RPC puede no estar en tipos todavía
+      const { data, error } = await supabase.rpc("liquidate_all_pending_commissions", {
+        p_admin_id: session!.user.id,
+      });
+      if (error) throw error;
+      if (data && !(data as any).success) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-all-pending-commissions"] });
+      qc.invalidateQueries({ queryKey: ["admin-total-wallets"] });
+      qc.invalidateQueries({ queryKey: ["admin-all-wallets"] });
+      qc.invalidateQueries({ queryKey: ["admin-pending-commissions"] });
+    },
+  });
+}
+
 // ─── Comisiones de tipo breakage (remanentes) ─────────────────────────────────
 
 export type BreakageCommission = Commission & {

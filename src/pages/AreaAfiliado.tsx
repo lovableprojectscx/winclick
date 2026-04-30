@@ -612,12 +612,14 @@ export default function AreaAfiliado() {
               {myOrders.map((order) => {
                 const statusColor =
                   order.status === "entregado"  ? "text-secondary bg-secondary/10 border-secondary/30" :
-                  order.status === "aprobado"   ? "text-primary bg-primary/10 border-primary/30" :
+                  order.status === "procesando" ? "text-primary bg-primary/10 border-primary/30" :
+                  order.status === "enviado"    ? "text-[#6366f1] bg-[#6366f1]/10 border-[#6366f1]/30" :
                   order.status === "cancelado"  ? "text-destructive bg-destructive/10 border-destructive/30" :
                   "text-wo-crema-muted bg-wo-carbon border-wo-crema/10";
                 const statusLabel: Record<string, string> = {
                   pendiente:  "Pendiente",
-                  aprobado:   "Aprobado",
+                  procesando: "Aprobado",
+                  enviado:    "Enviado",
                   entregado:  "Entregado",
                   cancelado:  "Cancelado",
                 };
@@ -645,15 +647,15 @@ export default function AreaAfiliado() {
                       <div className="absolute top-4 left-[10%] right-[10%] h-[1.5px] bg-white/5 z-0" />
                       {/* Línea de progreso */}
                       <div className="absolute top-4 left-[10%] h-[1.5px] bg-primary transition-all duration-500 z-0" 
-                        style={{ width: order.status === "entregado" ? "80%" : order.status === "enviado" ? "53%" : order.status === "aprobado" ? "26%" : "0%" }} />
+                        style={{ width: order.status === "entregado" ? "80%" : order.status === "enviado" ? "53%" : order.status === "procesando" ? "26%" : "0%" }} />
 
                       {[
                         { s: "pendiente", icon: <Clock size={12} />, label: "Pendiente" },
-                        { s: "aprobado",  icon: <Check size={12} />, label: "Pagado" },
+                        { s: "procesando", icon: <Check size={12} />, label: "Pagado" },
                         { s: "enviado",   icon: <Package size={12} />, label: "En Camino" },
                         { s: "entregado", icon: <Award size={12} />, label: "Recibido" },
                       ].map((step, i) => {
-                        const states = ["pendiente", "aprobado", "enviado", "entregado"];
+                        const states = ["pendiente", "procesando", "enviado", "entregado"];
                         const currentIdx = states.indexOf(order.status);
                         const isDone = currentIdx >= i;
                         const isCurrent = currentIdx === i;
@@ -682,7 +684,16 @@ export default function AreaAfiliado() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold">Destino de entrega</p>
-                            <p className="font-jakarta text-xs text-wo-crema truncate">{order.shipping_address}</p>
+                            <p className="font-jakarta text-xs text-wo-crema flex items-center gap-2">
+                              {order.shipping_address}
+                              <button 
+                                onClick={() => { navigator.clipboard.writeText(order.shipping_address!); }}
+                                className="p-1 rounded hover:bg-white/10 text-wo-crema/20 hover:text-primary transition-colors"
+                                title="Copiar dirección"
+                              >
+                                <Copy size={10} />
+                              </button>
+                            </p>
                             {order.tracking_number && (
                               <div className="mt-2 flex items-center justify-between bg-primary/10 rounded-lg px-2.5 py-2 border border-primary/20">
                                 <span className="font-jakarta text-[10px] text-primary font-bold">TRACKING: {order.tracking_number}</span>

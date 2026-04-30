@@ -305,7 +305,7 @@ export default function RegistroAfiliado() {
                 )}
 
                 <InputField label="Nombre completo" k="name" placeholder="Tu nombre completo" value={form.name} onChange={handleInputChange} />
-                <InputField label="DNI" k="dni" placeholder="12345678" maxLength={8} value={form.dni} onChange={handleInputChange} sensitive />
+                <InputField label="DNI / CE" k="dni" placeholder="Documento de identidad" maxLength={12} value={form.dni} onChange={handleInputChange} sensitive />
                 <InputField label="Email" k="email" type="email" placeholder="tu@email.com" value={form.email} onChange={handleInputChange} />
 
                 <div>

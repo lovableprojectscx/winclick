@@ -127,6 +127,20 @@ export default function TiendaAfiliado() {
         ) : (
           <p className="font-jakarta text-sm text-wo-crema-muted text-center py-12">Esta tienda no tiene productos destacados aún.</p>
         )}
+        {/* Como funciona para clientes */}
+        <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            { icon: "🛒", title: "Elige", desc: "Explora el catálogo y añade tus productos favoritos al carrito." },
+            { icon: "💳", title: "Paga", desc: "Realiza tu pago seguro vía Yape, Plin o transferencia bancaria." },
+            { icon: "🚚", title: "Recibe", desc: "Enviamos tu pedido a la dirección que indiques en todo el país." },
+          ].map((s, i) => (
+            <div key={i} className="text-center p-6 rounded-2xl bg-wo-carbon/20 border border-white/5">
+              <div className="text-3xl mb-3">{s.icon}</div>
+              <h4 className="font-syne font-bold text-wo-crema mb-2">{s.title}</h4>
+              <p className="font-jakarta text-xs text-wo-crema-muted leading-relaxed">{s.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Store footer */}
