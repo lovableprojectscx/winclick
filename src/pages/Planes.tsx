@@ -256,7 +256,7 @@ function CatalogPrices() {
               ? { background: p.color, color: "hsl(var(--background))" }
               : { background: "rgba(255,255,255,0.04)", color: "rgba(248,244,236,0.45)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
             <span style={{ color: activePlan === p.key ? "hsl(var(--background))" : p.color }}>{p.icon}</span>
-            {p.label} <span className="opacity-75">{p.key === "Básico" ? "0%" : p.key === "Ejecutivo" ? "45%" : "50%+"} OFF</span>
+            Socio {p.key} <span className="opacity-75">{p.key === "Básico" ? "40%" : "50%"} OFF</span>
           </button>
         ))}
       </div>
@@ -268,7 +268,7 @@ function CatalogPrices() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {items.map(product => {
             const pub = product.public_price ?? product.price;
-            const factor = plan.key === "Básico" ? 1.00 : plan.key === "Ejecutivo" ? 0.55 : 0.50;
+            const factor = plan.key === "Básico" ? 0.60 : 0.50; // Lógica de Recompra
             const act = pub * factor;
             return (
               <Link key={product.id} to={`/catalogo/${product.slug || product.id}`}
@@ -279,7 +279,7 @@ function CatalogPrices() {
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     onError={e => { (e.currentTarget as HTMLImageElement).src = IMG_FALLBACK; }} />
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full font-jakarta text-[10px] font-extrabold"
-                    style={{ background: plan.color, color: "hsl(var(--background))" }}>{plan.key === "Básico" ? "PÚBLICO" : `-${plan.discount}%`}</div>
+                    style={{ background: plan.color, color: "hsl(var(--background))" }}>{plan.key === "Básico" ? "-40%" : "-50%"}</div>
                 </div>
                 <div className="p-3 flex flex-col gap-2 flex-1">
                   <p className="font-jakarta font-semibold text-[12px] text-wo-crema leading-tight line-clamp-2">{product.name}</p>
