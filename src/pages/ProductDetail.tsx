@@ -1,9 +1,11 @@
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Star, Check, Shield, Leaf, Truck, ArrowLeft, Flame, ShoppingBag, Crown, Zap, RefreshCw, AlertTriangle, Sparkles, Target } from "lucide-react";
-import { useProduct } from "@/hooks/useProducts";
+import { useProduct, useStoreProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { parseCustomPrices } from "@/lib/storeContext";
+import { Tag } from "lucide-react";
 import {
   getActivationPrice,
   getRecompraPrice,
@@ -53,11 +55,17 @@ export default function ProductDetail() {
   const isPending      = affiliate?.account_status === "pending";
   const activationPlan = affiliate?.package ?? null;
 
-  const displayPrice = isPending && activationPlan
-    ? getActivationPrice(product, activationPlan)
-    : affiliate
-      ? getRecompraPrice(product, affiliate.package)
-      : (product.public_price ?? product.price);
+  // ── Contexto de Tienda Afiliado (si hay ref code) ──
+  const { data: storeData } = useStoreProducts(refCode ?? "");
+  const customPrices = storeData?.store?.custom_prices ? parseCustomPrices(storeData.store.custom_prices) : {};
+
+  const displayPrice = refCode && customPrices[product.id]
+    ? customPrices[product.id]
+    : isPending && activationPlan
+      ? getActivationPrice(product, activationPlan)
+      : affiliate
+        ? getRecompraPrice(product, affiliate.package)
+        : (product.public_price ?? product.price);
 
   // Badge de descuento visible (todos los planes tienen descuento en membresía)
   const activationDiscountPct = isPending && activationPlan && hasActivationDiscount(activationPlan)
@@ -189,6 +197,11 @@ export default function ProductDetail() {
                   ) : null}
                 </div>
               </div>
+              {refCode && customPrices[product.id] && (
+                <p className="font-jakarta text-[11px] font-bold mt-1.5 flex items-center gap-1.5" style={{ color: "hsl(var(--primary))" }}>
+                  <Tag size={12} /> Precio especial de esta tienda
+                </p>
+              )}
               {isPending && (
                 <p className="font-jakarta text-[10px] text-wo-crema-muted/60 mt-1.5">
                   Precio exclusivo de membresía según tu plan. Luego de activar se mantiene el mismo descuento en recompras.

@@ -215,6 +215,7 @@ export default function Checkout() {
         })),
         affiliateCode: refCode || affiliateCode || undefined,
         receiptUrl: receiptStorageUrl,
+        isDropshipping: !session || (affiliate && refCode && refCode.toUpperCase() !== affiliate.affiliate_code?.toUpperCase()),
       });
       setConfirmedItems([...items]);
       setConfirmedTotal(total);

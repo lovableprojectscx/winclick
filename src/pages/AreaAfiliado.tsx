@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Copy, Check, LogOut, ExternalLink, DollarSign, Users, ShoppingBag, AlertTriangle, Clock, Lock, ArrowUpCircle, X, MessageCircle, Package, TrendingUp, Award, Share2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PackageType } from "@/lib/database.types";
-import { useAffiliateStats, useMyCommissions, useMyNetwork, useMyPayments, useSubmitPayment, useWallet, useUpdateProfile, useProfile, useBusinessSettings } from "@/hooks/useAffiliate";
+import { useAffiliateStats, useMyCommissions, useMyNetwork, useMyPayments, useSubmitPayment, useWallet, useUpdateProfile, useProfile, useBusinessSettings, useMyStoreConfig } from "@/hooks/useAffiliate";
 import { useMyOrders } from "@/hooks/useOrders";
 
 const PACKAGES: { name: PackageType; depthUnlocked: number; investment: number }[] = [
@@ -41,6 +41,7 @@ export default function AreaAfiliado() {
   const { data: network = [] }     = useMyNetwork();
   const { data: payments = [] }    = useMyPayments();
   const { data: walletData }       = useWallet();
+  const { data: storeConfig }      = useMyStoreConfig();
 
   // Mientras se carga el perfil tras el login, muestra un loader
   if (loading) {
@@ -148,12 +149,20 @@ export default function AreaAfiliado() {
                     </span>
                   ) : (
                     <>
-                      <Link to={`/tienda/${affiliate.affiliate_code}`} className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
-                        Ver mi tienda <ExternalLink size={10} />
-                      </Link>
-                      <Link to="/editar-tienda" className="font-jakarta text-xs text-wo-crema-muted hover:text-secondary flex items-center gap-1 transition-colors">
-                        Editar tienda ✏️
-                      </Link>
+                      {!storeConfig ? (
+                        <Link to="/editar-tienda" className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
+                          Crear mi tienda 🏪
+                        </Link>
+                      ) : (
+                        <>
+                          <Link to={`/tienda/${affiliate.affiliate_code}`} className="font-jakarta text-xs text-primary hover:underline flex items-center gap-1">
+                            Ver mi tienda <ExternalLink size={10} />
+                          </Link>
+                          <Link to="/editar-tienda" className="font-jakarta text-xs text-wo-crema-muted hover:text-secondary flex items-center gap-1 transition-colors">
+                            Editar tienda ✏️
+                          </Link>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
@@ -507,18 +516,26 @@ export default function AreaAfiliado() {
                   </button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(`Visita mi tienda Winclick: ${window.location.origin}/tienda/${affiliate.affiliate_code}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 font-jakarta font-bold text-xs px-3 py-2 rounded-wo-btn transition-colors hover:brightness-110"
-                    style={{ background: "rgba(37,211,102,0.12)", color: "rgb(37,211,102)", border: "0.5px solid rgba(37,211,102,0.3)" }}
-                  >
-                    <span>📱</span> Compartir WhatsApp
-                  </a>
-                  <Link to={`/tienda/${affiliate.affiliate_code}`} className="flex items-center gap-1.5 font-jakarta font-bold text-xs px-3 py-2 rounded-wo-btn text-wo-crema-muted hover:text-wo-crema transition-colors" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
-                    <ExternalLink size={11} /> Ver tienda
-                  </Link>
+                  {!storeConfig ? (
+                    <Link to="/editar-tienda" className="flex items-center gap-1.5 font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn bg-primary text-white hover:brightness-110 transition-all">
+                      🚀 Crear mi tienda ahora
+                    </Link>
+                  ) : (
+                    <>
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(`Visita mi tienda Winclick: ${window.location.origin}/tienda/${affiliate.affiliate_code}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 font-jakarta font-bold text-xs px-3 py-2 rounded-wo-btn transition-colors hover:brightness-110"
+                        style={{ background: "rgba(37,211,102,0.12)", color: "rgb(37,211,102)", border: "0.5px solid rgba(37,211,102,0.3)" }}
+                      >
+                        <span>📱</span> Compartir WhatsApp
+                      </a>
+                      <Link to={`/tienda/${affiliate.affiliate_code}`} className="flex items-center gap-1.5 font-jakarta font-bold text-xs px-3 py-2 rounded-wo-btn text-wo-crema-muted hover:text-wo-crema transition-colors" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
+                        <ExternalLink size={11} /> Ver tienda
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1.5 shrink-0">

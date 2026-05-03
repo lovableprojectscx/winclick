@@ -12,14 +12,14 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { useStoreProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
+import { ShoppingCart, MessageCircle, ArrowLeft, Tag } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { MessageCircle } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { parseCustomPrices, type AffiliateStoreContext } from "@/lib/storeContext";
 
 export default function TiendaAfiliado() {
   const { codigo = "" } = useParams<{ codigo: string }>();
-  const { setAffiliateCode } = useCart();
+  const { items, setIsOpen, setAffiliateCode } = useCart();
   const { data, isLoading } = useStoreProducts(codigo);
 
   // Registrar el código de afiliado en el carrito para comisiones
@@ -65,7 +65,34 @@ export default function TiendaAfiliado() {
     : { backgroundColor: store.accent_color ?? "hsl(var(--wo-grafito))" };
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-background">
+      {/* Navbar Minimalista para Tienda de Afiliado */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-wo-grafito/80 backdrop-blur-xl border-b border-white/5 h-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-syne font-bold text-primary-foreground transform group-hover:rotate-12 transition-transform">
+              W
+            </div>
+            <span className="font-syne font-bold text-wo-crema text-lg tracking-tight">
+              {store.store_name || "Winclick"}
+            </span>
+          </Link>
+
+          <button
+            onClick={() => setIsOpen(true)}
+            className="relative w-11 h-11 flex items-center justify-center rounded-xl bg-wo-carbon border border-white/10 text-wo-crema hover:bg-wo-carbon/80 transition-all active:scale-95 group"
+          >
+            <ShoppingCart size={19} className="group-hover:text-primary transition-colors" />
+            {items.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center shadow-lg animate-in zoom-in">
+                {items.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      <div className="pt-16">
       {/* Banner */}
       <div className="relative h-[220px] overflow-hidden bg-cover bg-center" style={bannerBgStyle}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />

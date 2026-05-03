@@ -22,6 +22,7 @@ interface PlaceOrderArgs {
   items:           CartItem[];
   affiliateCode?:  string;
   receiptUrl?:     string;
+  isDropshipping?: boolean;
 }
 
 // ─── Crear pedido ─────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ export function usePlaceOrder() {
         status:               "pendiente",
         affiliate_id:         affiliateId,
         shipping_voucher_url: args.receiptUrl,
+        is_dropshipping:      args.isDropshipping ?? false,
       };
       const { data: order, error: orderError } = await supabase
         .from("orders")

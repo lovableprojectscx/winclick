@@ -43,7 +43,7 @@ const IMG_FALLBACK = "https://images.unsplash.com/photo-1490645935967-10de6ba170
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ProductCard({ product, affiliateCode, storeCtx }: Props) {
-  const { addItem, total } = useCart();
+  const { addItem, total, setIsOpen } = useCart();
   const { session, affiliate } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { toast } = useToast();
@@ -110,6 +110,8 @@ export default function ProductCard({ product, affiliateCode, storeCtx }: Props)
     }
     addItem(product, displayPrice);
     setAdded(true);
+    // Abrir el carrito automáticamente para que el cliente vea su compra
+    setIsOpen(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
