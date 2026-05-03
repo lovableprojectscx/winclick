@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 import {
   canAddActivationItem,
   getActivationCap,
@@ -113,10 +114,16 @@ export default function ProductCard({ product, affiliateCode, storeCtx }: Props)
   };
 
   return (
-    <Link
-      to={`/catalogo/${product.slug || product.id}${affiliateCode ? `?ref=${affiliateCode}` : ""}`}
-      className="product-card group block bg-wo-grafito rounded-wo-card overflow-hidden"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
     >
+      <Link
+        to={`/catalogo/${product.slug || product.id}${affiliateCode ? `?ref=${affiliateCode}` : ""}`}
+        className="product-card group block bg-wo-grafito rounded-wo-card overflow-hidden"
+      >
       {/* Image */}
       <div className="relative h-[160px] sm:h-[180px] bg-wo-carbon overflow-hidden">
         <img
@@ -243,6 +250,7 @@ export default function ProductCard({ product, affiliateCode, storeCtx }: Props)
           </button>
         </div>
       </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 }

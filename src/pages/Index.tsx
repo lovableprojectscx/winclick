@@ -3,6 +3,7 @@ import { Star, TrendingUp, ShoppingBag, Award, Store } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { useProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
+import { motion } from "framer-motion";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const COMMISSION_LEVELS = [
@@ -42,7 +43,12 @@ export default function Index() {
 
         {/* LEFT — contenido */}
         <div className="flex-1 flex items-center px-6 sm:px-10 lg:px-16 pt-28 pb-16 relative z-10">
-          <div className="w-full max-w-[540px]">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="w-full max-w-[540px]"
+          >
 
             <p className="font-jakarta text-[11px] font-bold tracking-[0.22em] uppercase text-primary mb-7">
               Winclick · Perú · Negocio desde casa
@@ -63,24 +69,38 @@ export default function Index() {
               Quiero ser socio →
             </Link>
 
-            <div className="flex gap-8 mt-12 pt-8" style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)" }}>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 1 }}
+              className="flex gap-8 mt-12 pt-8" 
+              style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)" }}
+            >
               {[
                 { num: "+2,400", label: "Socios activos" },
                 { num: "25%",    label: "Comisión máxima" },
                 { num: "10",     label: "Niveles de red" },
               ].map((s, i) => (
-                <div key={i}>
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 + (i * 0.1), duration: 0.5 }}
+                >
                   <p className="font-syne font-extrabold text-[28px] text-wo-crema">{s.num}</p>
                   <p className="font-jakarta text-[12px] text-wo-crema-muted mt-1">{s.label}</p>
-                </div>
+                </motion.div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* RIGHT — foto lifestyle (desktop) */}
         <div className="hidden lg:block relative w-[46vw] shrink-0 min-h-screen">
-          <img
+          <motion.img
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=960&h=1080&fit=crop&crop=top&auto=format&q=88"
             alt="Socia Winclick exitosa"
             className="w-full h-full object-cover"
@@ -94,15 +114,31 @@ export default function Index() {
             style={{ background: "linear-gradient(to top, hsl(214,30%,5%) 0%, transparent 18%)" }}
           />
 
-          <div
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1, duration: 0.8 }}
+            animate={{ y: [0, -8, 0] }}
+            transition={{ 
+              y: { repeat: Infinity, duration: 4, ease: "easeInOut" },
+              default: { delay: 1, duration: 0.8 } 
+            }}
             className="absolute bottom-14 left-10 bg-wo-grafito/90 backdrop-blur-md rounded-xl px-5 py-4"
             style={{ border: "0.5px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
           >
             <p className="font-syne font-extrabold text-[22px] text-primary">S/ 3,800</p>
             <p className="font-jakarta text-[12px] text-wo-crema mt-0.5">Daniela Vega · Rango VIP · /mes</p>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.2, duration: 0.6 }}
+            animate={{ y: [0, 6, 0] }}
+            transition={{ 
+              y: { repeat: Infinity, duration: 5, ease: "easeInOut" },
+              default: { delay: 1.2, duration: 0.6 }
+            }}
             className="absolute top-32 right-8 bg-wo-grafito/85 backdrop-blur-md rounded-xl px-4 py-3"
             style={{ border: "0.5px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
           >
@@ -110,7 +146,7 @@ export default function Index() {
               <span className="w-2 h-2 rounded-full bg-secondary" />
               <p className="font-jakarta text-[12px] font-semibold text-wo-crema">+2,400 socios activos</p>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Mobile: imagen de fondo */}
@@ -126,7 +162,13 @@ export default function Index() {
       </section>
 
       {/* WHY WINCLICK */}
-      <section ref={refWhy} className="reveal bg-wo-grafito overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="bg-wo-grafito overflow-hidden"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[620px]">
 
           <div className="relative min-h-[340px] lg:min-h-full overflow-hidden">
@@ -174,7 +216,13 @@ export default function Index() {
       </section>
 
       {/* COMMISSION STRUCTURE */}
-      <section ref={refCommission} className="reveal bg-background overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="bg-background overflow-hidden"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[580px]">
 
           <div className="flex flex-col justify-center px-8 sm:px-14 lg:px-16 xl:px-20 py-16">
@@ -244,7 +292,13 @@ export default function Index() {
       </section>
 
       {/* FEATURED PRODUCTS */}
-      <section ref={refProducts} className="reveal bg-wo-grafito py-20">
+      <motion.section 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="bg-wo-grafito py-20"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="font-jakarta text-[10px] font-bold tracking-[0.16em] uppercase text-primary mb-3">PRODUCTOS DESTACADOS</p>
           <h2 className="font-syne font-extrabold text-[26px] text-wo-crema mb-10">Productos que respaldan tu negocio.</h2>
@@ -273,7 +327,13 @@ export default function Index() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section ref={refTestimonials} className="reveal bg-background py-20 px-4 sm:px-6 lg:px-8">
+      <motion.section 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="bg-background py-20 px-4 sm:px-6 lg:px-8"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <p className="font-jakarta text-[11px] font-bold tracking-[0.22em] uppercase text-primary mb-4">Socios que ya ganan</p>
@@ -356,7 +416,13 @@ export default function Index() {
       </section>
 
       {/* FINAL CTA */}
-      <section ref={refCta} className="reveal relative overflow-hidden min-h-[520px] flex items-center">
+      <motion.section 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+        className="relative overflow-hidden min-h-[520px] flex items-center"
+      >
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=700&fit=crop&crop=center&auto=format&q=80"
