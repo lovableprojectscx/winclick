@@ -193,5 +193,6 @@ export default function TiendaAfiliado() {
         )}
       </button>
     </div>
+    </div>
   );
 }
