@@ -5,7 +5,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useAffiliate";
 import { usePlaceOrder } from "@/hooks/useOrders";
-import { useBusinessSettings, useUpdateProfile, useStoreProducts } from "@/hooks/useAffiliate";
+import { useBusinessSettings, useUpdateProfile } from "@/hooks/useAffiliate";
+import { useStoreProducts } from "@/hooks/useProducts";
 import { supabase } from "@/lib/supabase";
 import {
   ACTIVATION_TARGET,
