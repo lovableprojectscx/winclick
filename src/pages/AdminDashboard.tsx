@@ -150,6 +150,15 @@ export default function AdminDashboard() {
   const [settingsQrUrl,   setSettingsQrUrl]   = useState("");
   const [settingsQrFile,  setSettingsQrFile]  = useState<File | null>(null);
 
+  const hasSettingsChanges = 
+    settingsYape !== (bizSettings?.yape_number ?? "") ||
+    settingsPlin !== (bizSettings?.plin_number ?? "") ||
+    settingsHolder !== (bizSettings?.account_holder_name ?? "") ||
+    settingsBank !== (bizSettings?.bank_name ?? "") ||
+    settingsAcct !== (bizSettings?.bank_account ?? "") ||
+    settingsWA !== (bizSettings?.whatsapp_number ?? "") ||
+    settingsPhone !== (bizSettings?.contact_phone ?? "");
+
   // Edit affiliate form state
   const [affName,     setAffName]     = useState("");
   const [affYape,     setAffYape]     = useState("");
@@ -1837,9 +1846,15 @@ export default function AdminDashboard() {
 
       {/* ========== MODAL: Configuración ========== */}
       {openSettings && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setOpenSettings(false)}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => {
+          if (hasSettingsChanges && !confirm("Tienes cambios sin guardar en los métodos de pago. ¿Cerrar de todas formas?")) return;
+          setOpenSettings(false);
+        }}>
           <div className="bg-wo-grafito rounded-2xl max-w-3xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style={cardStyle} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setOpenSettings(false)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
+            <button onClick={() => {
+              if (hasSettingsChanges && !confirm("Tienes cambios sin guardar. ¿Cerrar de todas formas?")) return;
+              setOpenSettings(false);
+            }} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema text-lg">✕</button>
             <div className="mb-6 pr-8">
               <p className="font-jakarta text-[10px] uppercase tracking-[0.2em] text-wo-crema-muted mb-2">Configuración</p>
               <h3 className="font-syne font-bold text-2xl text-wo-crema">Centro de control del admin</h3>
@@ -1943,7 +1958,7 @@ export default function AdminDashboard() {
                     <label className="font-jakarta text-[11px] text-wo-crema-muted mb-1 block">{field.label}</label>
                     <input
                       value={field.value}
-                      onChange={(e) => field.setter(e.target.value)}
+                      onChange={(e) => { field.setter(e.target.value); setSettingsSaved(false); }}
                       placeholder={field.placeholder}
                       className="w-full bg-wo-grafito text-wo-crema font-jakarta text-sm px-3 py-2 rounded-xl outline-none focus:ring-1 focus:ring-primary"
                       style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
@@ -2011,12 +2026,30 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="mt-4 flex gap-3 justify-end">
-              <button onClick={() => { setActiveTab("pagos"); setOpenSettings(false); }} className="bg-primary text-primary-foreground font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn hover:bg-primary/90">
-                Revisar pagos
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center border-t border-white/5 pt-6">
+              <button 
+                onClick={() => { 
+                  if (hasSettingsChanges && !confirm("Tienes cambios sin guardar en los métodos de pago. ¿Deseas salir a revisar pagos sin guardar?")) return;
+                  setActiveTab("pagos"); 
+                  setOpenSettings(false); 
+                }} 
+                className="flex items-center gap-2 text-wo-crema-muted hover:text-primary font-jakarta text-[11px] font-bold transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-full bg-wo-carbon flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                  <CreditCard size={14} className="group-hover:text-primary" />
+                </div>
+                Ir a revisar pagos recibidos
               </button>
-              <button onClick={() => setOpenSettings(false)} className="bg-wo-carbon text-wo-crema-muted font-jakarta font-bold text-xs px-4 py-2 rounded-wo-btn hover:text-wo-crema" style={cardStyle}>
-                Cerrar
+              
+              <button 
+                onClick={() => {
+                  if (hasSettingsChanges && !confirm("Tienes cambios sin guardar. ¿Cerrar de todas formas?")) return;
+                  setOpenSettings(false);
+                }} 
+                className="w-full sm:w-auto bg-wo-carbon text-wo-crema-muted font-jakarta font-bold text-xs px-8 py-2.5 rounded-xl hover:text-wo-crema transition-colors" 
+                style={cardStyle}
+              >
+                Cerrar configuración
               </button>
             </div>
           </div>

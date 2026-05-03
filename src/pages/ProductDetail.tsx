@@ -19,16 +19,16 @@ export default function ProductDetail() {
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get("ref");
   
-  const { data: product, isLoading } = useProduct(id ?? "");
+  const { data: product, isLoading: loadingProduct } = useProduct(id ?? "");
   const { addItem, setIsOpen, setAffiliateCode, total } = useCart();
-  const { affiliate } = useAuth();
+  const { affiliate, loading: authLoading } = useAuth();
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
     if (refCode) setAffiliateCode(refCode.toUpperCase());
   }, [refCode, setAffiliateCode]);
 
-  if (isLoading) {
+  if (loadingProduct || authLoading) {
     return (
       <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />

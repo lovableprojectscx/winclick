@@ -169,6 +169,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 5. Asignar rol 'affiliate'
     await supabase.from("user_roles").insert({ user_id: userId, role: "affiliate" });
 
+    // 6. CARGAR PERFIL MANUALMENTE PARA EVITAR RACE CONDITIONS
+    // Esto asegura que cuando 'register' retorne, el estado 'affiliate' ya esté poblado
+    // y no tengamos que esperar al listener asíncrono.
+    await loadProfile(userId, true);
+
     return { error: null };
   }
 

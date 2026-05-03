@@ -8,6 +8,7 @@ export default function Catalogo() {
   const [search,            setSearch]            = useState("");
   const [activeCategoryId,  setActiveCategoryId]  = useState<string | "all">("all");
 
+  const { session, loading: authLoading } = useAuth();
   const { data: products = [],   isLoading: loadingProducts,   isError: errorProducts }   = useProducts();
   const { data: categories = [], isLoading: loadingCategories, isError: errorCategories } = useCategories();
 
@@ -20,7 +21,7 @@ export default function Catalogo() {
     });
   }, [search, activeCategoryId, products]);
 
-  const loading = loadingProducts || loadingCategories;
+  const loading = loadingProducts || loadingCategories || authLoading;
   const hasError = !loading && (errorProducts || errorCategories);
   useSEO({
     title: "Productos Orgánicos y Premium Winclick Perú | Tienda Online",

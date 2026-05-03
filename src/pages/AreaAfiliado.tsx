@@ -598,12 +598,12 @@ export default function AreaAfiliado() {
               </div>
               <p className="font-jakarta text-[11px] text-wo-crema/40 mt-2">{10 - currentPackage.depthUnlocked} niveles más con {nextPackage?.name ?? "nivel máximo"}</p>
             </div>
-            {nextPackage && !isPending && (
+            {currentPackageIdx < PACKAGES.length - 1 && !isPending && (
               <button
                 onClick={() => setShowUpgradeModal(true)}
                 className="flex items-center gap-2 font-jakarta font-bold text-[14px] px-6 py-3.5 rounded-xl bg-primary text-white hover:bg-wo-oro-dark transition-colors shrink-0 min-h-[48px]"
               >
-                <ArrowUpCircle size={16} /> Mejorar a {nextPackage.name}
+                <ArrowUpCircle size={16} /> Cambiar de Plan
               </button>
             )}
           </div>
@@ -977,74 +977,64 @@ export default function AreaAfiliado() {
       </div>
 
       {/* Modal: Upgrade de paquete */}
-      {showUpgradeModal && nextPackage && (
+      {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
           <div className="w-full max-w-md bg-wo-grafito rounded-wo-card p-6 relative" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
             <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-wo-crema-muted hover:text-wo-crema">
               <X size={16} />
             </button>
 
-            <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-1">Mejorar paquete</p>
-            <h3 className="font-syne font-bold text-xl text-wo-crema mb-4">{currentPackage.name} → {nextPackage.name}</h3>
+            <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-semibold mb-1">Mejorar Plan</p>
+            <h3 className="font-syne font-bold text-xl text-wo-crema mb-2">Escala tu negocio</h3>
+            <p className="font-jakarta text-xs text-wo-crema-muted mb-6">
+              Selecciona el plan al que deseas ascender para ampliar tus niveles de cobro y bonos de patrocinio.
+            </p>
 
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="bg-wo-carbon rounded-wo-btn p-3 text-center" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-1">Actual</p>
-                <p className="font-jakarta font-bold text-sm text-wo-crema">{currentPackage.name}</p>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted">Niveles 1–{currentPackage.depthUnlocked}</p>
-              </div>
-              <div className="rounded-wo-btn p-3 text-center" style={{ background: "rgba(232,116,26,0.08)", border: "0.5px solid rgba(232,116,26,0.3)" }}>
-                <p className="font-jakarta text-[10px] text-primary uppercase mb-1">Nuevo</p>
-                <p className="font-jakarta font-bold text-sm text-wo-crema">{nextPackage.name}</p>
-                <p className="font-jakarta text-[11px] text-secondary">Niveles 1–{nextPackage.depthUnlocked}</p>
-              </div>
-            </div>
-
-            <div className="rounded-wo-btn p-4 mb-5 flex items-center justify-between" style={{ background: "rgba(232,116,26,0.05)", border: "0.5px solid rgba(232,116,26,0.2)" }}>
-              <div>
-                <p className="font-jakarta text-[11px] text-wo-crema-muted">Acumulado requerido</p>
-                <p className="font-syne font-extrabold text-2xl text-primary">S/ {(nextPackage.investment - currentPackage.investment).toLocaleString()}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-jakarta text-[10px] text-wo-crema-muted">{currentPackage.name}: S/ {currentPackage.investment.toLocaleString()}</p>
-                <p className="font-jakarta text-[10px] text-wo-crema-muted">{nextPackage.name}: S/ {nextPackage.investment.toLocaleString()}</p>
-              </div>
-            </div>
-
-            <div className="mb-6 p-4 rounded-xl bg-wo-carbon/50" style={{ border: "0.5px solid rgba(255,255,255,0.05)" }}>
-              <p className="font-jakarta text-sm text-wo-crema leading-relaxed mb-2">
-                <strong>¿Cómo hago el Upgrade?</strong>
-              </p>
-              <p className="font-jakarta text-[13px] text-wo-crema-muted leading-relaxed">
-                Para ascender a <strong className="text-wo-crema">{nextPackage.name}</strong>, no necesitas enviar una transferencia directa de este monto acá, sino <strong>adquirir esa cantidad en productos</strong> a través de nuestra tienda. 
-              </p>
-              <ul className="mt-3 space-y-1 ml-4 list-disc font-jakarta text-xs text-wo-crema/60">
-                <li>Ve al catálogo y agrega productos a tu carrito.</li>
-                <li>Finaliza la compra subiendo el comprobante respectivo allí mismo.</li>
-                <li>Una vez que la administración apruebe tus compras, tu paquete será actualizado automáticamente.</li>
-              </ul>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <Link
-                to="/catalogo"
-                className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-jakarta font-bold text-sm py-3.5 rounded-wo-btn hover:bg-wo-oro-dark transition-colors"
-              >
-                <ShoppingBag size={16} /> Ir al Catálogo de Productos
-              </Link>
-              {settings?.whatsapp_number && (
-                <a
-                  href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
-                    `Hola, soy ${affiliate?.name ?? "socio"} (${affiliate?.affiliate_code ?? ""}). Quiero hacer un upgrade a paquete ${nextPackage?.name}. ¿Me pueden asesorar?`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] text-white font-jakarta font-bold text-sm py-3.5 rounded-wo-btn hover:bg-[#1ebe5d] transition-colors"
+            <div className="space-y-3 mb-6 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
+              {PACKAGES.filter((_, idx) => idx > currentPackageIdx).map((pkg) => (
+                <div 
+                  key={pkg.name}
+                  className="bg-wo-carbon/50 rounded-xl p-4 border border-white/5 hover:border-primary/30 transition-colors group"
                 >
-                  <MessageCircle size={16} /> Hablar con un asesor por WhatsApp
-                </a>
-              )}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-syne font-bold text-lg text-wo-crema group-hover:text-primary transition-colors">{pkg.name}</span>
+                    <span className="font-jakarta font-bold text-xs text-secondary">Niveles 1–{pkg.depthUnlocked}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="font-jakarta text-[11px] text-wo-crema-muted">Meta acumulada: S/ {pkg.investment.toLocaleString()}</p>
+                    <a
+                      href={`https://wa.me/${settings?.whatsapp_number?.replace(/\D/g, "") || ""}?text=${encodeURIComponent(
+                        `Hola, soy ${affiliate?.name ?? "socio"} (${affiliate?.affiliate_code ?? ""}). Estoy en el plan ${currentPackage.name} y quiero cambiarme al plan ${pkg.name}. ¿Me pueden asesorar?`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-jakarta font-bold text-[10px] px-3 py-1.5 rounded-lg transition-all"
+                    >
+                      Solicitar vía WhatsApp
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
+
+            <div className="bg-primary/5 rounded-xl p-4 border border-primary/20 mb-4">
+              <div className="flex items-start gap-3">
+                <MessageCircle size={18} className="text-primary shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-jakarta font-bold text-xs text-wo-crema mb-1">Conversa con un asesor</p>
+                  <p className="font-jakarta text-[11px] text-wo-crema-muted leading-relaxed">
+                    Te enviaremos a WhatsApp para que un asesor valide tu solicitud y te guíe en el proceso de upgrade.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => { setShowUpgradeModal(false); navigate("/catalogo"); }}
+              className="w-full inline-flex items-center justify-center gap-2 text-wo-crema-muted hover:text-wo-crema font-jakarta text-xs py-2 transition-colors"
+            >
+              <ShoppingBag size={14} /> O ir directamente al catálogo
+            </button>
           </div>
         </div>
       )}

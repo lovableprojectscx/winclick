@@ -26,7 +26,7 @@ import { CheckoutSuccess } from "@/components/checkout/CheckoutSuccess";
 
 export default function Checkout() {
   const { items, total, clearCart, affiliateCode, setAffiliateCode } = useCart();
-  const { affiliate, session }   = useAuth();
+  const { affiliate, session, loading: authLoading }   = useAuth();
   const { data: walletData }     = useWallet();
   const { data: settings }       = useBusinessSettings();
   const placeOrder               = usePlaceOrder();
@@ -257,7 +257,17 @@ export default function Checkout() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background pt-20 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <p className="font-jakarta text-sm text-wo-crema-muted">Cargando datos de socio...</p>
+      </div>
+    );
+  }
+
   if (items.length === 0 && !success) {
+
     return (
       <div className="min-h-screen bg-background pt-20 flex flex-col items-center justify-center gap-4 px-4">
         <ShoppingCart size={48} className="text-wo-crema-muted opacity-30" />
