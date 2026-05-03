@@ -92,16 +92,16 @@ const queryClient = new QueryClient({
   },
 });
 
-// Oculta Navbar y Footer en las páginas de tienda de afiliado
+// Oculta Navbar y Footer en las páginas de tienda de afiliado y checkout
 function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const isTienda = pathname.startsWith("/tienda/");
+  const isHiddenRoute = pathname.startsWith("/tienda/") || pathname === "/checkout";
   return (
     <>
-      {!isTienda && <Navbar />}
+      {!isHiddenRoute && <Navbar />}
       <CartDrawer />
       {children}
-      {!isTienda && <Footer />}
+      {!isHiddenRoute && <Footer />}
     </>
   );
 }

@@ -5,7 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useAffiliate";
 import { usePlaceOrder } from "@/hooks/useOrders";
-import { useBusinessSettings, useUpdateProfile } from "@/hooks/useAffiliate";
+import { useBusinessSettings, useUpdateProfile, useStoreProducts } from "@/hooks/useAffiliate";
 import { supabase } from "@/lib/supabase";
 import {
   ACTIVATION_TARGET,
@@ -21,20 +21,23 @@ import {
 import { compressImage } from "@/lib/imageUtils";
 import { ActivationProgress } from "@/components/checkout/ActivationProgress";
 import { CheckoutSuccess } from "@/components/checkout/CheckoutSuccess";
+import { DynamicIcon } from "@/components/DynamicIcon";
 
 /* ── Componente Principal: Checkout ──────────────────────── */
 
 export default function Checkout() {
   const { items, total, clearCart, affiliateCode, setAffiliateCode } = useCart();
   const { affiliate, session, loading: authLoading }   = useAuth();
-  const { data: walletData }     = useWallet();
-  const { data: settings }       = useBusinessSettings();
-  const placeOrder               = usePlaceOrder();
+  const { data: walletData }       = useWallet();
+  const { data: settings }         = useBusinessSettings();
+  const placeOrder                 = usePlaceOrder();
+  
+  const [refCode, setRefCode]      = useState(affiliateCode || "");
+  const { data: storeData }        = useStoreProducts(refCode);
 
   const [paymentMethod,    setPaymentMethod]    = useState<"wallet" | "cash">("cash");
   const [receipt,          setReceipt]          = useState<File | null>(null);
   const [receiptUrl,       setReceiptUrl]       = useState<string | null>(null);
-  const [refCode,          setRefCode]          = useState(affiliateCode || "");
   const [refValid,         setRefValid]         = useState<boolean | null>(affiliateCode ? true : null);
   const [refName,          setRefName]          = useState("");
   const [processing,       setProcessing]       = useState(false);
@@ -294,14 +297,51 @@ export default function Checkout() {
     );
   }
 
+  const isRetailFlow = !!refCode && (!session || (affiliate && refCode.toUpperCase() !== affiliate.affiliate_code?.toUpperCase()));
+  const store = storeData?.store;
+
   return (
-    <div className="min-h-screen bg-background pt-20 pb-16">
+    <div className="min-h-screen bg-background">
+      {/* Header Dinámico (Branding de Tienda o Winclick) */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-wo-grafito/80 backdrop-blur-xl border-b border-white/5 h-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+          <Link to={refCode ? `/tienda/${refCode}` : "/"} className="flex items-center gap-2 group">
+            {store ? (
+              <>
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                   {store.banner_icon ? (
+                     <DynamicIcon name={store.banner_icon} size={18} className="text-primary-foreground" />
+                   ) : (
+                     <span className="text-sm">{store.banner_emoji ?? "🏪"}</span>
+                   )}
+                </div>
+                <span className="font-syne font-bold text-wo-crema text-lg tracking-tight">
+                  {store.store_name}
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-syne font-bold text-primary-foreground transform group-hover:rotate-12 transition-transform">
+                  W
+                </div>
+                <span className="font-syne font-bold text-wo-crema text-lg tracking-tight">Winclick</span>
+              </>
+            )}
+          </Link>
+
+          <Link to={refCode ? `/tienda/${refCode}` : "/catalogo"} className="text-wo-crema-muted hover:text-wo-crema font-jakarta text-xs flex items-center gap-1.5 transition-colors">
+             <ShoppingCart size={14} /> Volver a la tienda
+          </Link>
+        </div>
+      </header>
+
+      <div className="pt-24 pb-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <h1 className="font-syne font-extrabold text-[26px] sm:text-[28px] text-wo-crema mb-4">Finalizar Compra</h1>
 
         {/* ── Banner contextual ─────────────────────────────────────────── */}
-        {!session ? (
-          /* Guest: invitar a iniciar sesión para obtener descuento */
+        {!session && !refCode && (
+          /* Guest normal (sin tienda): invitar a iniciar sesión */
           <div className="rounded-xl px-4 py-3 mb-6 flex items-center justify-between gap-4 flex-wrap"
             style={{ background: "rgba(232,116,26,0.07)", border: "0.5px solid rgba(232,116,26,0.25)" }}>
             <div className="flex items-center gap-2.5">
@@ -316,14 +356,9 @@ export default function Checkout() {
                 style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}>
                 Iniciar sesión
               </Link>
-              <Link to="/registro-afiliado"
-                className="font-jakarta font-bold text-[12px] px-4 py-2 rounded-full"
-                style={{ border: "0.5px solid rgba(232,116,26,0.4)", color: "hsl(var(--primary))" }}>
-                Unirme
-              </Link>
             </div>
           </div>
-        ) : affiliate?.account_status === "pending" ? (
+        )}
           /* Afiliado pendiente — compra de activación */
           (() => {
             const plan = affiliate.package ?? "";
@@ -436,7 +471,7 @@ export default function Checkout() {
             <div>
               <h3 className="font-jakarta font-semibold text-sm text-wo-crema mb-3">Método de pago</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(session ? [
+                {(session && !isRetailFlow ? [
                   { value: "wallet" as const, icon: "💳", label: "Billetera Winclick", sub: `Saldo: S/ ${walletBalance.toFixed(2)}` },
                   { value: "cash"   as const, icon: "💵", label: "Dinero Real",        sub: "Yape / Plin / Banco" },
                 ] : [
