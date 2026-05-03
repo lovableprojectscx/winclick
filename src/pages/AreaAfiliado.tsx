@@ -81,6 +81,7 @@ export default function AreaAfiliado() {
   const nextPackage       = PACKAGES[currentPackageIdx + 1];
 
   const totalSales = affiliateStats?.total_sales       ?? affiliate.total_sales       ?? 0;
+  const retailSales = affiliateStats?.retail_sales     ?? (affiliate as any).retail_sales ?? 0;
   const totalComm     = affiliateStats?.total_commissions ?? affiliate.total_commissions ?? 0;
   const walletBalance = walletData?.balance ?? 0;
 
@@ -363,7 +364,7 @@ export default function AreaAfiliado() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { label: "Ventas totales",     value: `S/ ${totalSales.toLocaleString()}`,    icon: <ShoppingBag size={18} />, accent: "rgba(232,116,26,1)",    accentBg: "rgba(232,116,26,0.12)" },
+            { label: "Ventas de mi tienda", value: `S/ ${retailSales.toLocaleString()}`,    icon: <ShoppingBag size={18} />, accent: "rgba(232,116,26,1)",    accentBg: "rgba(232,116,26,0.12)" },
             { label: "Comisiones ganadas", value: `S/ ${totalComm.toLocaleString()}`,     icon: <DollarSign  size={18} />, accent: "rgba(232,116,26,1)",    accentBg: "rgba(232,116,26,0.12)" },
             { label: "Referidos directos", value: String(affiliate.referral_count ?? 0),  icon: <Users       size={18} />, accent: "rgba(30,192,213,1)",    accentBg: "rgba(30,192,213,0.12)" },
           ].map((kpi, i) => (

@@ -71,6 +71,7 @@ export function useAffiliateStats() {
       return data ? {
         ...data,
         total_sales:       toN(data.total_sales),
+        retail_sales:      toN(data.retail_sales),
         total_commissions: toN(data.total_commissions),
       } : data;
     },
