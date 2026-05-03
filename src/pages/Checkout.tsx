@@ -339,7 +339,7 @@ export default function Checkout() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <h1 className="font-syne font-extrabold text-[26px] sm:text-[28px] text-wo-crema mb-4">Finalizar Compra</h1>
 
-        {/* ── Banner contextual ─────────────────────────────────────────── */}
+        {/* ── Banners contextuales ─────────────────────────────────────────── */}
         {!session && !refCode && (
           /* Guest normal (sin tienda): invitar a iniciar sesión */
           <div className="rounded-xl px-4 py-3 mb-6 flex items-center justify-between gap-4 flex-wrap"
@@ -359,9 +359,11 @@ export default function Checkout() {
             </div>
           </div>
         )}
+
+        {session && affiliate?.account_status === "pending" && affiliate.package && (
           /* Afiliado pendiente — compra de activación */
           (() => {
-            const plan = affiliate.package ?? "";
+            const plan = affiliate.package;
             const vipDiscount = hasActivationDiscount(plan);
             return (
               <div className="rounded-xl px-4 py-3 mb-6 flex items-center gap-3"
@@ -388,7 +390,9 @@ export default function Checkout() {
               </div>
             );
           })()
-        ) : affiliate?.account_status === "suspended" ? (
+        )}
+
+        {session && affiliate?.account_status === "suspended" && (
           /* Afiliado suspendido */
           <div className="rounded-xl px-4 py-3 mb-6 flex items-center gap-3"
             style={{ background: "rgba(231,76,60,0.07)", border: "0.5px solid rgba(231,76,60,0.30)" }}>
@@ -398,7 +402,9 @@ export default function Checkout() {
               <span className="text-wo-crema-muted ml-1.5">— Reactiva tu cuenta para seguir ganando comisiones en tu red.</span>
             </p>
           </div>
-        ) : affiliate ? (
+        )}
+
+        {session && affiliate && affiliate.account_status === "active" && !isRetailFlow && (
           /* Afiliado activo: precio socio aplicado */
           <div className="rounded-xl px-4 py-3 mb-6 flex items-center gap-3"
             style={{ background: "rgba(30,192,213,0.06)", border: "0.5px solid rgba(30,192,213,0.20)" }}>
@@ -407,7 +413,7 @@ export default function Checkout() {
               Precio de socio aplicado — <span className="font-bold text-wo-crema">comprando como {affiliate.name ?? "afiliado"}</span>
             </p>
           </div>
-        ) : null}
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Form */}

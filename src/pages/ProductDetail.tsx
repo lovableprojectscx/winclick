@@ -30,6 +30,9 @@ export default function ProductDetail() {
     if (refCode) setAffiliateCode(refCode.toUpperCase());
   }, [refCode, setAffiliateCode]);
 
+  const { data: storeData } = useStoreProducts(refCode ?? "");
+  const customPrices = storeData?.store?.custom_prices ? parseCustomPrices(storeData.store.custom_prices) : {};
+
   if (loadingProduct || authLoading) {
     return (
       <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
@@ -47,17 +50,8 @@ export default function ProductDetail() {
   }
 
   // ── Precio según contexto ─────────────────────────────────────────────
-  // - Afiliado PENDIENTE (membresía):
-  //     • Básico 40% OFF | Ejecutivo 45% OFF | Intermedio 50% OFF | VIP 55% OFF
-  // - Afiliado ACTIVO (recompra mensual, genera comisiones):
-  //     • Básico 40% OFF | Ejecutivo 45% OFF | Intermedio 50% OFF | VIP 55% OFF
-  // - Público → public_price
   const isPending      = affiliate?.account_status === "pending";
   const activationPlan = affiliate?.package ?? null;
-
-  // ── Contexto de Tienda Afiliado (si hay ref code) ──
-  const { data: storeData } = useStoreProducts(refCode ?? "");
-  const customPrices = storeData?.store?.custom_prices ? parseCustomPrices(storeData.store.custom_prices) : {};
 
   const displayPrice = refCode && customPrices[product.id]
     ? customPrices[product.id]
