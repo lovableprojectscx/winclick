@@ -227,7 +227,8 @@ export default function AdminDashboard() {
   const visibleReferralTree = selectedReferralTree.filter(r => r.level <= depthUnlocked);
 
   // ─── Derived aggregates ───────────────────────────────────────────────────
-  const totalRevenue     = orders.reduce((s, o) => s + o.total, 0);
+  const confirmedOrders = orders.filter(o => ["procesando", "enviado", "entregado"].includes(o.status));
+  const totalRevenue     = confirmedOrders.reduce((s, o) => s + o.total, 0);
   const totalCommissions = affiliates.reduce((s, a) => s + (a.total_commissions ?? 0), 0);
   const pendingWithdrawals = payments.filter((p) => p.type === "retiro" && p.status === "pendiente").reduce((s, p) => s + p.amount, 0);
   const totalRemanentes  = breakage.filter((r) => r.status === "rejected").reduce((s, r) => s + r.amount, 0);
@@ -546,8 +547,8 @@ export default function AdminDashboard() {
               );
 
               const kpis = [
-                { label: "Ventas totales",    value: `S/ ${totalRevenue.toFixed(2)}`,  icon: <DollarSign size={16} />, color: "text-primary",     up: true,  desc: "Suma de todos los pedidos registrados en el sistema, sin importar su estado." },
-                { label: "Pedidos",           value: orders.length,                    icon: <ShoppingBag size={16} />, color: "text-secondary",  up: true,  desc: "Cantidad total de pedidos realizados en la tienda, incluyendo pendientes, procesando y entregados." },
+                { label: "Ventas totales",    value: `S/ ${totalRevenue.toFixed(2)}`,  icon: <DollarSign size={16} />, color: "text-primary",     up: true,  desc: "Suma de pedidos confirmados (procesando, enviado o entregado). No incluye pedidos pendientes de pago o cancelados." },
+                { label: "Pedidos",           value: confirmedOrders.length,           icon: <ShoppingBag size={16} />, color: "text-secondary",  up: true,  desc: "Cantidad de pedidos confirmados en el sistema." },
                 { label: "Afiliados activos", value: affiliates.filter((a) => a.account_status === "active").length, icon: <Users size={16} />, color: "text-primary", up: true, desc: "Afiliados con cuenta activa que pueden generar comisiones. No incluye cuentas pendientes ni suspendidas." },
                 { label: "Inventario bajo",   value: products.filter((p) => p.stock <= 10).length, icon: <AlertTriangle size={16} />, color: "text-destructive", up: false, desc: "Productos con 10 o menos unidades en stock. Requiere reabastecimiento pronto." },
               ];
