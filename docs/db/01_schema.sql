@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ENUM TYPES
 -- =============================================================================
 
-CREATE TYPE package_type    AS ENUM ('Básico', 'Intermedio', 'VIP');
+CREATE TYPE package_type    AS ENUM ('Básico', 'Ejecutivo', 'Intermedio', 'VIP');
 CREATE TYPE account_status  AS ENUM ('pending', 'active', 'suspended');
 CREATE TYPE user_role       AS ENUM ('affiliate', 'admin');
 

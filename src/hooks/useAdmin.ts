@@ -216,59 +216,15 @@ export function useUpdateOrderStatus() {
 
   return useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      // 1. Obtener información de la orden y del afiliado
-      const { data: order } = await supabase
-        .from("orders")
-        .select("affiliate_id, is_activation_order")
-        .eq("id", orderId)
-        .maybeSingle();
-
-      // 2. Actualizar el estado de la orden
+      // La lógica de activación de cuenta (verificar metas acumuladas) ahora 
+      // está delegada por completo a la base de datos (trigger: handle_order_status_change)
+      // Esto evita condiciones de carrera y redundancia de código.
       const { error: updateError } = await supabase
         .from("orders")
         .update({ status })
         .eq("id", orderId);
+      
       if (updateError) throw updateError;
-
-      // 3. Lógica de activación acumulativa (solo si la orden confirmada es de activación)
-      const confirmedStatuses = ["procesando", "enviado", "entregado"];
-      if (order?.is_activation_order && order?.affiliate_id && confirmedStatuses.includes(status)) {
-        
-        // Obtener el paquete elegido por el afiliado
-        const { data: affiliate } = await supabase
-          .from("affiliates")
-          .select("account_status, package")
-          .eq("id", order.affiliate_id)
-          .maybeSingle();
-
-        if (affiliate?.account_status === "pending") {
-          // Calcular el total ACUMULADO de órdenes de activación ya confirmadas
-          const { data: orders } = await supabase
-            .from("orders")
-            .select("total")
-            .eq("affiliate_id", order.affiliate_id)
-            .eq("is_activation_order", true)
-            .in("status", confirmedStatuses);
-
-          const totalConfirmed = (orders ?? []).reduce((sum, o) => sum + Number(o.total), 0);
-
-          // FIX H-01 + recomendación 7.1 del audit: usar el mapa autoritativo
-          // de activationPrice.ts. Antes había un objeto local que omitía
-          // "Ejecutivo" y dejaba esos afiliados sin transición a 'active'.
-          const target = ACTIVATION_TARGET[affiliate.package || "Básico"] ?? 120;
-
-          // Si el acumulado confirma el cumplimiento de la meta:
-          if (totalConfirmed >= target) {
-            await supabase
-              .from("affiliates")
-              .update({
-                account_status: "active",
-                activated_at: new Date().toISOString()
-              })
-              .eq("id", order.affiliate_id);
-          }
-        }
-      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-orders"] });

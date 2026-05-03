@@ -42,10 +42,8 @@ export default function AreaAfiliado() {
   const { data: payments = [] }    = useMyPayments();
   const { data: walletData }       = useWallet();
 
-  // Mientras se carga el perfil tras el login, muestra un loader en lugar de
-  // renderizar la página en blanco (evita el flash de footer-only que se veía
-  // antes de que `affiliate` se poblara).
-  if (loading || !affiliate) {
+  // Mientras se carga el perfil tras el login, muestra un loader
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div style={{
@@ -55,6 +53,24 @@ export default function AreaAfiliado() {
           animation: "spin 0.75s linear infinite",
         }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Si terminó de cargar pero no hay afiliado (ej. falló registro en BD o cuenta eliminada)
+  if (!affiliate) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4">
+          <AlertTriangle size={32} />
+        </div>
+        <h2 className="font-syne font-bold text-2xl text-wo-crema mb-2">Error de Cuenta</h2>
+        <p className="font-jakarta text-sm text-wo-crema-muted max-w-md mb-6">
+          No se encontró tu perfil de afiliado. Esto suele ocurrir si hubo un error durante tu registro (ej. paquete incorrecto) o si tu cuenta fue modificada.
+        </p>
+        <button onClick={() => { logout(); navigate("/"); }} className="bg-primary text-primary-foreground px-6 py-2.5 rounded-wo-btn font-jakarta font-bold text-sm">
+          Cerrar sesión y volver
+        </button>
       </div>
     );
   }
@@ -113,11 +129,11 @@ export default function AreaAfiliado() {
             {/* Izquierda: avatar + saludo */}
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full flex items-center justify-center font-syne font-bold text-[17px] text-primary shrink-0" style={{ background: "rgba(232,116,26,0.15)", border: "1.5px solid rgba(232,116,26,0.35)" }}>
-                {affiliate.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()}
+                {(affiliate.name || "A").split(" ").map((n: string) => n[0] || "").join("").substring(0, 2).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-syne font-extrabold text-[20px] text-wo-crema">Hola, {affiliate.name.split(" ")[0]} 👋</span>
+                  <span className="font-syne font-extrabold text-[20px] text-wo-crema">Hola, {(affiliate.name || "").split(" ")[0]} 👋</span>
                   <span className="text-[10px] font-jakarta font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(232,116,26,0.15)", color: "hsl(var(--wo-oro))", border: "0.5px solid rgba(232,116,26,0.35)" }}>
                     {affiliate.package}
                   </span>
@@ -765,7 +781,7 @@ export default function AreaAfiliado() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full bg-wo-carbon flex items-center justify-center font-jakarta text-[10px] font-bold text-wo-crema">
-                              {ref.name.split(" ").map((n: string) => n[0]).join("")}
+                              {(ref.name || "A").split(" ").map((n: string) => n[0] || "").join("").substring(0,2)}
                             </div>
                             <span className="font-jakarta text-sm text-wo-crema">{ref.name}</span>
                           </div>
@@ -808,9 +824,9 @@ export default function AreaAfiliado() {
                           {visibleNetwork.filter((r) => r.level === lvl).map(({ level, referred: ref }) => (
                             <div key={ref.id} className="flex flex-col items-center">
                               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-jakarta text-xs font-bold ${ref.account_status === "active" ? "bg-wo-carbon text-wo-crema" : "bg-wo-carbon/50 text-wo-crema-muted"}`}>
-                                {ref.name.split(" ").map((n: string) => n[0]).join("").substring(0,2)}
+                                {(ref.name || "A").split(" ").map((n: string) => n[0] || "").join("").substring(0,2)}
                               </div>
-                              <p className="font-jakarta text-[10px] text-wo-crema-muted mt-1">{ref.name.split(" ")[0]}</p>
+                              <p className="font-jakarta text-[10px] text-wo-crema-muted mt-1">{(ref.name || "").split(" ")[0]}</p>
                               <span className="text-[9px] text-primary font-jakarta">{ref.package}</span>
                             </div>
                           ))}

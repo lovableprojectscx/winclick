@@ -129,7 +129,7 @@ ORDER BY check_name;
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ALTER TABLE affiliates
-  ADD COLUMN IF NOT EXISTS package TEXT CHECK (package IN ('Básico','Intermedio','VIP')),
+  ADD COLUMN IF NOT EXISTS package TEXT CHECK (package IN ('Básico', 'Ejecutivo', 'Intermedio', 'VIP')),
   ADD COLUMN IF NOT EXISTS depth_unlocked INT NOT NULL DEFAULT 3,
   ADD COLUMN IF NOT EXISTS account_status TEXT NOT NULL DEFAULT 'active'
     CHECK (account_status IN ('pending','active','suspended')),

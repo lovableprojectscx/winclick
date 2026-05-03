@@ -1187,7 +1187,7 @@ export default function AdminDashboard() {
                       {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : <span className="text-wo-crema-muted text-sm">{i + 1}</span>}
                     </span>
                     <div className="w-8 h-8 rounded-full bg-wo-carbon flex items-center justify-center font-jakarta text-[10px] font-bold text-wo-crema">
-                      {a.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
+                      {(a.name || "Afiliado").split(" ").map((n) => n[0]).join("").substring(0, 2)}
                     </div>
                     <div className="flex-1">
                       <p className="font-jakarta text-xs text-wo-crema">{a.name}</p>
@@ -1675,7 +1675,7 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className="px-6 py-4 flex items-center gap-4" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
               <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-jakarta font-bold text-sm shrink-0">
-                {viewingAffiliate.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
+                {(viewingAffiliate.name || "Afiliado").split(" ").map((n) => n[0]).join("").substring(0, 2)}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-syne font-bold text-lg text-wo-crema truncate">{viewingAffiliate.name}</h3>
@@ -1865,7 +1865,7 @@ export default function AdminDashboard() {
                             {visibleReferralTree.filter((r) => r.level === lvl).map((r) => (
                               <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
                                 <div className="w-8 h-8 rounded-full bg-wo-grafito flex items-center justify-center font-jakarta text-[10px] font-bold text-primary shrink-0">
-                                  {r.referred?.name.split(" ").map((n) => n[0]).join("").substring(0, 2) ?? "?"}
+                                  {(r.referred?.name || "?").split(" ").map((n) => n[0]).join("").substring(0, 2)}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-jakarta text-xs font-bold text-wo-crema truncate">{r.referred?.name ?? "—"}</p>

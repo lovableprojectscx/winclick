@@ -79,7 +79,7 @@ export default function Navbar() {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="w-9 h-9 rounded-full bg-primary text-primary-foreground font-jakarta font-bold text-xs flex items-center justify-center"
                 >
-                  {user.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
+                  {(user?.name || "U").split(" ").map((n) => n[0] || "").join("").substring(0, 2)}
                 </button>
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-wo-grafito rounded-wo-card py-1 shadow-xl" style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}>
