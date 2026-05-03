@@ -31,7 +31,7 @@ import {
 
 const tabs = [
   { id: "resumen",      label: "Resumen",             icon: <BarChart3 size={14} /> },
-  { id: "pedidos",      label: "Pedidos y Logística", icon: <ShoppingBag size={14} /> },
+  { id: "pedidos",      label: "Pedidos",             icon: <ShoppingBag size={14} /> },
   { id: "afiliados",    label: "Afiliados",           icon: <Users size={14} /> },
   { id: "catalogo",     label: "Catálogo",            icon: <Package size={14} /> },
   { id: "reportes",     label: "Reportes",            icon: <BarChart3 size={14} /> },
@@ -2152,30 +2152,30 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                {/* Botones de Cambio de Estado */}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {(["procesando", "enviado", "entregado", "cancelado"] as const).filter(
-                    (s) => s !== viewingOrder.status
-                  ).map((s) => (
-                    <button
-                      key={s}
-                      disabled={updateOrderStatus.isPending}
-                      onClick={async () => {
-                        await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
-                        setViewingOrder({ ...viewingOrder, status: s });
-                      }}
-                      className={`font-jakarta text-xs font-semibold px-3 py-1.5 rounded-wo-pill transition-colors flex items-center gap-1.5 ${
-                        s === "entregado" ? "bg-secondary/15 text-secondary hover:bg-secondary/25" :
-                        s === "cancelado" ? "bg-destructive/15 text-destructive hover:bg-destructive/25" :
-                        "bg-primary/10 text-primary hover:bg-primary/20"
-                      }`}
-                    >
-                      {s === "entregado" ? <><CheckCircle size={12} /> Marcar entregado</> :
-                       s === "enviado"   ? <><Package size={12} /> Marcar enviado</>   :
-                       s === "cancelado" ? <><XCircle size={12} /> Cancelar pedido</>  :
-                       "⏳ En procesando"}
-                    </button>
-                  ))}
+                {/* Selector de Cambio de Estado */}
+                <div className="flex items-center gap-3 mt-3 p-3 bg-wo-carbon/50 rounded-xl border border-white/5">
+                  <p className="font-jakarta text-xs text-wo-crema-muted font-bold">Estado actual:</p>
+                  <select
+                    value={viewingOrder.status}
+                    onChange={async (e) => {
+                      const s = e.target.value as any;
+                      await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
+                      setViewingOrder({ ...viewingOrder, status: s });
+                    }}
+                    disabled={updateOrderStatus.isPending}
+                    className={`font-jakarta text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer transition-colors ${
+                      viewingOrder.status === "entregado" ? "bg-secondary/15 text-secondary" :
+                      viewingOrder.status === "cancelado" ? "bg-destructive/15 text-destructive" :
+                      "bg-primary/15 text-primary"
+                    }`}
+                  >
+                    <option value="pendiente" className="bg-wo-grafito text-wo-crema">Pendiente</option>
+                    <option value="procesando" className="bg-wo-grafito text-wo-crema">Procesando</option>
+                    <option value="enviado" className="bg-wo-grafito text-wo-crema">Enviado</option>
+                    <option value="entregado" className="bg-wo-grafito text-wo-crema">Entregado</option>
+                    <option value="cancelado" className="bg-wo-grafito text-wo-crema">Cancelado</option>
+                  </select>
+                  {updateOrderStatus.isPending && <span className="font-jakarta text-[10px] text-wo-crema-muted animate-pulse">Guardando...</span>}
                 </div>
               </div>
 
