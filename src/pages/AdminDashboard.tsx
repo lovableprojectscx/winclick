@@ -122,7 +122,6 @@ export default function AdminDashboard() {
   const [activeTab,            setActiveTab]            = useState("resumen");
   const [openSettings,         setOpenSettings]         = useState(false);
   const [orderFilter,          setOrderFilter]          = useState("todos");
-  const [logisticsSearch,      setLogisticsSearch]      = useState("");
   const [affiliateSearch,      setAffiliateSearch]      = useState("");
   const [affiliateStatusFilter,setAffiliateStatusFilter]= useState<"todos" | "active" | "suspended" | "pending">("todos");
   const [paymentSubTab,        setPaymentSubTab]        = useState<"activaciones" | "reactivaciones" | "upgrades" | "retiros" | "recargas">("activaciones");
