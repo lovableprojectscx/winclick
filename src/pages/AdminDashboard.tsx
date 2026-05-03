@@ -30,15 +30,14 @@ import {
 } from "lucide-react";
 
 const tabs = [
-  { id: "resumen",      label: "Resumen",       icon: <BarChart3 size={14} /> },
-  { id: "pedidos",      label: "Pedidos",        icon: <ShoppingBag size={14} /> },
-  { id: "logistica",    label: "Logística",      icon: <Package size={14} /> },
-  { id: "afiliados",    label: "Afiliados",      icon: <Users size={14} /> },
-  { id: "catalogo",     label: "Catálogo",       icon: <Package size={14} /> },
-  { id: "reportes",     label: "Reportes",       icon: <BarChart3 size={14} /> },
-  { id: "billetera",    label: "Billetera",      icon: <Wallet size={14} /> },
-  { id: "pagos",        label: "Pagos",          icon: <CreditCard size={14} /> },
-  { id: "remanentes",   label: "Remanentes",     icon: <AlertTriangle size={14} /> },
+  { id: "resumen",      label: "Resumen",             icon: <BarChart3 size={14} /> },
+  { id: "pedidos",      label: "Pedidos y Logística", icon: <ShoppingBag size={14} /> },
+  { id: "afiliados",    label: "Afiliados",           icon: <Users size={14} /> },
+  { id: "catalogo",     label: "Catálogo",            icon: <Package size={14} /> },
+  { id: "reportes",     label: "Reportes",            icon: <BarChart3 size={14} /> },
+  { id: "billetera",    label: "Billetera",           icon: <Wallet size={14} /> },
+  { id: "pagos",        label: "Pagos",               icon: <CreditCard size={14} /> },
+  { id: "remanentes",   label: "Remanentes",          icon: <AlertTriangle size={14} /> },
 ];
 
 const cardStyle = { border: "0.5px solid rgba(255,255,255,0.07)" };
@@ -123,6 +122,7 @@ export default function AdminDashboard() {
   const [activeTab,            setActiveTab]            = useState("resumen");
   const [openSettings,         setOpenSettings]         = useState(false);
   const [orderFilter,          setOrderFilter]          = useState("todos");
+  const [logisticsSearch,      setLogisticsSearch]      = useState("");
   const [affiliateSearch,      setAffiliateSearch]      = useState("");
   const [affiliateStatusFilter,setAffiliateStatusFilter]= useState<"todos" | "active" | "suspended" | "pending">("todos");
   const [paymentSubTab,        setPaymentSubTab]        = useState<"activaciones" | "reactivaciones" | "upgrades" | "retiros" | "recargas">("activaciones");
@@ -234,7 +234,11 @@ export default function AdminDashboard() {
   const totalRemanentes  = breakage.filter((r) => r.status === "rejected").reduce((s, r) => s + r.amount, 0);
 
   // ─── Filtered data ────────────────────────────────────────────────────────
-  const filteredOrders = orderFilter === "todos" ? orders : orders.filter((o) => o.status === orderFilter);
+  const filteredOrders = (orderFilter === "todos" ? orders : orders.filter((o) => o.status === orderFilter))
+    .filter(o => 
+      o.order_number.toLowerCase().includes(logisticsSearch.toLowerCase()) || 
+      o.customer_name.toLowerCase().includes(logisticsSearch.toLowerCase())
+    );
 
   const filteredAffiliates = affiliates.filter((a) => {
     const matchSearch = a.name.toLowerCase().includes(affiliateSearch.toLowerCase()) ||
@@ -690,6 +694,19 @@ export default function AdminDashboard() {
               </button>
             </div>
 
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-wo-crema-muted" />
+                <input
+                  type="text"
+                  placeholder="Buscar por # pedido o cliente..."
+                  value={logisticsSearch}
+                  onChange={(e) => setLogisticsSearch(e.target.value)}
+                  className="pl-9 pr-4 py-2 bg-wo-carbon rounded-xl font-jakarta text-xs text-wo-crema placeholder:text-wo-crema-muted w-64 border border-white/5 outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+
             <div className="bg-wo-grafito rounded-wo-card overflow-hidden" style={cardStyle}>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -730,117 +747,6 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* =================== LOGÍSTICA =================== */}
-        {activeTab === "logistica" && (
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex gap-2">
-                {[
-                  { id: "por_enviar", label: "📦 Por Enviar", count: orders.filter(o => o.status === "procesando").length },
-                  { id: "en_camino",  label: "🚚 En Camino",  count: orders.filter(o => o.status === "enviado").length },
-                  { id: "entregados", label: "✅ Entregados", count: orders.filter(o => o.status === "entregado").length },
-                ].map(t => (
-                  <button key={t.id} onClick={() => setLogisticsTab(t.id as any)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-jakarta text-xs font-bold transition-all ${
-                    logisticsTab === t.id ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-wo-carbon text-wo-crema-muted hover:text-wo-crema"
-                  }`}>
-                    {t.label} <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${logisticsTab === t.id ? "bg-white/20" : "bg-white/5"}`}>{t.count}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-wo-crema-muted" />
-                <input
-                  type="text"
-                  placeholder="Buscar por # o cliente..."
-                  value={logisticsSearch}
-                  onChange={(e) => setLogisticsSearch(e.target.value)}
-                  className="pl-9 pr-4 py-2 bg-wo-carbon rounded-xl font-jakarta text-xs text-wo-crema placeholder:text-wo-crema-muted w-64 border border-white/5"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              {orders.filter(o => {
-                const matchesSearch = o.order_number.toLowerCase().includes(logisticsSearch.toLowerCase()) || 
-                                     o.customer_name.toLowerCase().includes(logisticsSearch.toLowerCase());
-                if (!matchesSearch) return false;
-                
-                if (logisticsTab === "por_enviar") return o.status === "procesando";
-                if (logisticsTab === "en_camino")  return o.status === "enviado";
-                if (logisticsTab === "entregados") return o.status === "entregado";
-                return false;
-              }).map(o => (
-                <div key={o.id} className="bg-wo-grafito rounded-2xl p-5 flex flex-wrap items-center justify-between gap-6" style={cardStyle}>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-wo-carbon flex items-center justify-center text-primary shrink-0">
-                      <Package size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-syne font-bold text-wo-crema text-base">{o.order_number} — {o.customer_name}</h4>
-                      <p className="font-jakarta text-xs text-wo-crema-muted mt-0.5 flex items-center gap-1.5 text-secondary">
-                        <Tag size={12} /> {o.shipping_address || "Dirección no especificada"}
-                        {o.shipping_address && (
-                          <button 
-                            onClick={() => { navigator.clipboard.writeText(o.shipping_address!); }}
-                            className="p-1 rounded hover:bg-white/10 text-wo-crema/20 hover:text-secondary transition-colors"
-                            title="Copiar dirección"
-                          >
-                            <Copy size={10} />
-                          </button>
-                        )}
-                      </p>
-                      {o.order_items && o.order_items.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {o.order_items.map((item, idx) => (
-                            <span key={idx} className="px-1.5 py-0.5 bg-white/5 rounded text-[9px] text-wo-crema-muted border border-white/5">
-                              {item.quantity}x {item.name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="text-right mr-4">
-                      <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase font-bold">Total Pedido</p>
-                      <p className="font-syne font-extrabold text-lg text-primary">S/ {o.total.toFixed(2)}</p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button onClick={() => { setTrackingModal(o); setTrackingVal(o.tracking_number || ""); }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wo-carbon text-wo-crema hover:bg-white/5 transition-colors font-jakarta text-xs font-bold border border-white/5">
-                        <Edit2 size={14} /> {o.tracking_number ? "Editar Tracking" : "Asignar Tracking"}
-                      </button>
-
-                      {o.status === "procesando" && (
-                        <button onClick={() => updateOrderStatus.mutate({ orderId: o.id, status: "enviado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
-                          <CheckCircle size={14} /> Marcar como Enviado
-                        </button>
-                      )}
-
-                      {o.status === "enviado" && (
-                        <>
-                          <button onClick={() => updateOrderStatus.mutate({ orderId: o.id, status: "entregado" })} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:brightness-110 transition-all font-jakarta text-xs font-bold">
-                            <CheckCircle size={14} /> Confirmar Entrega
-                          </button>
-                          <a 
-                            href={`https://wa.me/${o.customer_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${(o.customer_name || "Cliente").split(" ")[0]}, te saluda WinClick. Tu pedido ${o.order_number} ya está en camino. Tracking: ${o.tracking_number}`)}`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:brightness-110 transition-all font-jakarta text-xs font-bold"
-                          >
-                            <MessageCircle size={14} /> Avisar por WhatsApp
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -2213,35 +2119,69 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* ── Cambiar estado del pedido ── */}
+            {/* ── Acciones de Logística y Estado ── */}
             <div className="mt-5 pt-4" style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
-              <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-2">Cambiar estado</p>
-              <div className="flex flex-wrap gap-2">
-                {(["procesando", "enviado", "entregado", "cancelado"] as const).filter(
-                  (s) => s !== viewingOrder.status
-                ).map((s) => (
-                  <button
-                    key={s}
-                    disabled={updateOrderStatus.isPending}
-                    onClick={async () => {
-                      await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
-                      setViewingOrder({ ...viewingOrder, status: s });
-                    }}
-                    className={`font-jakarta text-xs font-semibold px-3 py-1.5 rounded-wo-pill transition-colors ${
-                      s === "entregado" ? "bg-secondary/15 text-secondary hover:bg-secondary/25" :
-                      s === "cancelado" ? "bg-destructive/15 text-destructive hover:bg-destructive/25" :
-                      "bg-primary/10 text-primary hover:bg-primary/20"
-                    }`}
+              <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase mb-3">Gestión Logística</p>
+              
+              <div className="flex flex-col gap-3">
+                {/* Botones de Tracking y Comunicación */}
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    onClick={() => { setTrackingModal(viewingOrder); setTrackingVal(viewingOrder.tracking_number || ""); }} 
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-wo-carbon text-wo-crema hover:bg-white/5 transition-colors font-jakarta text-xs font-bold border border-white/5"
                   >
-                    {s === "entregado" ? "✓ Marcar entregado" :
-                     s === "enviado"   ? "↑ Marcar enviado"   :
-                     s === "cancelado" ? "✕ Cancelar pedido"  :
-                     "⏳ En procesando"}
+                    <Edit2 size={12} /> {viewingOrder.tracking_number ? `Tracking: ${viewingOrder.tracking_number}` : "Asignar Tracking"}
                   </button>
-                ))}
+                  
+                  {viewingOrder.shipping_address && (
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText(viewingOrder.shipping_address!); toast({ title: "✓ Dirección copiada" }); }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-wo-carbon text-wo-crema hover:bg-white/5 transition-colors font-jakarta text-xs font-bold border border-white/5"
+                    >
+                      <Copy size={12} /> Copiar Dirección
+                    </button>
+                  )}
+
+                  {viewingOrder.customer_phone && viewingOrder.status === "enviado" && (
+                    <a 
+                      href={`https://wa.me/${viewingOrder.customer_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${(viewingOrder.customer_name || "Cliente").split(" ")[0]}, te saluda WinClick. Tu pedido ${viewingOrder.order_number} ya está en camino. Tracking: ${viewingOrder.tracking_number}`)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#25D366] text-white hover:brightness-110 transition-all font-jakarta text-xs font-bold"
+                    >
+                      <MessageCircle size={12} /> Avisar Envío
+                    </a>
+                  )}
+                </div>
+
+                {/* Botones de Cambio de Estado */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(["procesando", "enviado", "entregado", "cancelado"] as const).filter(
+                    (s) => s !== viewingOrder.status
+                  ).map((s) => (
+                    <button
+                      key={s}
+                      disabled={updateOrderStatus.isPending}
+                      onClick={async () => {
+                        await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
+                        setViewingOrder({ ...viewingOrder, status: s });
+                      }}
+                      className={`font-jakarta text-xs font-semibold px-3 py-1.5 rounded-wo-pill transition-colors flex items-center gap-1.5 ${
+                        s === "entregado" ? "bg-secondary/15 text-secondary hover:bg-secondary/25" :
+                        s === "cancelado" ? "bg-destructive/15 text-destructive hover:bg-destructive/25" :
+                        "bg-primary/10 text-primary hover:bg-primary/20"
+                      }`}
+                    >
+                      {s === "entregado" ? <><CheckCircle size={12} /> Marcar entregado</> :
+                       s === "enviado"   ? <><Package size={12} /> Marcar enviado</>   :
+                       s === "cancelado" ? <><XCircle size={12} /> Cancelar pedido</>  :
+                       "⏳ En procesando"}
+                    </button>
+                  ))}
+                </div>
               </div>
+
               {viewingOrder.status === "entregado" && (
-                <p className="font-jakarta text-[11px] text-secondary mt-2 flex items-center gap-1.5">
+                <p className="font-jakarta text-[11px] text-secondary mt-3 flex items-center gap-1.5 p-2 bg-secondary/10 rounded-lg">
                   <CheckCircle size={12} /> Pedido aprobado — el sistema procesó la activación/reactivación del afiliado automáticamente.
                 </p>
               )}
