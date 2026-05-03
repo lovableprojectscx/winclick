@@ -179,6 +179,19 @@ export default function TiendaAfiliado() {
           ¿Quieres tu propia tienda? → Regístrate gratis
         </Link>
       </div>
+
+      {/* Botón flotante de carrito para móviles/tienda */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[0_8px_30px_rgb(232,116,26,0.4)] transition-all hover:scale-110 active:scale-95"
+      >
+        <ShoppingCart size={24} />
+        {items.length > 0 && (
+          <span className="absolute -top-1 -right-1 w-6 h-6 bg-secondary text-secondary-foreground rounded-full text-xs font-bold flex items-center justify-center border-2 border-primary shadow-lg animate-in zoom-in">
+            {items.length}
+          </span>
+        )}
+      </button>
     </div>
   );
 }
