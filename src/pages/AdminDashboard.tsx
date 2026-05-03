@@ -829,7 +829,7 @@ export default function AdminDashboard() {
                             <CheckCircle size={14} /> Confirmar Entrega
                           </button>
                           <a 
-                            href={`https://wa.me/${o.customer_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${o.customer_name.split(" ")[0]}, te saluda WinClick. Tu pedido ${o.order_number} ya está en camino. Tracking: ${o.tracking_number}`)}`}
+                            href={`https://wa.me/${o.customer_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${(o.customer_name || "Cliente").split(" ")[0]}, te saluda WinClick. Tu pedido ${o.order_number} ya está en camino. Tracking: ${o.tracking_number}`)}`}
                             target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:brightness-110 transition-all font-jakarta text-xs font-bold"
                           >
@@ -962,7 +962,7 @@ export default function AdminDashboard() {
                         <Eye size={12} className="text-primary" /> Perfil
                       </button>
                       <a 
-                        href={`https://wa.me/${a.contact_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${a.name.split(" ")[0]}, te saluda el Admin de WinClick.`)}`}
+                        href={`https://wa.me/${a.contact_phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${(a.name || "Afiliado").split(" ")[0]}, te saluda el Admin de WinClick.`)}`}
                         target="_blank" rel="noopener noreferrer"
                         className="p-2.5 rounded-xl bg-wo-carbon border border-white/5 hover:bg-[#25D366]/10 hover:border-[#25D366]/20 transition-all text-wo-crema-muted hover:text-[#25D366] shadow-sm"
                         title="WhatsApp"
@@ -1427,7 +1427,7 @@ export default function AdminDashboard() {
                         </tr>
                       ))}
                       {pendingCommRows.length === 0 && (
-                        <tr><td colSpan={6} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">No hay comisiones pendientes de acreditar</td></tr>
+                        <tr><td colSpan={7} className="px-4 py-8 text-center font-jakarta text-sm text-wo-crema-muted">No hay comisiones pendientes de acreditar</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -2311,12 +2311,11 @@ export default function AdminDashboard() {
                   return (
                     <div className="rounded-xl p-3" style={{ background: "rgba(30,192,213,0.04)", border: "0.5px solid rgba(30,192,213,0.15)" }}>
                       <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase tracking-widest mb-2.5">Vista previa · precios por membresía</p>
-                      <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="grid grid-cols-3 gap-2 text-center">
                         {[
                           { label: "Público", pct: 1.00, color: "rgba(248,244,236,0.6)" },
-                          { label: "Básica", pct: 0.60, color: "hsl(var(--primary))" },
-                          { label: "Pack 2K", pct: 0.55, color: "hsl(var(--secondary))" },
-                          { label: "VIP", pct: 0.50, color: "#D4A017" },
+                          { label: "Básico", pct: 0.60, color: "hsl(var(--primary))" },
+                          { label: "Ejecutivo+", pct: 0.50, color: "hsl(var(--secondary))" },
                         ].map((t) => (
                           <div key={t.label}>
                             <p className="font-jakarta text-[10px] text-wo-crema-muted mb-0.5">{t.label}</p>
@@ -2433,12 +2432,11 @@ export default function AdminDashboard() {
                   return (
                     <div className="rounded-xl p-3" style={{ background: "rgba(30,192,213,0.04)", border: "0.5px solid rgba(30,192,213,0.15)" }}>
                       <p className="font-jakarta text-[10px] text-wo-crema-muted uppercase tracking-widest mb-2.5">Vista previa · precios por membresía</p>
-                      <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="grid grid-cols-3 gap-2 text-center">
                         {[
                           { label: "Público", pct: 1.00, color: "rgba(248,244,236,0.6)" },
-                          { label: "Básica", pct: 0.60, color: "hsl(var(--primary))" },
-                          { label: "Pack 2K", pct: 0.50, color: "hsl(var(--secondary))" },
-                          { label: "VIP", pct: 0.45, color: "#D4A017" },
+                          { label: "Básico", pct: 0.60, color: "hsl(var(--primary))" },
+                          { label: "Ejecutivo+", pct: 0.50, color: "hsl(var(--secondary))" },
                         ].map((t) => (
                           <div key={t.label}>
                             <p className="font-jakarta text-[10px] text-wo-crema-muted mb-0.5">{t.label}</p>
