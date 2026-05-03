@@ -793,5 +793,6 @@ export default function Checkout() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
