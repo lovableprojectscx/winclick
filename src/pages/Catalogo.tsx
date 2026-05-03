@@ -3,6 +3,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { Search, X } from "lucide-react";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Catalogo() {
   const [search,            setSearch]            = useState("");
