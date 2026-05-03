@@ -26,7 +26,7 @@ import {
   Settings, ShoppingBag, Users, Package, BarChart3, Wallet, CreditCard,
   AlertTriangle, Search, Eye, CheckCircle, XCircle, ArrowUpRight,
   ArrowDownRight, TrendingUp, Target, ArrowRightCircle,
-  DollarSign, Download, Edit2, Trash2, Plus, Tag,
+  DollarSign, Download, Edit2, Trash2, Plus, Tag, MessageCircle, Copy
 } from "lucide-react";
 
 const tabs = [
