@@ -138,6 +138,9 @@ export default function AdminDashboard() {
   const [confirmDeleteProductId, setConfirmDeleteProductId] = useState<string | null>(null);
   const [affDetailTab,         setAffDetailTab]         = useState<"info" | "pagos" | "red">("info");
 
+  // Business settings — must be declared before hasSettingsChanges uses it
+  const { data: bizSettings } = useBusinessSettings();
+
   // Settings form state (métodos de pago)
   const [settingsYape,    setSettingsYape]    = useState("");
   const [settingsPlin,    setSettingsPlin]    = useState("");
@@ -150,7 +153,7 @@ export default function AdminDashboard() {
   const [settingsQrUrl,   setSettingsQrUrl]   = useState("");
   const [settingsQrFile,  setSettingsQrFile]  = useState<File | null>(null);
 
-  const hasSettingsChanges = 
+  const hasSettingsChanges =
     settingsYape !== (bizSettings?.yape_number ?? "") ||
     settingsPlin !== (bizSettings?.plin_number ?? "") ||
     settingsHolder !== (bizSettings?.account_holder_name ?? "") ||
@@ -221,7 +224,6 @@ export default function AdminDashboard() {
   const deleteAffiliate       = useDeleteAffiliate();
   const updateAffiliateStatus = useUpdateAffiliateStatus();
   const updateOrderStatus     = useUpdateOrderStatus();
-  const { data: bizSettings }           = useBusinessSettings();
   const { data: pendingComms }          = usePendingCommissions();
   const { data: totalWallets }          = useTotalWallets();
   const { data: allWallets = [] }       = useAllWallets();
@@ -2193,8 +2195,13 @@ export default function AdminDashboard() {
                     value={viewingOrder.status}
                     onChange={async (e) => {
                       const s = e.target.value as any;
-                      await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
-                      setViewingOrder({ ...viewingOrder, status: s });
+                      try {
+                        await updateOrderStatus.mutateAsync({ orderId: viewingOrder.id, status: s });
+                        setViewingOrder({ ...viewingOrder, status: s });
+                        toast({ title: "Estado actualizado", description: `Pedido marcado como "${s}".` });
+                      } catch (err: any) {
+                        toast({ title: "Error al actualizar estado", description: err?.message ?? "No se pudo cambiar el estado. Verifica permisos en Supabase.", variant: "destructive" });
+                      }
                     }}
                     disabled={updateOrderStatus.isPending}
                     className={`font-jakarta text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer transition-colors ${

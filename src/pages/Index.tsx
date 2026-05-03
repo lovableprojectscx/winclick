@@ -213,7 +213,7 @@ export default function Index() {
           </div>
 
         </div>
-      </section>
+      </motion.section>
 
       {/* COMMISSION STRUCTURE */}
       <motion.section 
@@ -289,7 +289,7 @@ export default function Index() {
           </div>
 
         </div>
-      </section>
+      </motion.section>
 
       {/* FEATURED PRODUCTS */}
       <motion.section 
@@ -324,7 +324,7 @@ export default function Index() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* TESTIMONIALS */}
       <motion.section 
@@ -413,7 +413,7 @@ export default function Index() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* FINAL CTA */}
       <motion.section 
@@ -456,7 +456,7 @@ export default function Index() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }
