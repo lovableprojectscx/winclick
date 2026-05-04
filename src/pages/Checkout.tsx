@@ -222,7 +222,7 @@ export default function Checkout() {
         })),
         affiliateCode: refCode || affiliateCode || undefined,
         receiptUrl: receiptStorageUrl,
-        isDropshipping: !session || (affiliate && refCode && refCode.toUpperCase() !== affiliate.affiliate_code?.toUpperCase()),
+        isDropshipping,
       });
       setConfirmedItems([...items]);
       setConfirmedTotal(total);
@@ -301,7 +301,15 @@ export default function Checkout() {
     );
   }
 
-  const isRetailFlow = !!refCode && (!session || (affiliate && refCode.toUpperCase() !== affiliate.affiliate_code?.toUpperCase()));
+  const isPending = affiliate?.account_status === "pending";
+  // Un pedido es dropshipping solo si no hay sesión (invitado en tienda)
+  // o si el afiliado logueado está comprando con el código de otro (y no es activación)
+  const isDropshipping = !isPending && (
+    !session || 
+    (!!affiliate && !!refCode && refCode.toUpperCase() !== affiliate.affiliate_code?.toUpperCase())
+  );
+
+  const isRetailFlow = !!refCode && isDropshipping;
   const store = storeData?.store;
 
   return (
