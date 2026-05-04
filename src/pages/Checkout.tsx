@@ -197,7 +197,10 @@ export default function Checkout() {
       if (paymentMethod === "cash" && receipt) {
         const ext  = receipt.name.split(".").pop();
         const folder = session ? session.user.id : "public";
-        const path = `${folder}/checkout-${crypto.randomUUID()}.${ext}`;
+        const uuid = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+          ? crypto.randomUUID() 
+          : Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const path = `${folder}/checkout-${uuid}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("receipts").upload(path, receipt);
         if (uploadError) throw new Error(`Error al subir imagen: ${uploadError.message}`);
         const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(path);
@@ -572,17 +575,52 @@ export default function Checkout() {
                 ) : (
                   <>
                     {!receipt ? (
-                      <label className="block bg-wo-carbon rounded-wo-btn p-6 sm:p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors" style={{ border: "1px dashed rgba(255,255,255,0.15)" }}>
+                      <label 
+                        htmlFor="receipt-upload"
+                        className="block bg-wo-carbon rounded-wo-btn p-6 sm:p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors" 
+                        style={{ border: "1px dashed rgba(255,255,255,0.15)" }}
+                      >
                         <Upload size={24} className="mx-auto text-wo-crema-muted mb-3" />
                         <p className="font-jakarta text-sm text-wo-crema-muted">Sube tu comprobante</p>
                         <p className="font-jakarta text-xs text-wo-crema/30 mt-1">JPG, PNG o PDF</p>
-                        <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={async (e) => {
-                          const f = e.target.files?.[0];
-                          if (!f) return;
-                          const compressed = await compressImage(f);
-                          setReceipt(compressed);
-                          setReceiptUrl(URL.createObjectURL(compressed));
-                        }} />
+                        <input 
+                          id="receipt-upload"
+                          type="file" 
+                          className="hidden" 
+                          accept="image/jpeg,image/png,image/webp,application/pdf" 
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            
+                            // Validar tamaño inicial (ej. max 15MB antes de comprimir para evitar crashes)
+                            if (f.size > 15 * 1024 * 1024) {
+                              alert("La imagen es demasiado grande (máx 15MB). Por favor elige una foto más pequeña.");
+                              return;
+                            }
+
+                            try {
+                              const compressed = await compressImage(f);
+                              
+                              // Validar tamaño final (10MB es el límite de Supabase que acabamos de configurar)
+                              if (compressed.size > 10 * 1024 * 1024) {
+                                alert("El archivo sigue siendo demasiado grande después de comprimir. Por favor intenta con otra imagen.");
+                                return;
+                              }
+
+                              setReceipt(compressed);
+                              setReceiptUrl(URL.createObjectURL(compressed));
+                            } catch (err) {
+                              console.error("Compression error:", err);
+                              // Fallback to original file if small enough
+                              if (f.size <= 10 * 1024 * 1024) {
+                                setReceipt(f);
+                                setReceiptUrl(URL.createObjectURL(f));
+                              } else {
+                                alert("El archivo es demasiado grande y no pudo ser comprimido. Por favor usa una imagen más pequeña.");
+                              }
+                            }
+                          }} 
+                        />
                       </label>
                     ) : (
                       <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3.5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
