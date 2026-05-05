@@ -585,9 +585,8 @@ export default function Checkout() {
                 ) : (
                   <>
                     {!receipt ? (
-                      <label 
-                        htmlFor="receipt-upload"
-                        className="block bg-wo-carbon rounded-wo-btn p-6 sm:p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors" 
+                      <label
+                        className="block bg-wo-carbon rounded-wo-btn p-6 sm:p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors"
                         style={{ border: "1px dashed rgba(255,255,255,0.15)" }}
                       >
                         <div className="flex flex-col items-center">
@@ -601,14 +600,47 @@ export default function Checkout() {
                           {isCompressing ? "Procesando imagen..." : "Sube tu comprobante"}
                         </p>
                         <p className="font-jakarta text-xs text-wo-crema/30 mt-1">JPG, PNG, HEIC o PDF</p>
+                        {/* Input dentro del label para máxima compatibilidad en móviles */}
+                        <input
+                          type="file"
+                          style={{ display: 'none' }}
+                          accept="image/*,application/pdf"
+                          disabled={isCompressing}
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            // Limpiar el input antes del async para evitar race condition en móviles
+                            e.target.value = '';
+
+                            setIsCompressing(true);
+                            setCheckoutError(null);
+
+                            try {
+                              const compressed = await compressImage(f);
+                              setReceipt(compressed);
+                              setReceiptUrl(URL.createObjectURL(compressed));
+                            } catch (err) {
+                              console.error("Upload process error:", err);
+                              // Fallback: usar el archivo original si no es demasiado grande
+                              if (f.size <= 12 * 1024 * 1024) {
+                                setReceipt(f);
+                                setReceiptUrl(URL.createObjectURL(f));
+                              } else {
+                                setCheckoutError("La imagen es demasiado pesada. Intenta con una captura de pantalla.");
+                              }
+                            } finally {
+                              setIsCompressing(false);
+                            }
+                          }}
+                        />
                       </label>
                     ) : (
                       <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3.5 border border-secondary/30">
                         <div className="w-12 h-12 rounded-lg bg-wo-grafito flex items-center justify-center shrink-0 overflow-hidden">
                           {receiptUrl && (receipt.type.startsWith('image/') || receipt.name.toLowerCase().endsWith('.heic')) ? (
-                            <img 
-                              src={receiptUrl} 
-                              alt="Comprobante" 
+                            <img
+                              src={receiptUrl}
+                              alt="Comprobante"
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -622,50 +654,14 @@ export default function Checkout() {
                           <p className="font-jakarta text-[13px] font-bold text-wo-crema truncate">¡Imagen lista!</p>
                           <p className="font-jakarta text-[11px] text-wo-crema-muted truncate">{receipt.name}</p>
                         </div>
-                        <button 
-                          onClick={() => { setReceipt(null); setReceiptUrl(null); setCheckoutError(null); }} 
+                        <button
+                          onClick={() => { setReceipt(null); setReceiptUrl(null); setCheckoutError(null); }}
                           className="w-10 h-10 flex items-center justify-center text-wo-crema/40 hover:text-destructive transition-colors shrink-0"
                         >
                           <X size={16} />
                         </button>
                       </div>
                     )}
-
-                    <input 
-                      id="receipt-upload"
-                      type="file" 
-                      style={{ position: 'absolute', opacity: 0, width: 1, height: 1, overflow: 'hidden' }}
-                      accept="image/*,application/pdf" 
-                      disabled={isCompressing}
-                      onChange={async (e) => {
-                        const f = e.target.files?.[0];
-                        if (!f) return;
-                        
-                        setIsCompressing(true);
-                        setCheckoutError(null);
-
-                        try {
-                          // Forzar una pequeña espera para que el DOM se asiente en móviles
-                          await new Promise(r => setTimeout(r, 100));
-                          
-                          const compressed = await compressImage(f);
-                          setReceipt(compressed);
-                          setReceiptUrl(URL.createObjectURL(compressed));
-                        } catch (err) {
-                          console.error("Upload process error:", err);
-                          // Fallback total e inmediato
-                          if (f.size <= 12 * 1024 * 1024) {
-                            setReceipt(f);
-                            setReceiptUrl(URL.createObjectURL(f));
-                          } else {
-                            setCheckoutError("La imagen es demasiado pesada. Intenta con una captura de pantalla.");
-                          }
-                        } finally {
-                          setIsCompressing(false);
-                          e.target.value = '';
-                        }
-                      }} 
-                    />
                     
                     {checkoutError && !processing && (
                       <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
