@@ -317,10 +317,11 @@ export default function Checkout() {
       {/* Header Dinámico (Branding de Tienda o Winclick) */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-wo-grafito/80 backdrop-blur-xl border-b border-white/5 h-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
-          <Link to={refCode ? `/tienda/${refCode}` : "/"} className="flex items-center gap-2 group">
-            {store ? (
+          <Link to={isRetailFlow ? `/tienda/${refCode}` : "/"} className="flex items-center gap-2 group">
+            {isRetailFlow && store ? (
               <>
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform"
+                     style={{ backgroundColor: store.accent_color || "hsl(var(--primary))" }}>
                    {store.banner_icon ? (
                      <DynamicIcon name={store.banner_icon} size={18} className="text-primary-foreground" />
                    ) : (
@@ -341,8 +342,8 @@ export default function Checkout() {
             )}
           </Link>
 
-          <Link to={refCode ? `/tienda/${refCode}` : "/catalogo"} className="text-wo-crema-muted hover:text-wo-crema font-jakarta text-xs flex items-center gap-1.5 transition-colors">
-             <ShoppingCart size={14} /> Volver a la tienda
+          <Link to={isRetailFlow ? `/tienda/${refCode}` : "/catalogo"} className="text-wo-crema-muted hover:text-wo-crema font-jakarta text-xs flex items-center gap-1.5 transition-colors">
+             <ShoppingCart size={14} /> {isRetailFlow ? "Volver a la tienda" : "Volver al catálogo"}
           </Link>
         </div>
       </header>
