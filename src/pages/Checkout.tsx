@@ -631,12 +631,11 @@ export default function Checkout() {
                       </div>
                     )}
 
-                    {/* El input se mantiene siempre fuera de los condicionales para no perder el foco/contexto en móviles */}
                     <input 
                       id="receipt-upload"
                       type="file" 
-                      className="hidden" 
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" 
+                      style={{ position: 'absolute', opacity: 0, width: 1, height: 1, overflow: 'hidden' }}
+                      accept="image/*,application/pdf" 
                       disabled={isCompressing}
                       onChange={async (e) => {
                         const f = e.target.files?.[0];
@@ -646,20 +645,23 @@ export default function Checkout() {
                         setCheckoutError(null);
 
                         try {
+                          // Forzar una pequeña espera para que el DOM se asiente en móviles
+                          await new Promise(r => setTimeout(r, 100));
+                          
                           const compressed = await compressImage(f);
                           setReceipt(compressed);
                           setReceiptUrl(URL.createObjectURL(compressed));
                         } catch (err) {
-                          console.error("Upload error:", err);
-                          if (f.size <= 10 * 1024 * 1024) {
+                          console.error("Upload process error:", err);
+                          // Fallback total e inmediato
+                          if (f.size <= 12 * 1024 * 1024) {
                             setReceipt(f);
                             setReceiptUrl(URL.createObjectURL(f));
                           } else {
-                            setCheckoutError("La imagen es demasiado pesada (>10MB).");
+                            setCheckoutError("La imagen es demasiado pesada. Intenta con una captura de pantalla.");
                           }
                         } finally {
                           setIsCompressing(false);
-                          // Reset input value to allow selecting the same file again if needed
                           e.target.value = '';
                         }
                       }} 
