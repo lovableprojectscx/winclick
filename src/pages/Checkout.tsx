@@ -601,53 +601,6 @@ export default function Checkout() {
                           {isCompressing ? "Procesando imagen..." : "Sube tu comprobante"}
                         </p>
                         <p className="font-jakarta text-xs text-wo-crema/30 mt-1">JPG, PNG, HEIC o PDF</p>
-                        <input 
-                          id="receipt-upload"
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*,application/pdf" 
-                          disabled={isCompressing}
-                          onChange={async (e) => {
-                            const f = e.target.files?.[0];
-                            if (!f) return;
-                            
-                            // Validar tamaño inicial (max 20MB para móviles)
-                            if (f.size > 20 * 1024 * 1024) {
-                              alert("La imagen es demasiado grande (máx 20MB). Por favor elige una foto más pequeña.");
-                              return;
-                            }
-
-                            setIsCompressing(true);
-                            setCheckoutError(null);
-
-                            try {
-                              // Intentar comprimir
-                              const compressed = await compressImage(f);
-                              
-                              // Validar tamaño final (10MB es el nuevo límite)
-                              if (compressed.size > 10 * 1024 * 1024) {
-                                setCheckoutError("El archivo sigue superando los 10MB permitidos. Intenta con otra imagen.");
-                                setIsCompressing(false);
-                                return;
-                              }
-
-                              setReceipt(compressed);
-                              setReceiptUrl(URL.createObjectURL(compressed));
-                              setCheckoutError(null);
-                            } catch (err) {
-                              console.error("Compression error:", err);
-                              if (f.size <= 10 * 1024 * 1024) {
-                                setReceipt(f);
-                                setReceiptUrl(URL.createObjectURL(f));
-                                setCheckoutError(null);
-                              } else {
-                                setCheckoutError("La imagen es demasiado pesada (>10MB). Intenta con una captura de pantalla.");
-                              }
-                            } finally {
-                              setIsCompressing(false);
-                            }
-                          }} 
-                        />
                       </label>
                     ) : (
                       <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3.5 border border-secondary/30">
@@ -658,7 +611,6 @@ export default function Checkout() {
                               alt="Comprobante" 
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                // Si falla la previsualización, ocultar la imagen rota
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
@@ -678,6 +630,40 @@ export default function Checkout() {
                         </button>
                       </div>
                     )}
+
+                    {/* El input se mantiene siempre fuera de los condicionales para no perder el foco/contexto en móviles */}
+                    <input 
+                      id="receipt-upload"
+                      type="file" 
+                      className="hidden" 
+                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" 
+                      disabled={isCompressing}
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        
+                        setIsCompressing(true);
+                        setCheckoutError(null);
+
+                        try {
+                          const compressed = await compressImage(f);
+                          setReceipt(compressed);
+                          setReceiptUrl(URL.createObjectURL(compressed));
+                        } catch (err) {
+                          console.error("Upload error:", err);
+                          if (f.size <= 10 * 1024 * 1024) {
+                            setReceipt(f);
+                            setReceiptUrl(URL.createObjectURL(f));
+                          } else {
+                            setCheckoutError("La imagen es demasiado pesada (>10MB).");
+                          }
+                        } finally {
+                          setIsCompressing(false);
+                          // Reset input value to allow selecting the same file again if needed
+                          e.target.value = '';
+                        }
+                      }} 
+                    />
                     
                     {checkoutError && !processing && (
                       <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
