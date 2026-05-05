@@ -633,14 +633,15 @@ export default function Checkout() {
 
                               setReceipt(compressed);
                               setReceiptUrl(URL.createObjectURL(compressed));
+                              setCheckoutError(null);
                             } catch (err) {
                               console.error("Compression error:", err);
-                              // Fallback
                               if (f.size <= 10 * 1024 * 1024) {
                                 setReceipt(f);
                                 setReceiptUrl(URL.createObjectURL(f));
+                                setCheckoutError(null);
                               } else {
-                                setCheckoutError("No se pudo procesar la imagen. Intenta con una más pequeña.");
+                                setCheckoutError("La imagen es demasiado pesada (>10MB). Intenta con una captura de pantalla.");
                               }
                             } finally {
                               setIsCompressing(false);
@@ -649,14 +650,38 @@ export default function Checkout() {
                         />
                       </label>
                     ) : (
-                      <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3.5" style={{ border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                        {receiptUrl && <img src={receiptUrl} alt="Comprobante" className="w-16 h-16 rounded-lg object-cover shrink-0" />}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-jakarta text-sm text-wo-crema truncate">{receipt.name}</p>
+                      <div className="flex items-center gap-3 bg-wo-carbon rounded-lg p-3.5 border border-secondary/30">
+                        <div className="w-12 h-12 rounded-lg bg-wo-grafito flex items-center justify-center shrink-0 overflow-hidden">
+                          {receiptUrl && (receipt.type.startsWith('image/') || receipt.name.toLowerCase().endsWith('.heic')) ? (
+                            <img 
+                              src={receiptUrl} 
+                              alt="Comprobante" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Si falla la previsualización, ocultar la imagen rota
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <Check size={20} className="text-secondary" />
+                          )}
                         </div>
-                        <button onClick={() => { setReceipt(null); setReceiptUrl(null); }} className="w-9 h-9 flex items-center justify-center text-destructive shrink-0">
-                          <X size={15} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-jakarta text-[13px] font-bold text-wo-crema truncate">¡Imagen lista!</p>
+                          <p className="font-jakarta text-[11px] text-wo-crema-muted truncate">{receipt.name}</p>
+                        </div>
+                        <button 
+                          onClick={() => { setReceipt(null); setReceiptUrl(null); setCheckoutError(null); }} 
+                          className="w-10 h-10 flex items-center justify-center text-wo-crema/40 hover:text-destructive transition-colors shrink-0"
+                        >
+                          <X size={16} />
                         </button>
+                      </div>
+                    )}
+                    
+                    {checkoutError && !processing && (
+                      <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                        <p className="font-jakarta text-[11px] text-destructive text-center font-medium">{checkoutError}</p>
                       </div>
                     )}
                   </>
