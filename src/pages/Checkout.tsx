@@ -43,6 +43,7 @@ export default function Checkout() {
   const [refName,          setRefName]          = useState("");
   const [processing,       setProcessing]       = useState(false);
   const [isUpgrading,      setIsUpgrading]      = useState(false);
+  const [isCompressing,    setIsCompressing]    = useState(false);
   const [checkoutError,    setCheckoutError]    = useState<string | null>(null);
   const [success,          setSuccess]          = useState(false);
   const [orderNumber,      setOrderNumber]      = useState("");
@@ -589,30 +590,44 @@ export default function Checkout() {
                         className="block bg-wo-carbon rounded-wo-btn p-6 sm:p-8 text-center cursor-pointer hover:bg-wo-grafito transition-colors" 
                         style={{ border: "1px dashed rgba(255,255,255,0.15)" }}
                       >
-                        <Upload size={24} className="mx-auto text-wo-crema-muted mb-3" />
-                        <p className="font-jakarta text-sm text-wo-crema-muted">Sube tu comprobante</p>
-                        <p className="font-jakarta text-xs text-wo-crema/30 mt-1">JPG, PNG o PDF</p>
+                        <div className="flex flex-col items-center">
+                          {isCompressing ? (
+                            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-3" />
+                          ) : (
+                            <Upload size={24} className="mx-auto text-wo-crema-muted mb-3" />
+                          )}
+                        </div>
+                        <p className="font-jakarta text-sm text-wo-crema-muted">
+                          {isCompressing ? "Procesando imagen..." : "Sube tu comprobante"}
+                        </p>
+                        <p className="font-jakarta text-xs text-wo-crema/30 mt-1">JPG, PNG, HEIC o PDF</p>
                         <input 
                           id="receipt-upload"
                           type="file" 
                           className="hidden" 
-                          accept="image/jpeg,image/png,image/webp,application/pdf" 
+                          accept="image/*,application/pdf" 
+                          disabled={isCompressing}
                           onChange={async (e) => {
                             const f = e.target.files?.[0];
                             if (!f) return;
                             
-                            // Validar tamaño inicial (ej. max 15MB antes de comprimir para evitar crashes)
-                            if (f.size > 15 * 1024 * 1024) {
-                              alert("La imagen es demasiado grande (máx 15MB). Por favor elige una foto más pequeña.");
+                            // Validar tamaño inicial (max 20MB para móviles)
+                            if (f.size > 20 * 1024 * 1024) {
+                              alert("La imagen es demasiado grande (máx 20MB). Por favor elige una foto más pequeña.");
                               return;
                             }
 
+                            setIsCompressing(true);
+                            setCheckoutError(null);
+
                             try {
+                              // Intentar comprimir
                               const compressed = await compressImage(f);
                               
-                              // Validar tamaño final (10MB es el límite de Supabase que acabamos de configurar)
+                              // Validar tamaño final (10MB es el nuevo límite)
                               if (compressed.size > 10 * 1024 * 1024) {
-                                alert("El archivo sigue siendo demasiado grande después de comprimir. Por favor intenta con otra imagen.");
+                                setCheckoutError("El archivo sigue superando los 10MB permitidos. Intenta con otra imagen.");
+                                setIsCompressing(false);
                                 return;
                               }
 
@@ -620,13 +635,15 @@ export default function Checkout() {
                               setReceiptUrl(URL.createObjectURL(compressed));
                             } catch (err) {
                               console.error("Compression error:", err);
-                              // Fallback to original file if small enough
+                              // Fallback
                               if (f.size <= 10 * 1024 * 1024) {
                                 setReceipt(f);
                                 setReceiptUrl(URL.createObjectURL(f));
                               } else {
-                                alert("El archivo es demasiado grande y no pudo ser comprimido. Por favor usa una imagen más pequeña.");
+                                setCheckoutError("No se pudo procesar la imagen. Intenta con una más pequeña.");
                               }
+                            } finally {
+                              setIsCompressing(false);
                             }
                           }} 
                         />
